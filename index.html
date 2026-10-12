@@ -172,6 +172,9 @@
   .plaque-go i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(207, 167, 90, .5); transition: background .2s, color .2s, transform .25s var(--ease); }
   .plaque-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .plaque-go small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .seat-count { font-family: var(--body); font-size: 13px; letter-spacing: .04em; color: var(--muted); margin-left: 2px; }
+  .plaque.full { opacity: .62; }
+  .plaque.full .plaque-go i { border-style: dashed; }
   .plaque:hover .plaque-go i, .plaque:focus-visible .plaque-go i { background: var(--brass); color: var(--brass-ink); transform: translateX(2px); }
   .loading-plaque { height: 86px; border: 1px solid rgba(207, 167, 90, .14); border-radius: 3px; background: linear-gradient(100deg, #130e0b 30%, #1d1611 50%, #130e0b 70%); background-size: 220% 100%; animation: sheen 1.5s linear infinite; }
   @keyframes sheen { to { background-position: -220% 0; } }
@@ -236,6 +239,7 @@
   .player { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 4px; border-radius: 999px; background: var(--felt-2); border: 1px solid var(--line); font-size: 15px; transition: box-shadow .3s, border-color .3s; }
   .player em { font-style: normal; color: var(--muted); font-size: 12px; }
   .player .last { font-family: var(--display); color: var(--brass); }
+  .player.watching { opacity: .55; }
   .player.turn { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(207, 167, 90, .5), 0 0 14px rgba(207, 167, 90, .35); }
   /* игрок садится за стол: фишка раздвигает соседей, падает на место и вспыхивает золотом */
   .player.join { animation: seat .75s var(--ease) both, seatglow 1.6s ease-out .2s both; }
@@ -248,6 +252,15 @@
   .player.leave { animation: unseat .42s ease-in forwards; pointer-events: none; }
   @keyframes unseat { 0% { max-width: 260px; } 40% { opacity: .5; transform: translateY(4px) scale(.85); } 100% { max-width: 0; opacity: 0; padding-inline: 0; border-width: 0; margin-left: -8px; transform: translateY(8px) scale(.5); } }
   .player { max-width: 260px; overflow: hidden; white-space: nowrap; }
+
+  /* пустые места в раунде на 3–8 игроков */
+  .seat-ghost { position: absolute; left: 50%; top: 50%; z-index: 1; display: grid; justify-items: center; gap: 4px; pointer-events: none;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)); animation: fadein .4s ease-out both; }
+  .seat-ghost .ghost-ring { width: var(--d); height: var(--d); border-radius: 50%; border: 1.5px dashed rgba(207, 167, 90, .32); }
+  .seat-ghost .ghost-name { font-size: 13px; color: var(--muted); max-width: calc(var(--d) * 1.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seat-ghost.turn .ghost-ring { border-style: solid; border-color: var(--gold-hi); animation: ringpulse 1.6s ease-in-out infinite; }
+  .seat-ghost.turn .ghost-name { color: var(--gold-hi); font-weight: 700; }
+  @keyframes ringpulse { 50% { box-shadow: 0 0 0 6px rgba(207, 167, 90, .12), 0 0 18px rgba(236, 208, 143, .35); } }
 
   /* глашатай: «Оля садится за стол» сверху арены */
   .herald { position: absolute; z-index: 5; left: 50%; top: 4px; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; max-width: calc(100% - 16px);
@@ -284,6 +297,14 @@
   .fighter.won .pip { border-color: var(--brass-ink); }
   .fighter.won .pip.on { background: var(--brass-ink); box-shadow: none; }
   .vs { align-self: center; font-family: var(--display); color: var(--muted); font-size: 16px; letter-spacing: .1em; }
+  /* раунд на 3–8 игроков: компактные карточки сеткой */
+  .fighters.multi { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 6px; }
+  .fighters.multi .fighter { padding: 5px 4px; gap: 3px; }
+  .fighters.multi .fname { font-size: 14px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+  .fighters.multi .pips { gap: 4px; }
+  .fighters.multi .pip { width: 10px; height: 10px; }
+  .fighters.multi .tag { font-size: 9.5px; letter-spacing: .08em; min-height: 1.15em; }
+  .ex.more { border-color: transparent; }
   .pips { display: flex; gap: 6px; }
   .pip { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--brass); transition: background .3s, box-shadow .3s; }
   .pip.on { background: var(--brass); box-shadow: 0 0 8px rgba(207, 167, 90, .6); }
@@ -305,6 +326,8 @@
   .dz[data-pos=front] { --y: -3cqh; }
   .dz[data-pos=back-a] { --x: -34cqw; --y: -22cqh; --s: .48; z-index: 1; filter: brightness(.82) saturate(.85); }
   .dz[data-pos=back-b] { --x: 34cqw; --y: -22cqh; --s: .48; z-index: 1; filter: brightness(.82) saturate(.85); }
+  .dz[data-pos=slot] { z-index: 2; }
+  .dz[data-pos=slot] .dz-cap { font-size: calc(14px / var(--s, 1)); }
   .dz[data-pos=enter] { --y: -16cqh; --s: .6; opacity: 0; }
   .dz[data-pos=out] { --y: 16cqh; --s: .45; opacity: 0; }
   .die-stage { position: relative; width: 100%; aspect-ratio: 1; }
@@ -361,6 +384,8 @@
   .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 18px; align-content: start; padding-bottom: 4px; }
   .hint-text { color: var(--muted); font-size: 15px; margin: 0; }
   .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quick-pick { flex-wrap: wrap; gap: 8px; }
+  #pickStart { width: 100%; }
   .pick { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--felt); font-weight: 500; transition: border-color .2s, box-shadow .2s, background .2s; }
   .pick[aria-pressed=true] { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: var(--felt-3); }
   .feed, .results { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
@@ -478,11 +503,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <span id="duelSub" class="duel-sub"></span>
         <span id="abortZone" class="confirm"></span>
       </div>
-      <div class="fighters">
-        <div id="fa" class="fighter"><span class="fname"></span><span class="pips"></span><span class="tag"></span></div>
-        <div class="vs">VS</div>
-        <div id="fb" class="fighter"><span class="fname"></span><span class="pips"></span><span class="tag"></span></div>
-      </div>
+      <div id="fighters" class="fighters"></div>
       <div id="exlog" class="exlog"></div>
     </div>
 
@@ -538,13 +559,15 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <div class="grabber"></div>
   <div class="sheet-head"><span class="sheet-title">Новый раунд</span><button class="icon-btn bare" type="button" data-close="picker" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheet-body">
-    <p class="hint-text">Двое бросают d20 по очереди. В каждом обмене очко получает тот, у кого выпало больше. Кто первым наберёт 3 очка, выигрывает раунд.</p>
-    <p class="hint-text" style="color:var(--ivory)">Участники выбраны случайно. Нажмите на имя, чтобы заменить.</p>
-    <div id="pickList" class="pick-list"></div>
-    <div class="row" style="justify-content:space-between">
-      <button id="pickRandom" class="btn small ghost" type="button">Выбрать случайно</button>
-      <button id="pickStart" class="btn primary" type="button">Начать раунд</button>
+    <p class="hint-text" style="color:var(--ivory)">Кто играет? Нажимайте на имена: можно выбрать от 2 до 8 игроков.</p>
+    <div class="row quick-pick">
+      <button id="pickPair" class="btn small ghost" type="button">Случайная пара</button>
+      <button id="pickAll" class="btn small ghost" type="button">Все за столом</button>
     </div>
+    <div id="pickList" class="pick-list"></div>
+    <p id="pickRules" class="hint-text"></p>
+    <p id="pickWatch" class="hint-text"></p>
+    <button id="pickStart" class="btn primary" type="button">Начать раунд</button>
   </div>
 </div>
 <div id="history" class="sheet gilded" role="dialog" aria-label="История" hidden>
@@ -677,41 +700,56 @@ let serverOffset = 0;
 onValue(ref(db, ".info/serverTimeOffset"), (snap) => { serverOffset = Number(snap.val()) || 0; });
 
 // ---------- логика раунда ----------
-// Состояние раунда целиком выводится из списка бросков, поэтому у всех игроков оно одинаковое.
+// Раунд: от 2 до 8 участников (места seats), бросают по кругу. В каждом круге очко получает тот, у кого выпало больше всех,
+// а если наверху ничья — очко никому. Кто первым наберёт WIN_POINTS очков, выигрывает раунд.
+// Состояние целиком выводится из списка бросков, поэтому у всех игроков оно одинаковое.
+const MAX_SEATS = 8;
+function seatsOf(rd) {
+  if (!rd || !rd.seats) return null;
+  const s = Object.keys(rd.seats).map(Number).filter((i) => i >= 0 && i < MAX_SEATS).sort((x, y) => x - y)
+    .map((i) => rd.seats[i]).filter((p) => p && p.pid);
+  return s.length >= 2 ? s : null;
+}
 function deriveRound(rd, onlyVisible) {
-  if (!rd || !rd.a || !rd.b) return null;
-  const order = rd.first === "b" ? ["b", "a"] : ["a", "b"];
+  const seats = seatsOf(rd); if (!seats) return null;
+  const n = seats.length;
   const rolls = Object.entries(rd.rolls || {}).map(([key, v]) => ({ key, ...v }))
     .filter((x) => !onlyVisible || !hiddenKeys.has(x.key)).sort(byTs);
-  const score = { a: 0, b: 0 }, exchanges = []; let pending = null, winner = null, count = 0, last = null;
+  const score = new Array(n).fill(0), exchanges = []; let cur = [], winner = null, count = 0, last = null;
   for (const r of rolls) {
-    if (winner) break;
-    const expected = order[count % 2];
-    if (r.side !== expected || r.pid !== rd[expected].pid) continue; // чужой или внеочередной бросок не засчитывается
-    count++; last = r;
-    if (!pending) { pending = r; continue; }
-    const first = pending, second = r; pending = null;
-    const ex = { [first.side]: first, [second.side]: second, second: second.side, point: null };
-    if (first.value > second.value) ex.point = first.side; else if (second.value > first.value) ex.point = second.side;
-    if (ex.point) score[ex.point]++;
-    exchanges.push(ex);
-    if (score.a >= WIN_POINTS) winner = "a"; else if (score.b >= WIN_POINTS) winner = "b";
+    if (winner !== null) break;
+    const expected = count % n;
+    if (r.seat !== expected || r.pid !== seats[expected].pid) continue; // чужой или внеочередной бросок не засчитывается
+    count++; last = r; cur.push(r);
+    if (cur.length < n) continue;
+    const max = Math.max(...cur.map((x) => x.value));
+    const top = cur.filter((x) => x.value === max).map((x) => x.seat);
+    const ex = { rolls: cur, max, top, point: top.length === 1 ? top[0] : null };
+    if (ex.point !== null) { score[ex.point]++; if (score[ex.point] >= WIN_POINTS) winner = ex.point; }
+    exchanges.push(ex); cur = [];
   }
-  return { order, score, exchanges, pending, winner, last, nextSide: winner ? null : order[count % 2] };
+  return { n, seats, score, exchanges, current: cur, winner, last, nextSeat: winner !== null ? null : count % n };
 }
 const roundState = () => deriveRound(round, false);
 const visibleState = () => deriveRound(round, true);
-const other = (side) => (side === "a" ? "b" : "a");
-function roundShown() { return !!(round && round.a && round.id !== dismissedRound); }
-function roundLive() { const s = roundState(); return !!(s && !s.winner); }
-function uiLive() { if (!roundShown()) return false; const s = visibleState(); return !!(s && !s.winner); }
-function uiFinished() { if (!roundShown()) return false; const s = visibleState(); return !!(s && s.winner); }
+function roundShown() { return !!(round && seatsOf(round) && round.id !== dismissedRound); }
+function roundLive() { const s = roundState(); return !!(s && s.winner === null); }
+function uiLive() { if (!roundShown()) return false; const s = visibleState(); return !!(s && s.winner === null); }
+function uiFinished() { if (!roundShown()) return false; const s = visibleState(); return !!(s && s.winner !== null); }
+function mySeat() { const s = seatsOf(round); return s ? s.findIndex((p) => p.pid === pid) : -1; }
 function myTurn() {
   if (!roundLive() || animating || cooldown) return false;
   const full = roundState(), vis = visibleState();
-  return round[full.nextSide].pid === pid && vis.nextSide === full.nextSide;
+  return full.seats[full.nextSeat].pid === pid && vis.nextSeat === full.nextSeat;
 }
-function rollerName(r) { return r.name || (round && r.side && round[r.side] && round[r.side].name) || "Игрок"; }
+function rollerName(r) { const s = seatsOf(round); return r.name || (s && s[r.seat] && s[r.seat].name) || "Игрок"; }
+function sideOf(seat, n) { return n === 2 ? (seat === 0 ? "a" : "b") : null; }
+function tieText(st) { return st.n === 2 ? "Ничья — очко никому" : "Ничья наверху — очко никому"; }
+function scoreLine(st) { return st.score.slice().sort((x, y) => y - x).join(":"); }
+function exchangeLine(st, ex) {
+  if (st.n === 2) { const a = ex.rolls.find((x) => x.seat === 0), b = ex.rolls.find((x) => x.seat === 1); return st.seats[0].name + " " + a.value + " : " + b.value + " " + st.seats[1].name; }
+  return ex.rolls.map((x) => st.seats[x.seat].name + " " + x.value).join(" · ");
+}
 
 // ---------- лобби ----------
 let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false, shownCodes = new Set(), firstLobbyPaint = true;
@@ -758,16 +796,20 @@ function renderLobby() {
     const head = el("span", "plaque-code");
     if (t.people.length) head.append(el("span", "live-dot")); else if (t.invited) head.insertAdjacentHTML("beforeend", ICON_SEAL);
     head.append(document.createTextNode(t.code));
+    const full = t.people.length >= MAX_SEATS && !t.people.some((p) => p.pid === pid);
+    if (t.people.length) head.append(el("span", "seat-count", t.people.length + "/" + MAX_SEATS));
+    if (full) b.classList.add("full");
     info.append(head);
     if (t.people.length) {
       const sitters = el("span", "sitters");
-      t.people.slice(0, 6).forEach((p) => { const m = el("span", "mini"); m.append(ava(p.pid, p.name), el("span", "", p.name)); sitters.append(m); });
-      if (t.people.length > 6) sitters.append(el("span", "more", "+" + (t.people.length - 6)));
+      t.people.slice(0, 5).forEach((p) => { const m = el("span", "mini"); m.append(ava(p.pid, p.name), el("span", "", p.name)); sitters.append(m); });
+      if (t.people.length > 5) sitters.append(el("span", "more", "+" + (t.people.length - 5)));
       info.append(sitters);
     }
     const go = el("span", "plaque-go"); go.innerHTML = ICON_GO;
+    if (full) go.querySelector("small").textContent = "Мест нет";
     b.append(info, go);
-    b.addEventListener("click", () => joinRoom(t.code));
+    b.addEventListener("click", () => { if (full) { toast("За этим столом уже " + MAX_SEATS + " игроков"); return; } joinRoom(t.code); });
     li.append(b); ol.append(li);
   });
   if (lobbyLoaded) { shownCodes = new Set(list.map((t) => t.code)); firstLobbyPaint = false; }
@@ -878,7 +920,15 @@ function enterRoom(r) {
       .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp() }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
       .catch(() => {});
   }));
-  unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); playersReady = true; }));
+  let firstPlayers = true;
+  unsubs.push(onValue(R("players"), (snap) => {
+    players = snap.val() || {};
+    if (firstPlayers) {
+      firstPlayers = false;
+      if (Object.keys(players).filter((k) => k !== pid).length >= MAX_SEATS) { goLobby(); toast("За столом " + r + " уже " + MAX_SEATS + " игроков — мест нет", 3200); return; }
+    }
+    renderAll(); playersReady = true;
+  }));
   // создатель стола: кто первым сел за пустой стол, тот и хозяин
   let firstMeta = true;
   meta = null; closing = false;
@@ -1156,10 +1206,10 @@ class Die3D {
     D20.draw(this.ctx, W, this.O, { color: this.color, top: this.top, topFace: D20.FACE_OF[20], labelScale: this.labelScale });
   }
   rest(value) { this.top = value === "?" ? "?" : null; this.O = D20.restQ(value === "?" ? 20 : value); this.paint(); }
-  roll(value, key, side) {
+  roll(value, key, side, scale = 1) {
     this.top = null;
-    const arenaRect = arena.getBoundingClientRect(), dieW = this.stage.clientWidth || 120;
-    const p = D20.plan(value, key, side, dieW, arenaRect.width, arenaRect.height);
+    const dieW = this.stage.clientWidth || 120;
+    const p = D20.plan(value, key, side, dieW, arena.clientWidth / scale, arena.clientHeight / scale);
     const T = TUMBLE_MS, t0 = performance.now();
     let impact = false;
     return new Promise((resolve) => {
@@ -1208,19 +1258,71 @@ function place(d, pos) {
   if (d.die && d.die.labelScale !== ls) { d.die.labelScale = ls; d.die.paint(); }
 }
 function dropDie(d, instant) { if (!d) return; if (instant) { d.remove(); return; } d.classList.remove("won", "lost", "tie"); d.dataset.pos = "out"; setTimeout(() => d.remove(), 520); }
-function clearArena(instant) { dropDie(front, instant); dropDie(back, instant); front = back = null; }
+function clearArena(instant) {
+  dropDie(front, instant); dropDie(back, instant); front = back = null;
+  for (const d of slotDice.values()) dropDie(d, instant);
+  slotDice.clear(); multiN = 0;
+  arena.querySelectorAll(".seat-ghost").forEach((g) => g.remove());
+}
 function placeholder(caption, instant) { clearArena(instant); front = makeDie(caption, null, instant ? "front" : "enter"); setNum(front, "?"); place(front, "front"); }
-function dieOf(r, pos) { const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), r.side, pos, colorFor(r.pid)); setNum(d, r.value); return d; }
+function dieOf(r, pos) {
+  const n = (seatsOf(round) || []).length, side = r.seat != null ? sideOf(r.seat, n) : null;
+  const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), side, pos, colorFor(r.pid)); setNum(d, r.value); return d;
+}
+// Раунд на 3–8 игроков: у каждого своё место на столе, пустые места подписаны, чьё место сейчас — мерцает.
+const slotDice = new Map(); let multiN = 0;
+function slotLayout(n) {
+  const W = arena.clientWidth, H = arena.clientHeight;
+  const cols = n <= 4 ? n : Math.ceil(n / 2), rows = n <= 4 ? 1 : 2;
+  const base = Math.min(.64 * W, .7 * H, 250) || 1, cw = W / cols, ch = H / rows;
+  const s = Math.max(.18, Math.min(cw * .9, ch * .66, base * .62) / base);
+  return (seat) => {
+    const row = rows === 1 || seat < cols ? 0 : 1, inRow = row === 0 ? Math.min(cols, n) : n - cols, col = row === 0 ? seat : seat - cols;
+    const x = (col + .5) * (W / inRow) - W / 2;
+    const y = rows === 1 ? -H * .06 : (row + .5) * ch - H / 2 - ch * .08;
+    return { x, y, s, ring: base * s * .78 };
+  };
+}
+function setSlot(d, seat, n) {
+  const L = slotLayout(n)(seat);
+  d.dataset.pos = "slot";
+  d.style.setProperty("--x", L.x.toFixed(1) + "px"); d.style.setProperty("--y", L.y.toFixed(1) + "px"); d.style.setProperty("--s", L.s.toFixed(3));
+  if (d.die && d.die.labelScale !== 1.35) { d.die.labelScale = 1.35; d.die.paint(); }
+  return L;
+}
+function markExchange(d, seat, ex) {
+  d.classList.remove("won", "lost", "tie");
+  if (ex.point === seat) d.classList.add("won");
+  else if (ex.point === null && ex.top.includes(seat)) d.classList.add("tie");
+  else d.classList.add("lost");
+}
+function renderGhosts(st) {
+  arena.querySelectorAll(".seat-ghost").forEach((g) => g.remove());
+  if (!st || st.n <= 2 || !multiN) return;
+  const lay = slotLayout(st.n);
+  st.seats.forEach((p, i) => {
+    if (slotDice.has(i)) return;
+    const L = lay(i), g = el("div", "seat-ghost" + (st.winner === null && st.nextSeat === i ? " turn" : ""));
+    g.style.setProperty("--x", L.x.toFixed(1) + "px"); g.style.setProperty("--y", L.y.toFixed(1) + "px"); g.style.setProperty("--d", L.ring.toFixed(1) + "px");
+    g.append(el("span", "ghost-ring"), el("span", "ghost-name", p.pid === pid ? "Вы" : p.name));
+    arena.append(g);
+  });
+}
+new ResizeObserver(() => {
+  if (!multiN) return;
+  for (const [seat, d] of slotDice) setSlot(d, seat, multiN);
+  renderGhosts(visibleState());
+}).observe(arena);
 
 // Бросок: кость вылетает со стороны бросающего, кувыркается, отскакивает от стола и ложится выпавшей гранью вверх.
-async function throwDie(d, final, r, caption) {
+async function throwDie(d, final, r, caption, side, scale) {
   const cap = d.querySelector(".dz-cap");
   if (caption != null) setTimeout(() => { cap.textContent = caption; }, 360);
   d.classList.remove("crit-win", "crit-fail", "idle", "won", "lost", "tie");
   d.die.color = colorFor(r.pid);
   if (reduceMotion() || document.hidden) { setNum(d, final); return; }
   d.classList.add("rolling");
-  await d.die.roll(final, r.key, r.side);
+  await d.die.roll(final, r.key, side, scale || 1);
   d.classList.remove("rolling");
   d.querySelector(".die-num").textContent = final;
   critClasses(d, final);
@@ -1234,17 +1336,28 @@ function syncArena(instant) {
   const useRound = st && (roundLive() || !lastFree || !st.last || st.last.ts >= lastFree.ts);
   if (useRound) {
     clearArena(instant);
-    if (st.pending) { front = dieOf(st.pending, instant ? "front" : "enter"); place(front, "front"); }
-    else if (st.exchanges.length) {
-      const ex = st.exchanges[st.exchanges.length - 1];
-      const fs = ex.point || ex.second, bs = other(fs);
-      back = dieOf(ex[bs], instant ? "back-" + bs : "enter"); front = dieOf(ex[fs], instant ? "front" : "enter");
-      place(back, "back-" + bs); place(front, "front");
-      if (ex.point) { front.classList.add("won"); back.classList.add("lost"); } else { front.classList.add("tie"); back.classList.add("tie"); }
-    } else placeholder(st.nextSide ? round[st.nextSide].name : "", instant);
+    const lastEx = st.exchanges[st.exchanges.length - 1];
+    if (st.n === 2) {
+      if (st.current.length) { front = dieOf(st.current[0], instant ? "front" : "enter"); place(front, "front"); }
+      else if (lastEx) {
+        const fs = lastEx.point !== null ? lastEx.point : lastEx.rolls[1].seat, bs = 1 - fs;
+        const rf = lastEx.rolls.find((x) => x.seat === fs), rb = lastEx.rolls.find((x) => x.seat === bs);
+        back = dieOf(rb, instant ? "back-" + sideOf(bs, 2) : "enter"); front = dieOf(rf, instant ? "front" : "enter");
+        place(back, "back-" + sideOf(bs, 2)); place(front, "front");
+        if (lastEx.point !== null) { front.classList.add("won"); back.classList.add("lost"); } else { front.classList.add("tie"); back.classList.add("tie"); }
+      } else placeholder(st.seats[st.nextSeat !== null ? st.nextSeat : 0].name, instant);
+    } else {
+      multiN = st.n;
+      const shown = st.current.length ? st.current : (lastEx ? lastEx.rolls : []);
+      for (const r of shown) {
+        const d = dieOf(r, "slot"); setSlot(d, r.seat, st.n); slotDice.set(r.seat, d);
+        if (!st.current.length && lastEx) markExchange(d, r.seat, lastEx);
+      }
+      renderGhosts(st);
+    }
     describeRoundState(st);
   } else if (lastFree) {
-    clearArena(instant); front = makeDie(lastFree.pid === pid ? "Вы" : lastFree.name, null, instant ? "front" : "enter"); setNum(front, lastFree.value); place(front, "front");
+    clearArena(instant); front = makeDie(lastFree.pid === pid ? "Вы" : lastFree.name, null, instant ? "front" : "enter", colorFor(lastFree.pid)); setNum(front, lastFree.value); place(front, "front");
     describeFree(lastFree);
   } else { placeholder("", instant); setLines("", "", ""); }
 }
@@ -1262,11 +1375,10 @@ function describeFree(r) {
   setLines(critText(r.value), [nameNode(r), document.createTextNode(tail)], cls(r.value));
 }
 function describeRoundState(st) {
-  if (st.winner) { const w = st.winner; setLines(round[w].name + " выигрывает раунд!", "Счёт " + st.score[w] + ":" + st.score[other(w)], "win"); return; }
-  if (st.exchanges.length && !st.pending) {
-    const ex = st.exchanges[st.exchanges.length - 1];
-    setLines(ex.point ? "Очко получает " + round[ex.point].name : "Ничья — очко никому", round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, ex.point ? "win" : "");
-  } else if (st.pending) setLines("", [nameNode(st.pending), document.createTextNode(": выпало " + st.pending.value)]);
+  if (st.winner !== null) { setLines(st.seats[st.winner].name + " выигрывает раунд!", "Счёт " + scoreLine(st), "win"); return; }
+  const lastEx = st.exchanges[st.exchanges.length - 1];
+  if (lastEx && !st.current.length) setLines(lastEx.point !== null ? "Очко получает " + st.seats[lastEx.point].name : tieText(st), exchangeLine(st, lastEx), lastEx.point !== null ? "win" : "");
+  else if (st.current.length) { const r = st.current[st.current.length - 1]; setLines("", [nameNode(r), document.createTextNode(": выпало " + r.value)]); }
   else setLines("", "");
 }
 
@@ -1278,7 +1390,7 @@ async function runNext() {
   animating = true; renderControls();
   try {
     if (evt.kind === "free") await playFree(evt.roll);
-    else if (round && evt.roundId === round.id) await playDuel(evt.roll);
+    else if (round && evt.roundId === round.id) await playRound(evt.roll);
     else hiddenKeys.delete(evt.roll.key);
   }
   catch (e) { console.error(e); hiddenKeys.delete(evt.roll.key); }
@@ -1303,61 +1415,81 @@ async function playFree(r) {
   describeFree(r);
   if (r.value === 20 || r.value === 1) { haptic(r.value === 20 ? "win" : "fail"); if (r.pid === pid) buzz(r.value === 20 ? [60, 40, 120] : 200); }
 }
-async function playDuel(r) {
+async function playRound(r) {
   const before = visibleState();
   if (!before) { hiddenKeys.delete(r.key); return; }
+  const n = before.n;
   rollingLine(r, " в раунде " + round.num);
   const caption = r.pid === pid ? "Вы" : rollerName(r);
-  if (!before.pending) {
-    // первый бросок обмена: прошлые кости уходят, новая выкатывается в центр
-    if (front && !front.dataset.side && !back) { front.dataset.side = r.side; front.classList.add("rolling"); }
-    else { clearArena(); front = makeDie(caption, r.side, "front"); front.classList.add("rolling"); }
+  let thrown;
+  if (n === 2) {
+    const side = sideOf(r.seat, 2);
+    if (!before.current.length) {
+      // первый бросок обмена: прошлые кости уходят, новая выкатывается в центр
+      if (front && !front.dataset.side && !back && !multiN) { front.dataset.side = side; front.classList.add("rolling"); }
+      else { clearArena(); front = makeDie(caption, side, "front"); front.classList.add("rolling"); }
+    } else {
+      // второй бросок: первая кость отходит на задний план к своему игроку, новая — в центр
+      if (front) { place(front, "back-" + (front.dataset.side || sideOf(1 - r.seat, 2))); back = front; }
+      front = makeDie(caption, side, "front"); front.classList.add("rolling");
+    }
+    thrown = front;
+    await throwDie(front, r.value, r, caption, side, 1);
   } else {
-    // второй бросок: первая кость отходит на задний план к своему игроку, новая — в центр
-    if (front) { place(front, "back-" + (front.dataset.side || other(r.side))); back = front; }
-    front = makeDie(caption, r.side, "front"); front.classList.add("rolling");
+    if (!before.current.length || multiN !== n) { clearArena(); multiN = n; }   // новый круг: прошлые кости уходят со стола
+    const d = makeDie(caption, null, "slot", colorFor(r.pid)); d.classList.add("rolling");
+    const L = setSlot(d, r.seat, n); slotDice.set(r.seat, d);
+    renderGhosts(before);
+    thrown = d;
+    await throwDie(d, r.value, r, caption, L.x < 0 ? "a" : "b", L.s);
   }
-  await throwDie(front, r.value, r, caption);
   hiddenKeys.delete(r.key);
   renderDuel();
   const st = visibleState();
   const ex = st.exchanges[st.exchanges.length - 1];
-  const closed = ex && (ex.a.key === r.key || ex.b.key === r.key);
+  const closed = ex && ex.rolls.some((x) => x.key === r.key);
   if (!closed) {
     setLines(critText(r.value), [nameNode(r), document.createTextNode(": выпало " + r.value)], cls(r.value));
+    if (n > 2) renderGhosts(st);
     return;
   }
   await wait(250);
-  if (ex.point) {
-    const winDie = front.dataset.side === ex.point ? front : back, loseDie = winDie === front ? back : front;
-    winDie.classList.add("won"); if (loseDie) loseDie.classList.add("lost");
-    haptic(round[ex.point].pid === pid ? "win" : "tap");
-    if (winDie === back) { // победила кость с заднего плана: быстро выходит вперёд и отталкивает соперника
-      await wait(420);
-      arena.classList.add("swap");
-      place(back, "front"); place(front, "back-" + other(ex.point));
-      [front, back] = [back, front];
-      setTimeout(() => arena.classList.remove("swap"), 500);
-    }
-    setLines("Очко получает " + round[ex.point].name, round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, "win");
+  if (n === 2) {
+    if (ex.point !== null) {
+      const winSide = sideOf(ex.point, 2);
+      const winDie = front.dataset.side === winSide ? front : back, loseDie = winDie === front ? back : front;
+      if (winDie) winDie.classList.add("won"); if (loseDie) loseDie.classList.add("lost");
+      if (winDie && winDie === back) { // победила кость с заднего плана: быстро выходит вперёд и отталкивает соперника
+        await wait(420);
+        arena.classList.add("swap");
+        place(back, "front"); place(front, "back-" + sideOf(1 - ex.point, 2));
+        [front, back] = [back, front];
+        setTimeout(() => arena.classList.remove("swap"), 500);
+      }
+    } else { front.classList.add("tie"); if (back) back.classList.add("tie"); }
   } else {
-    front.classList.add("tie"); if (back) back.classList.add("tie");
-    setLines("Ничья — очко никому", round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, "");
+    for (const [seat, d] of slotDice) markExchange(d, seat, ex);
   }
-  if (st.winner) {
+  if (ex.point !== null) haptic(st.seats[ex.point].pid === pid ? "win" : "tap");
+  setLines(ex.point !== null ? "Очко получает " + st.seats[ex.point].name : tieText(st), exchangeLine(st, ex), ex.point !== null ? "win" : "");
+  if (st.winner !== null) {
     await wait(500);
-    const w = st.winner;
-    setLines(round[w].name + " выигрывает раунд!", "Счёт " + st.score[w] + ":" + st.score[other(w)], "win");
-    banner(round[w].name + " побеждает", "Раунд " + round.num + " — " + st.score[w] + ":" + st.score[other(w)]);
-    if (round[w].pid === pid) { buzz([60, 40, 60, 40, 160]); haptic("win"); }
+    const w = st.seats[st.winner];
+    setLines(w.name + " выигрывает раунд!", "Счёт " + scoreLine(st), "win");
+    banner(w.name + " побеждает", "Раунд " + round.num + " — " + scoreLine(st));
+    if (w.pid === pid) { buzz([60, 40, 60, 40, 160]); haptic("win"); }
   }
   await wait(600);
 }
 function announceRound(rd) {
   dismissedRound = null;
-  banner("Раунд " + rd.num, "Сражаются " + rd.a.name + " и " + rd.b.name + ". Первым бросает " + rd[rd.first].name + ".");
-  if (rd.a.pid === pid || rd.b.pid === pid) { buzz([80, 60, 80]); haptic("win"); }
-  if (!animating) { placeholder(rd[rd.first].name); setLines("", ""); } else arenaStale = true;
+  const s = seatsOf(rd); if (!s) return;
+  const names = s.map((p) => p.name);
+  banner("Раунд " + rd.num, s.length === 2
+    ? "Сражаются " + names[0] + " и " + names[1] + ". Первым бросает " + names[0] + "."
+    : "Играют " + s.length + ": " + names.join(", ") + ". Первым бросает " + names[0] + ".");
+  if (s.some((p) => p.pid === pid)) { buzz([80, 60, 80]); haptic("win"); }
+  if (!animating) syncArena(false); else arenaStale = true;
 }
 
 // ---------- отрисовка стола ----------
@@ -1376,7 +1508,8 @@ function renderPlayers() {
   const ids = new Set(list.map((p) => p.pid));
   const visFree = freeRolls.filter((x) => !hiddenKeys.has(x.key));
   const full = uiLive() ? visibleState() : null;
-  const turnPid = full && full.nextSide ? round[full.nextSide].pid : null;
+  const turnPid = full && full.nextSeat !== null ? full.seats[full.nextSeat].pid : null;
+  const inRound = full ? new Set(full.seats.map((p) => p.pid)) : null;
   const animate = playersReady && !reduceMotion();
   for (const [id, chip] of chipEls) {
     if (ids.has(id)) continue;
@@ -1398,10 +1531,12 @@ function renderPlayers() {
       }
     }
     chip.classList.toggle("turn", p.pid === turnPid);
+    const watching = !!inRound && !inRound.has(p.pid);
+    chip.classList.toggle("watching", watching);
     const parts = [ava(p.pid, p.name), el("span", "", p.name)];
     chip.replaceChildren(...parts);
-    chip.title = "";
-    if (meta && meta.owner === p.pid) { chip.insertAdjacentHTML("beforeend", OWNER_SEAL); chip.title = "Создатель стола"; }
+    chip.title = watching ? "Зритель в этом раунде" : "";
+    if (meta && meta.owner === p.pid) { chip.insertAdjacentHTML("beforeend", OWNER_SEAL); chip.title = (chip.title ? chip.title + ". " : "") + "Создатель стола"; }
     if (p.pid === pid) chip.append(el("em", "", "вы"));
     const lr = visFree.find((x) => x.pid === p.pid);
     if (lr && !full) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
@@ -1423,26 +1558,37 @@ function renderDuel() {
   if (!roundShown()) { box.hidden = true; return; }
   const st = visibleState(); if (!st) { box.hidden = true; return; }
   const wasHidden = box.hidden; box.hidden = false; if (wasHidden) animateIn(box, "duel");
-  box.classList.toggle("done", !!st.winner);
+  box.classList.toggle("done", st.winner !== null);
   $("duelTitle").textContent = "Раунд " + round.num;
-  $("duelSub").textContent = st.winner ? "завершён" : "обмен " + (st.exchanges.length + 1);
+  $("duelSub").textContent = st.winner !== null ? "завершён" : (st.n > 2 ? st.n + " игроков · круг " : "обмен ") + (st.exchanges.length + 1);
   $("duelSub").title = "До " + WIN_POINTS + " очков";
-  for (const side of ["a", "b"]) {
-    const f = $(side === "a" ? "fa" : "fb"), p = round[side];
-    f.className = "fighter" + (st.winner === side ? " won" : "") + (!st.winner && st.nextSide === side ? " turn" : "");
-    f.querySelector(".fname").textContent = p.name + (p.pid === pid ? " (вы)" : "");
-    const pips = f.querySelector(".pips"); const before = pips.dataset.round === round.id ? Number(pips.dataset.n || 0) : st.score[side];
-    pips.replaceChildren();
-    for (let i = 0; i < WIN_POINTS; i++) { const d = el("span", "pip" + (i < st.score[side] ? " on" : "")); if (i < st.score[side] && i >= before) d.classList.add("pop"); pips.append(d); }
-    pips.dataset.round = round.id; pips.dataset.n = st.score[side];
-    f.querySelector(".tag").textContent = st.winner === side ? "победитель" : (!st.winner && st.nextSide === side ? (p.pid === pid ? "ваш ход" : "бросает") : "");
-  }
+  const fbox = $("fighters");
+  const prev = fbox.dataset.round === round.id ? (fbox.dataset.scores || "").split(",").map(Number) : st.score;
+  fbox.className = "fighters" + (st.n > 2 ? " multi" : "");
+  fbox.style.setProperty("--cols", String(st.n <= 4 ? st.n : Math.ceil(st.n / 2)));
+  fbox.replaceChildren();
+  st.seats.forEach((p, i) => {
+    if (st.n === 2 && i === 1) fbox.append(el("div", "vs", "VS"));
+    const f = el("div", "fighter" + (st.winner === i ? " won" : "") + (st.winner === null && st.nextSeat === i ? " turn" : ""));
+    f.append(el("span", "fname", p.name + (p.pid === pid ? (st.n > 2 ? " · вы" : " (вы)") : "")));
+    const pips = el("span", "pips");
+    for (let k = 0; k < WIN_POINTS; k++) { const d = el("span", "pip" + (k < st.score[i] ? " on" : "")); if (k < st.score[i] && k >= (prev[i] || 0)) d.classList.add("pop"); pips.append(d); }
+    f.append(pips, el("span", "tag", st.winner === i ? "победитель" : (st.winner === null && st.nextSeat === i ? (p.pid === pid ? "ваш ход" : "бросает") : "")));
+    fbox.append(f);
+  });
+  fbox.dataset.round = round.id; fbox.dataset.scores = st.score.join(",");
   const log = $("exlog"); const prevN = log.dataset.round === round.id ? Number(log.dataset.n || 0) : st.exchanges.length;
   log.replaceChildren();
-  st.exchanges.forEach((ex, i) => {
-    const c = el("span", "ex" + (i >= prevN ? " new" : ""));
-    const a = el("span", ex.point === "a" ? "pt" : "", String(ex.a.value)), b = el("span", ex.point === "b" ? "pt" : "", String(ex.b.value));
-    c.append(a, document.createTextNode(":"), b); c.title = ex.point ? "Очко: " + round[ex.point].name : "Ничья";
+  const shown = st.exchanges.slice(st.n > 2 ? -4 : -6), offset = st.exchanges.length - shown.length;
+  if (offset > 0) log.append(el("span", "ex more", "…"));
+  shown.forEach((ex, j) => {
+    const i = offset + j, c = el("span", "ex" + (i >= prevN ? " new" : ""));
+    if (st.n === 2) {
+      const a = ex.rolls.find((x) => x.seat === 0), b = ex.rolls.find((x) => x.seat === 1);
+      c.append(el("span", ex.point === 0 ? "pt" : "", String(a.value)), document.createTextNode(":"), el("span", ex.point === 1 ? "pt" : "", String(b.value)));
+    } else if (ex.point !== null) c.append(el("span", "pt", String(ex.max)), document.createTextNode(" " + st.seats[ex.point].name));
+    else c.append(el("span", "", String(ex.max)), document.createTextNode(" ничья"));
+    c.title = ex.point !== null ? "Очко: " + st.seats[ex.point].name : "Ничья наверху — очко никому";
     log.append(c);
   });
   log.dataset.round = round.id; log.dataset.n = st.exchanges.length;
@@ -1450,14 +1596,16 @@ function renderDuel() {
 }
 function renderAbort(st) {
   const zone = $("abortZone");
-  if (zone.dataset.asking === "1" && !st.winner) return;
+  if (zone.dataset.asking === "1" && st.winner === null) return;
   zone.dataset.asking = "";
-  if (st.winner) {
+  if (st.winner !== null) {
     const x = el("button", "icon-btn bare", null); x.type = "button"; x.setAttribute("aria-label", "Закрыть итог раунда");
     x.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     x.addEventListener("click", () => { dismissedRound = round.id; syncArena(false); renderAll(); });
     zone.replaceChildren(x); return;
   }
+  // отменить раунд могут только его участники и тот, кто его объявил; зрители на раунд не влияют
+  if (mySeat() < 0 && round.by !== pid) { zone.replaceChildren(); return; }
   const b = el("button", "btn small ghost", "Отменить"); b.type = "button";
   b.addEventListener("click", () => {
     zone.dataset.asking = "1"; zone.replaceChildren();
@@ -1479,11 +1627,11 @@ function renderControls() {
   btn.classList.remove("your-turn");
   let canRoll = false;
   if (live) {
-    const full = animating ? visibleState() : roundState(); const next = round[full.nextSide];
-    const participant = round.a.pid === pid || round.b.pid === pid;
-    if (animating) { btn.textContent = "Кость катится…"; btn.disabled = true; hint.textContent = ""; }
+    const full = animating ? visibleState() : roundState(); const next = full.seats[full.nextSeat];
+    const participant = mySeat() >= 0;
+    if (animating) { btn.textContent = "Кость катится…"; btn.disabled = true; hint.textContent = participant ? "" : "Вы зритель в этом раунде"; }
     else if (myTurn()) { btn.textContent = "Ваш ход — бросить d20"; btn.disabled = false; btn.classList.add("your-turn"); hint.textContent = "Ваш ход: нажмите на кость или на кнопку"; canRoll = true; }
-    else { btn.textContent = participant ? "Ход соперника: " + next.name : "Сейчас бросает " + next.name; btn.disabled = true; hint.textContent = participant ? "Ждём бросок " + next.name : "Вы смотрите раунд — бросают " + round.a.name + " и " + round.b.name; }
+    else { btn.textContent = "Сейчас бросает " + next.name; btn.disabled = true; hint.textContent = participant ? "Ждите своей очереди" : "Вы зритель: смотрите раунд, бросают участники"; }
   } else if (finished) {
     btn.textContent = "Новый раунд"; btn.disabled = animating; hint.textContent = animating ? "" : "× закрывает итог раунда";
   } else {
@@ -1497,7 +1645,7 @@ function renderControls() {
 // --- история ---
 function renderHistory() {
   const st = visibleState();
-  const vis = results.filter((x) => !(round && x.key === round.id && !(st && st.winner)));
+  const vis = results.filter((x) => x && x.winner && !(round && x.key === round.id && !(st && st.winner !== null)));
   const tally = {};
   vis.forEach((x) => { const k = x.winner.pid; tally[k] = tally[k] || { name: x.winner.name, n: 0 }; tally[k].n++; });
   const tb = $("tally"); tb.replaceChildren();
@@ -1505,7 +1653,8 @@ function renderHistory() {
   const ol = $("results"); ol.replaceChildren();
   vis.slice(0, 20).forEach((x) => {
     const li = el("li"); const left = el("span");
-    left.append(document.createTextNode("Раунд " + x.num + ": "), el("b", "", x.winner.name), document.createTextNode(" — " + x.loser.name));
+    const rest = x.loser ? x.loser.name : (x.others || "");
+    left.append(document.createTextNode("Раунд " + x.num + ": "), el("b", "", x.winner.name), document.createTextNode(rest ? " — " + rest : ""));
     li.append(left, el("span", "sc", x.score)); ol.append(li);
   });
   $("resultsEmpty").hidden = vis.length > 0;
@@ -1571,11 +1720,12 @@ $("closeTableYes").addEventListener("click", async () => {
   } finally { $("closeTableYes").disabled = false; }
 });
 
-// --- выбор участников раунда ---
+// --- выбор участников раунда: от 2 до 8 игроков, остальные смотрят ---
 function randomPair() { return shuffle(onlinePlayers()).slice(0, 2).map((p) => p.pid); }
+function everyone() { return onlinePlayers().slice(0, MAX_SEATS).map((p) => p.pid); }
 function openPicker() {
   if (onlinePlayers().length < 2) { toast("Для раунда нужно минимум двое за столом. Пригласите друга."); return; }
-  picked = randomPair(); renderPicker(true); openSheet("picker");
+  picked = onlinePlayers().length === 2 ? everyone() : randomPair(); renderPicker(true); openSheet("picker");
 }
 function renderPicker(force) {
   if ($("picker").hidden && !force) return;
@@ -1588,31 +1738,40 @@ function renderPicker(force) {
     b.append(ava(p.pid, p.name), document.createTextNode(p.name + (p.pid === pid ? " (вы)" : "")));
     b.addEventListener("click", () => {
       if (picked.includes(p.pid)) picked = picked.filter((x) => x !== p.pid);
-      else { picked.push(p.pid); if (picked.length > 2) picked.shift(); }
+      else if (picked.length < MAX_SEATS) picked.push(p.pid);
       renderPicker();
     });
     box.append(b);
   }
-  $("pickStart").disabled = picked.length !== 2;
+  const k = picked.length, watchers = list.length - k;
+  $("pickStart").disabled = k < 2;
+  $("pickStart").textContent = k < 2 ? "Выберите хотя бы двоих" : k === 2 ? "Начать дуэль" : "Начать раунд на " + k;
+  $("pickRules").textContent = k > 2
+    ? "Каждый по очереди бросает d20. Очко получает тот, у кого выпало больше всех; если наверху ничья — очко никому. Кто первым наберёт " + WIN_POINTS + " очка, выигрывает."
+    : "Двое бросают d20 по очереди. В каждом обмене очко получает тот, у кого выпало больше. Кто первым наберёт " + WIN_POINTS + " очка, выигрывает.";
+  $("pickWatch").textContent = watchers > 0 ? "Остальные (" + watchers + ") будут смотреть раунд." : "Играют все, кто за столом.";
 }
 $("roundBtn").addEventListener("click", openPicker);
-$("pickRandom").addEventListener("click", () => { picked = randomPair(); renderPicker(); });
+$("pickPair").addEventListener("click", () => { picked = randomPair(); renderPicker(); });
+$("pickAll").addEventListener("click", () => { picked = everyone(); renderPicker(); });
 $("pickStart").addEventListener("click", async () => {
   const list = onlinePlayers();
-  const [a, b] = shuffle(picked).map((id) => list.find((p) => p.pid === id));
-  if (!a || !b) { toast("Выберите двух игроков"); return; }
-  const lastNum = Math.max(round ? round.num || 0 : 0, ...results.map((x) => x.num || 0), 0);
-  const data = { id: push(R("results")).key, num: lastNum + 1, a: { pid: a.pid, name: a.name }, b: { pid: b.pid, name: b.name }, first: randInt(2) === 1 ? "a" : "b", by: pid, ts: serverTimestamp() };
+  const seats = shuffle(picked).map((id) => list.find((p) => p.pid === id)).filter(Boolean).slice(0, MAX_SEATS).map((p) => ({ pid: p.pid, name: p.name }));
+  if (seats.length < 2) { toast("Выберите хотя бы двух игроков"); return; }
+  const lastNum = Math.max(round ? round.num || 0 : 0, ...results.map((x) => (x && x.num) || 0), 0);
+  const data = { id: push(R("results")).key, num: lastNum + 1, seats, by: pid, ts: serverTimestamp() };
   $("pickStart").disabled = true;
   try { await set(R("round"), data); closeSheet("picker"); }
   catch { toast("Не получилось начать раунд. Проверьте интернет."); $("pickStart").disabled = false; }
 });
 function saveResultIfFinished() {
   const st = roundState();
-  if (!st || !st.winner || results.some((x) => x.key === round.id)) return;
-  const w = st.winner, l = other(w);
+  if (!st || st.winner === null || results.some((x) => x.key === round.id)) return;
+  const w = st.seats[st.winner], others = st.seats.filter((_, i) => i !== st.winner);
+  const data = { num: round.num, winner: { pid: w.pid, name: w.name }, score: scoreLine(st), others: others.map((p) => p.name).join(", ").slice(0, 200), ts: serverTimestamp() };
+  if (st.n === 2) data.loser = { pid: others[0].pid, name: others[0].name };
   // любой игрок может записать итог; правила базы пропустят только первую запись
-  set(R("results/" + round.id), { num: round.num, winner: round[w], loser: round[l], score: st.score[w] + ":" + st.score[l], ts: serverTimestamp() }).catch(() => {});
+  set(R("results/" + round.id), data).catch(() => {});
 }
 
 // ---------- бросок ----------
@@ -1622,10 +1781,10 @@ async function doRoll() {
   if (!room || animating || cooldown) return;
   if (roundShown() && !roundLive()) { openPicker(); return; }
   if (roundLive() && roundShown()) {
-    if (!myTurn()) { const st = roundState(); toast("Сейчас ход: " + round[st.nextSide].name); return; }
+    if (!myTurn()) { const st = roundState(); toast(mySeat() >= 0 ? "Сейчас ход: " + st.seats[st.nextSeat].name : "Вы зритель в этом раунде"); return; }
     const st = roundState();
     cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 400);
-    try { await set(push(R("round/rolls")), { pid, side: st.nextSide, value: randInt(20), ts: serverTimestamp() }); }
+    try { await set(push(R("round/rolls")), { pid, seat: st.nextSeat, value: randInt(20), ts: serverTimestamp() }); }
     catch { toast("Бросок не сохранился. Проверьте интернет."); }
     return;
   }
