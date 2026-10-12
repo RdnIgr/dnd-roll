@@ -152,6 +152,20 @@
     .die-btn.rolling svg, .die-btn.landed svg, .roll.new { animation: none; }
   }
 
+  /* лобби */
+  .tables { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+  .table-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+  .table-row:hover { border-color: var(--brass); }
+  .table-row.invited { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+  .table-row .code { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: .03em; overflow-wrap: anywhere; }
+  .table-row .count { color: var(--muted); font-size: 14px; font-weight: 400; font-family: var(--body); letter-spacing: 0; margin-left: 6px; }
+  .table-row .sitters { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; min-width: 0; }
+  .mini { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; min-width: 0; }
+  .mini .ava { width: 22px; height: 22px; font-size: 12px; }
+  .recent { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .recent .btn { font-family: var(--display); letter-spacing: .03em; }
+  .invite { border-color: var(--brass); }
+
   /* раунд */
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .duel { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 12px; }
@@ -208,31 +222,49 @@
 <body>
 <main class="wrap">
 
-  <!-- Вход -->
+  <!-- Лобби -->
   <section id="join" class="wrap" style="padding:0" hidden>
     <div>
       <h1>DnD Roll</h1>
       <p class="lead">Общий стол для бросков d20. Каждый бросает со своего телефона, а результаты сразу видят все игроки за столом.</p>
     </div>
+    <label for="nameInput" class="card">Ваше имя
+      <input id="nameInput" type="text" maxlength="24" placeholder="Например, Игорь" required>
+      <span id="joinErr" class="err" hidden></span>
+    </label>
+
+    <div id="inviteCard" class="card invite" hidden>
+      <div>Вас пригласили за стол <b id="inviteRoom"></b></div>
+      <button id="inviteJoin" class="btn primary" type="button">Сесть за этот стол</button>
+    </div>
+
+    <div>
+      <h2>СТОЛЫ СЕЙЧАС</h2>
+      <ol id="lobbyList" class="tables"></ol>
+      <p id="lobbyEmpty" class="empty">Загружаем столы…</p>
+    </div>
+
+    <div id="recentBlock" hidden>
+      <h2>ВАШИ НЕДАВНИЕ СТОЛЫ</h2>
+      <div id="recentList" class="recent"></div>
+    </div>
+
     <form id="joinForm" class="card" autocomplete="off" novalidate>
-      <p id="inviteNote" class="invite-note" hidden></p>
-      <label for="nameInput">Ваше имя
-        <input id="nameInput" type="text" maxlength="24" placeholder="Например, Игорь" required>
-      </label>
-      <label for="roomInput">Код стола <small>Одинаковый у всех игроков. Латиница, цифры и дефис.</small>
+      <div class="duel-title">Новый стол</div>
+      <label for="roomInput">Код стола <small>Латиница, цифры и дефис. Друзья увидят этот стол в списке и смогут сесть за него.</small>
         <div class="row">
           <input id="roomInput" class="grow" type="text" maxlength="24" placeholder="stol-1234" required>
-          <button id="newRoomBtn" class="btn small ghost" type="button">Новый</button>
+          <button id="newRoomBtn" class="btn small ghost" type="button">Другой код</button>
         </div>
       </label>
-      <p id="joinErr" class="err" hidden></p>
-      <button class="btn primary" type="submit">Сесть за стол</button>
+      <button class="btn primary" type="submit">Создать стол и сесть</button>
     </form>
   </section>
 
   <!-- Стол -->
   <section id="table" class="wrap" style="padding:0" hidden>
     <header class="topbar">
+      <button id="backBtn" class="btn small ghost" type="button" aria-label="К списку столов">← Столы</button>
       <div class="room-chip grow"><span>Стол</span><span id="roomName" style="all:unset"></span></div>
       <span id="conn" class="conn">нет связи</span>
       <button id="inviteBtn" class="btn small" type="button">Пригласить</button>
@@ -308,7 +340,6 @@
 
     <div class="feed-head">
       <h2>СВОБОДНЫЕ БРОСКИ</h2>
-      <button id="renameBtn" class="btn small ghost" type="button">Сменить имя</button>
     </div>
     <ol id="feed" class="feed"></ol>
     <p id="empty" class="empty">Здесь появятся броски вне раундов.</p>
@@ -445,42 +476,101 @@ function myTurn() {
   return round[full.nextSide].pid === pid && vis.nextSide === full.nextSide;
 }
 
-// ---------- вход ----------
-function showJoin() {
+// ---------- лобби: список столов ----------
+let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false;
+function recentRooms() { try { const a = JSON.parse(store.get("dndroll.recent") || "[]"); return Array.isArray(a) ? a.filter((x) => ROOM_RE.test(x)) : []; } catch { return []; } }
+function addRecent(r) { const a = [r, ...recentRooms().filter((x) => x !== r)].slice(0, 6); store.set("dndroll.recent", JSON.stringify(a)); }
+
+function showLobby() {
   $("table").hidden = true; $("join").hidden = false;
-  $("nameInput").value = myName;
-  $("roomInput").value = ROOM_RE.test(invitedRoom) ? invitedRoom : (store.get("dndroll.room") || newRoomCode());
-  if (ROOM_RE.test(invitedRoom)) { $("inviteNote").textContent = "Вас пригласили за стол «" + invitedRoom + "». Введите имя и садитесь."; $("inviteNote").hidden = false; }
-  (myName ? $("roomInput") : $("nameInput")).focus();
+  if (tg && tg.BackButton) { try { tg.BackButton.hide(); } catch {} }
+  if (!$("nameInput").value) $("nameInput").value = myName;
+  if (!ROOM_RE.test($("roomInput").value)) $("roomInput").value = newRoomCode();
+  const inv = ROOM_RE.test(invitedRoom);
+  $("inviteCard").hidden = !inv;
+  if (inv) $("inviteRoom").textContent = invitedRoom;
+  if (!lobbyUnsub) {
+    lobbyUnsub = onValue(ref(db, "lobby"), (snap) => { lobbyData = snap.val() || {}; lobbyLoaded = true; renderLobby(); },
+      () => { lobbyLoaded = true; $("lobbyEmpty").textContent = "Не удалось загрузить список столов. Проверьте интернет."; });
+  }
+  renderLobby();
+  if (!myName) $("nameInput").focus();
+}
+function liveTables() {
+  return Object.entries(lobbyData)
+    .filter(([code]) => ROOM_RE.test(code))
+    .map(([code, ps]) => ({ code, people: Object.entries(ps || {}).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" })) }))
+    .filter((t) => t.people.length)
+    .sort((a, b) => b.people.length - a.people.length || a.code.localeCompare(b.code));
+}
+function renderLobby() {
+  const list = liveTables();
+  const ol = $("lobbyList"); ol.replaceChildren();
+  for (const t of list) {
+    const li = el("li", "table-row" + (t.code === invitedRoom ? " invited" : ""));
+    const info = el("div"); info.style.minWidth = "0";
+    const code = el("div", "code", t.code); code.append(el("span", "count", "· " + t.people.length + " " + plural(t.people.length, "игрок", "игрока", "игроков")));
+    const sitters = el("div", "sitters");
+    t.people.slice(0, 8).forEach((p) => { const m = el("span", "mini"); m.append(ava(p.pid, p.name), el("span", "", p.name)); sitters.append(m); });
+    info.append(code, sitters);
+    const b = el("button", "btn small primary", "Сесть"); b.type = "button";
+    b.addEventListener("click", (e) => { e.stopPropagation(); joinRoom(t.code); });
+    li.addEventListener("click", () => joinRoom(t.code));
+    li.append(info, b); ol.append(li);
+  }
+  const empty = $("lobbyEmpty");
+  empty.hidden = list.length > 0;
+  if (lobbyLoaded) empty.textContent = "Сейчас никто не играет. Создайте стол ниже и позовите друзей.";
+  const live = new Set(list.map((t) => t.code));
+  const rec = recentRooms().filter((x) => !live.has(x));
+  $("recentBlock").hidden = rec.length === 0;
+  const rl = $("recentList"); rl.replaceChildren();
+  rec.forEach((code) => { const b = el("button", "btn small", code); b.type = "button"; b.addEventListener("click", () => joinRoom(code)); rl.append(b); });
+}
+function plural(n, one, few, many) { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many; }
+function joinRoom(code) {
+  const name = $("nameInput").value.trim().slice(0, 24);
+  const err = $("joinErr");
+  if (!name) { err.textContent = "Введите имя, чтобы остальные видели, кто бросает."; err.hidden = false; $("nameInput").focus(); return; }
+  if (!ROOM_RE.test(code)) { err.textContent = "Код стола: от 3 до 24 символов, только латинские буквы, цифры и дефис."; err.hidden = false; return; }
+  err.hidden = true;
+  myName = name; store.set("dndroll.name", name);
+  enterRoom(code);
 }
 $("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); });
-$("joinForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = $("nameInput").value.trim().slice(0, 24);
-  const r = $("roomInput").value.trim().toLowerCase();
-  const err = $("joinErr");
-  if (!name) { err.textContent = "Введите имя, чтобы остальные видели, кто бросает."; err.hidden = false; return; }
-  if (!ROOM_RE.test(r)) { err.textContent = "Код стола: от 3 до 24 символов, только латинские буквы, цифры и дефис."; err.hidden = false; return; }
-  err.hidden = true;
-  myName = name; store.set("dndroll.name", name); store.set("dndroll.room", r);
-  enterRoom(r);
-});
+$("joinForm").addEventListener("submit", (e) => { e.preventDefault(); joinRoom($("roomInput").value.trim().toLowerCase()); });
+$("inviteJoin").addEventListener("click", () => joinRoom(invitedRoom));
+function goLobby() {
+  leaveRoom(); room = null; invitedRoom = "";
+  const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
+  showLobby();
+}
+$("backBtn").addEventListener("click", goLobby);
+if (tg && tg.BackButton) { try { tg.BackButton.onClick(goLobby); } catch {} }
 
 // ---------- стол ----------
 function enterRoom(r) {
   leaveRoom();
   room = r;
+  addRecent(r);
+  if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
+  if (tg && tg.BackButton) { try { tg.BackButton.show(); } catch {} }
   const url = new URL(location.href); url.searchParams.set("room", r); history.replaceState(null, "", url);
   $("roomName").textContent = r;
   $("join").hidden = true; $("table").hidden = false;
   knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true;
   hiddenKeys.clear(); animQueue.length = 0; round = null; results = []; freeRolls = [];
 
-  const meRef = R(`players/${pid}`);
+  const meRef = R(`players/${pid}`), lobbyRef = ref(db, `lobby/${r}/${pid}`);
   unsubs.push(onValue(ref(db, ".info/connected"), (snap) => {
     const on = snap.val() === true;
     $("conn").textContent = on ? "онлайн" : "нет связи"; $("conn").classList.toggle("on", on);
-    if (on) onDisconnect(meRef).remove().then(() => set(meRef, { name: myName, seen: serverTimestamp() })).catch(() => {});
+    if (!on || room !== r) return;
+    // при обрыве связи сервер сам уберёт игрока со стола и из списка столов
+    onDisconnect(meRef).remove()
+      .then(() => onDisconnect(lobbyRef).remove())
+      .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp() }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
+      .catch(() => {});
   }));
   unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); }));
 
@@ -528,7 +618,11 @@ function enterRoom(r) {
 function leaveRoom() {
   unsubs.forEach((u) => { try { u(); } catch {} });
   unsubs = [];
-  if (room) remove(R(`players/${pid}`)).catch(() => {});
+  if (room) {
+    const meRef = R(`players/${pid}`), lobbyRef = ref(db, `lobby/${room}/${pid}`);
+    try { onDisconnect(meRef).cancel(); onDisconnect(lobbyRef).cancel(); } catch {}
+    remove(meRef).catch(() => {}); remove(lobbyRef).catch(() => {});
+  }
 }
 
 // ---------- отрисовка ----------
@@ -874,12 +968,11 @@ $("inviteBtn").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(link); toast("Ссылка скопирована"); }
   catch { toast(link, 6000); }
 });
-$("renameBtn").addEventListener("click", () => { leaveRoom(); room = null; showJoin(); });
-window.addEventListener("pagehide", () => { if (room) remove(R(`players/${pid}`)).catch(() => {}); });
+window.addEventListener("pagehide", () => { if (room) { remove(R(`players/${pid}`)).catch(() => {}); remove(ref(db, `lobby/${room}/${pid}`)).catch(() => {}); } });
 
 // ---------- старт ----------
 if (myName && ROOM_RE.test(invitedRoom)) enterRoom(invitedRoom);
-else showJoin();
+else showLobby();
 </script>
 </body>
 </html>
