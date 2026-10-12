@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DnD Roll</title>
+<meta name="description" content="Общий стол для бросков d20: все игроки видят результаты друг друга в реальном времени.">
+<meta name="theme-color" content="#0f2a24">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  /* Игровой стол: зелёное сукно, латунные акценты, кость d20 в центре. Одна тёмная тема намеренно. */
+  :root {
+    --felt: #0f2a24;
+    --felt-2: #143630;
+    --felt-3: #1c463d;
+    --line: #2a5a4f;
+    --ivory: #f1ead8;
+    --muted: #a3b5ab;
+    --brass: #d6a446;
+    --brass-ink: #1a1408;
+    --blood: #e0574a;
+    --ok: #7fd1a3;
+    --display: "Alegreya SC", "Palatino Linotype", Georgia, serif;
+    --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    --r: 14px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background:
+      radial-gradient(120% 70% at 50% 0%, #17463b 0%, var(--felt) 60%) fixed,
+      var(--felt);
+    color: var(--ivory);
+    font: 400 17px/1.45 var(--body);
+    padding: env(safe-area-inset-top, 0px) 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    -webkit-tap-highlight-color: transparent;
+  }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 520px; margin: 0 auto; display: grid; gap: 18px; padding-block: 16px; }
+  h1, h2 { font-family: var(--display); font-weight: 800; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+  h1 { font-size: 34px; line-height: 1.1; }
+  h2 { font-size: 15px; letter-spacing: .12em; color: var(--muted); }
+  .lead { color: var(--muted); margin: 6px 0 0; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* поля и кнопки */
+  label { display: grid; gap: 6px; font-weight: 500; }
+  label small { color: var(--muted); font-weight: 400; }
+  input[type=text] {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    background: var(--felt-2); border: 1px solid var(--line); color: var(--ivory);
+  }
+  input[type=text]::placeholder { color: #7f978b; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--felt-3); font-weight: 700;
+  }
+  .btn.primary { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+  .btn.ghost { background: transparent; }
+  .btn.small { padding: 7px 12px; font-size: 15px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1 1 auto; min-width: 0; }
+  .row input.grow { flex: 1 1 0; width: 1%; }
+  .row > .btn { flex: none; }
+
+  /* экран входа */
+  .card { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
+  .invite-note { background: rgba(214,164,70,.12); border: 1px solid rgba(214,164,70,.4); color: var(--ivory); border-radius: 10px; padding: 10px 12px; }
+
+  /* шапка стола */
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .room-chip { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; }
+  .room-chip span { color: var(--muted); font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; margin-right: 6px; }
+  .conn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+  .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--blood); }
+  .conn.on::before { background: var(--ok); }
+
+  .players { display: flex; gap: 8px; flex-wrap: wrap; }
+  .player { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 999px; background: var(--felt-2); border: 1px solid var(--line); font-size: 15px; max-width: 100%; }
+  .player b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .player em { font-style: normal; color: var(--muted); font-size: 13px; }
+  .player .last { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
+  .ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--brass-ink); flex: none; }
+
+  /* кость */
+  .stage { display: grid; justify-items: center; gap: 6px; padding: 8px 0 0; }
+  .die-btn { background: none; border: 0; padding: 0; width: min(64vw, 250px); aspect-ratio: 1; max-width: 100%; position: relative; touch-action: manipulation; }
+  .die-btn svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .die-face { fill: var(--felt-3); stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
+  .die-edge { stroke: var(--brass); stroke-width: 2; opacity: .55; fill: none; }
+  .die-tri { fill: #22574b; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
+  .die-num { font-family: var(--display); font-weight: 800; font-size: 50px; fill: var(--ivory); text-anchor: middle; dominant-baseline: central; font-variant-numeric: lining-nums; }
+  .die-btn.win .die-tri { fill: var(--brass); }
+  .die-btn.win .die-num { fill: var(--brass-ink); }
+  .die-btn.win svg { filter: drop-shadow(0 0 18px rgba(214,164,70,.75)); }
+  .die-btn.fail .die-tri { fill: var(--blood); }
+  .die-btn.fail svg { filter: drop-shadow(0 0 16px rgba(224,87,74,.6)); }
+  .die-btn.rolling svg { animation: tumble .75s cubic-bezier(.3,.7,.4,1); }
+  .die-btn.landed svg { animation: land .35s ease-out; }
+  @keyframes tumble { 0%{transform:rotate(0) scale(1)} 30%{transform:rotate(200deg) scale(.86)} 70%{transform:rotate(330deg) scale(1.06)} 100%{transform:rotate(360deg) scale(1)} }
+  @keyframes land { 0%{transform:scale(1.12)} 100%{transform:scale(1)} }
+  .verdict { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .04em; min-height: 1.5em; text-align: center; }
+  .verdict.win { color: var(--brass); }
+  .verdict.fail { color: var(--blood); }
+  .who { color: var(--muted); text-align: center; min-height: 1.4em; overflow-wrap: anywhere; }
+  .who b { color: var(--ivory); font-weight: 700; }
+
+  /* управление */
+  .controls { display: grid; gap: 12px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--felt-2); border: 1px solid var(--line); border-radius: 10px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; padding: 9px 4px; border-radius: 7px; font-weight: 500; font-size: 15px; color: var(--muted); }
+  .seg button[aria-pressed=true] { background: var(--felt-3); color: var(--ivory); box-shadow: inset 0 0 0 1px var(--brass); }
+  .roll-btn { width: 100%; padding: 15px; font-size: 19px; font-family: var(--display); letter-spacing: .05em; }
+
+  /* история */
+  .feed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .roll { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .roll.new { animation: slidein .45s ease-out; }
+  @keyframes slidein { from { transform: translateY(-8px); opacity: .2; } to { transform: none; opacity: 1; } }
+  .roll .meta { min-width: 0; }
+  .roll .name { font-weight: 700; overflow-wrap: anywhere; }
+  .roll .note { color: var(--ivory); opacity: .85; overflow-wrap: anywhere; }
+  .roll .sub { color: var(--muted); font-size: 14px; }
+  .val { font-family: var(--display); font-weight: 800; font-size: 30px; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 10px; background: var(--felt-3); font-variant-numeric: lining-nums tabular-nums; }
+  .roll.win { border-color: var(--brass); }
+  .roll.win .val { background: var(--brass); color: var(--brass-ink); }
+  .roll.fail { border-color: var(--blood); }
+  .roll.fail .val { background: var(--blood); color: #1b0805; }
+  .empty { color: var(--muted); text-align: center; padding: 18px 10px; border: 1px dashed var(--line); border-radius: 12px; }
+  .danger-zone { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .danger-zone .q { color: var(--muted); }
+  .btn.danger { border-color: var(--blood); color: var(--blood); background: transparent; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 10px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: calc(100% - 32px); }
+  .err { color: var(--blood); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .die-btn.rolling svg, .die-btn.landed svg, .roll.new { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- Вход -->
+  <section id="join" class="wrap" style="padding:0" hidden>
+    <div>
+      <h1>DnD Roll</h1>
+      <p class="lead">Общий стол для бросков d20. Каждый бросает со своего телефона, а результаты сразу видят все игроки за столом.</p>
+    </div>
+    <form id="joinForm" class="card" autocomplete="off" novalidate>
+      <p id="inviteNote" class="invite-note" hidden></p>
+      <label for="nameInput">Ваше имя
+        <input id="nameInput" type="text" maxlength="24" placeholder="Например, Игорь" required>
+      </label>
+      <label for="roomInput">Код стола <small>Одинаковый у всех игроков. Латиница, цифры и дефис.</small>
+        <div class="row">
+          <input id="roomInput" class="grow" type="text" maxlength="24" placeholder="stol-1234" required>
+          <button id="newRoomBtn" class="btn small ghost" type="button">Новый</button>
+        </div>
+      </label>
+      <p id="joinErr" class="err" hidden></p>
+      <button class="btn primary" type="submit">Сесть за стол</button>
+    </form>
+  </section>
+
+  <!-- Стол -->
+  <section id="table" class="wrap" style="padding:0" hidden>
+    <header class="topbar">
+      <div class="room-chip grow"><span>Стол</span><span id="roomName" style="all:unset"></span></div>
+      <span id="conn" class="conn">нет связи</span>
+      <button id="inviteBtn" class="btn small" type="button">Пригласить</button>
+    </header>
+
+    <div>
+      <h2 id="playersTitle">ЗА СТОЛОМ</h2>
+      <div id="players" class="players" style="margin-top:8px"></div>
+    </div>
+
+    <div class="stage">
+      <button id="die" class="die-btn" type="button" aria-label="Бросить d20">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <polygon class="die-face" points="100,8 179.7,54 179.7,146 100,192 20.3,146 20.3,54"/>
+          <path class="die-edge" d="M100,52 L20.3,54 M100,52 L100,8 M100,52 L179.7,54 M146,132 L179.7,54 M146,132 L179.7,146 M146,132 L100,192 M54,132 L100,192 M54,132 L20.3,146 M54,132 L20.3,54"/>
+          <polygon class="die-tri" points="100,52 146,132 54,132"/>
+          <text id="dieNum" class="die-num" x="100" y="106">20</text>
+        </svg>
+      </button>
+      <div id="verdict" class="verdict" aria-live="polite"></div>
+      <div id="who" class="who">Нажмите на кость, чтобы бросить</div>
+    </div>
+
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Режим броска">
+        <button type="button" data-mode="" aria-pressed="true">Обычный</button>
+        <button type="button" data-mode="adv" aria-pressed="false">Преимущество</button>
+        <button type="button" data-mode="dis" aria-pressed="false">Помеха</button>
+      </div>
+      <input id="noteInput" type="text" maxlength="80" placeholder="Что решаем? Необязательно" aria-label="Что решает бросок">
+      <button id="rollBtn" class="btn primary roll-btn" type="button">Бросить d20</button>
+    </div>
+
+    <div class="feed-head">
+      <h2>ИСТОРИЯ БРОСКОВ</h2>
+      <button id="renameBtn" class="btn small ghost" type="button">Сменить имя</button>
+    </div>
+    <ol id="feed" class="feed"></ol>
+    <p id="empty" class="empty">Пока никто не бросал. Первый бросок появится здесь у всех игроков.</p>
+
+    <div class="danger-zone" id="clearZone">
+      <button id="clearBtn" class="btn small danger" type="button">Очистить историю</button>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, push, set, remove, onValue, onDisconnect,
+  query, orderByChild, limitToLast, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDEINAEINbui_48aJN_UHpR02mTCDHh5nE",
+  authDomain: "dnd-roll.firebaseapp.com",
+  databaseURL: "https://dnd-roll-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "dnd-roll",
+  storageBucket: "dnd-roll.firebasestorage.app",
+  messagingSenderId: "33698482253",
+  appId: "1:33698482253:web:7cb89e7400564a120c7404"
+};
+const db = getDatabase(initializeApp(firebaseConfig));
+
+const $ = (id) => document.getElementById(id);
+const ROOM_RE = /^[a-z0-9-]{3,24}$/;
+const PALETTE = ["#d6a446", "#7fd1a3", "#8fb8e8", "#e79b7a", "#c9a2e6", "#e6d27a", "#87d6d0", "#e88fb0"];
+const TUMBLE_MS = 900;
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+
+function randInt(n) { // честный бросок без перекоса
+  const buf = new Uint32Array(1), limit = Math.floor(0x100000000 / n) * n;
+  let x; do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+  return 1 + (x % n);
+}
+function newRoomCode() {
+  const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = "";
+  for (let i = 0; i < 4; i++) s += a[randInt(a.length) - 1];
+  return "stol-" + s;
+}
+function colorFor(id) {
+  let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+function initials(name) { return (name || "?").trim().slice(0, 1).toUpperCase(); }
+function fmtTime(ts) {
+  if (typeof ts !== "number") return "";
+  return new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+function toast(msg, ms = 2200) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms);
+}
+function cls(value) { return value === 20 ? "win" : value === 1 ? "fail" : ""; }
+function verdictText(value) { return value === 20 ? "Критический успех" : value === 1 ? "Критический провал" : ""; }
+function modeLabel(r) { return r.mode === "adv" ? "преимущество" : r.mode === "dis" ? "помеха" : ""; }
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- состояние ----------
+let pid = store.get("dndroll.pid");
+if (!pid || pid.length > 40) { pid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + randInt(1e6); store.set("dndroll.pid", pid); }
+let myName = store.get("dndroll.name") || "";
+let room = null, mode = "";
+let unsubs = [];
+let knownKeys = new Set(), firstFeed = true;
+let players = {}, rolls = [];
+// ключи бросков, которые ещё катятся: их не показываем в истории, чтобы не раскрыть результат раньше времени
+const hiddenKeys = new Set();
+let animating = false, queued = null, cooldown = false;
+
+const params = new URLSearchParams(location.search);
+const invitedRoom = (params.get("room") || "").toLowerCase();
+
+// ---------- вход ----------
+function showJoin() {
+  $("table").hidden = true; $("join").hidden = false;
+  $("nameInput").value = myName;
+  const r = ROOM_RE.test(invitedRoom) ? invitedRoom : (store.get("dndroll.room") || newRoomCode());
+  $("roomInput").value = r;
+  if (ROOM_RE.test(invitedRoom)) {
+    $("inviteNote").textContent = "Вас пригласили за стол «" + invitedRoom + "». Введите имя и садитесь.";
+    $("inviteNote").hidden = false;
+  }
+  (myName ? $("roomInput") : $("nameInput")).focus();
+}
+$("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); });
+$("joinForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("nameInput").value.trim().slice(0, 24);
+  const r = $("roomInput").value.trim().toLowerCase();
+  const err = $("joinErr");
+  if (!name) { err.textContent = "Введите имя, чтобы остальные видели, кто бросает."; err.hidden = false; return; }
+  if (!ROOM_RE.test(r)) { err.textContent = "Код стола: от 3 до 24 символов, только латинские буквы, цифры и дефис."; err.hidden = false; return; }
+  err.hidden = true;
+  myName = name; store.set("dndroll.name", name); store.set("dndroll.room", r);
+  enterRoom(r);
+});
+
+// ---------- стол ----------
+function enterRoom(r) {
+  leaveRoom();
+  room = r;
+  const url = new URL(location.href); url.searchParams.set("room", r);
+  history.replaceState(null, "", url);
+  $("roomName").textContent = r;
+  $("join").hidden = true; $("table").hidden = false;
+  knownKeys = new Set(); firstFeed = true; hiddenKeys.clear(); queued = null;
+
+  const meRef = ref(db, `rooms/${r}/players/${pid}`);
+  unsubs.push(onValue(ref(db, ".info/connected"), (snap) => {
+    const on = snap.val() === true;
+    $("conn").textContent = on ? "онлайн" : "нет связи";
+    $("conn").classList.toggle("on", on);
+    if (on) onDisconnect(meRef).remove().then(() => set(meRef, { name: myName, seen: serverTimestamp() })).catch(() => {});
+  }));
+  unsubs.push(onValue(ref(db, `rooms/${r}/players`), (snap) => { players = snap.val() || {}; renderPlayers(); }));
+
+  const q = query(ref(db, `rooms/${r}/rolls`), orderByChild("ts"), limitToLast(50));
+  unsubs.push(onValue(q, (snap) => {
+    const list = [];
+    snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
+    list.reverse(); // новые сверху
+    const fresh = firstFeed ? [] : list.filter((x) => !knownKeys.has(x.key));
+    list.forEach((x) => knownKeys.add(x.key));
+    rolls = list;
+    if (firstFeed) {
+      firstFeed = false;
+      if (list[0]) showResult(list[0], false); else resetDie();
+    } else if (fresh.length) {
+      // самый свежий бросок катится на кости у всех; остальные новые сразу попадают в историю
+      const newest = fresh[0];
+      hiddenKeys.add(newest.key);
+      startTumble(newest);
+    } else if (!list.length) {
+      resetDie();
+    }
+    renderFeed();
+    renderPlayers();
+  }, () => toast("Нет доступа к столу. Проверьте код.")));
+}
+function leaveRoom() {
+  unsubs.forEach((u) => { try { u(); } catch {} });
+  unsubs = [];
+  if (room) remove(ref(db, `rooms/${room}/players/${pid}`)).catch(() => {});
+}
+
+const visibleRolls = () => rolls.filter((x) => !hiddenKeys.has(x.key));
+
+function renderPlayers() {
+  const box = $("players"); box.replaceChildren();
+  const ids = Object.keys(players);
+  if (!ids.includes(pid)) ids.push(pid);
+  ids.sort((a, b) => (a === pid ? -1 : b === pid ? 1 : 0));
+  $("playersTitle").textContent = "ЗА СТОЛОМ · " + ids.length;
+  const vis = visibleRolls();
+  for (const id of ids) {
+    const name = id === pid ? myName : (players[id] && players[id].name) || "Игрок";
+    const chip = document.createElement("span"); chip.className = "player";
+    const ava = document.createElement("span"); ava.className = "ava"; ava.style.background = colorFor(id); ava.textContent = initials(name);
+    const b = document.createElement("b"); b.textContent = name;
+    chip.append(ava, b);
+    if (id === pid) { const em = document.createElement("em"); em.textContent = "вы"; chip.append(em); }
+    const lr = vis.find((x) => x.pid === id);
+    if (lr) { const l = document.createElement("span"); l.className = "last"; l.textContent = lr.value; l.title = "Последний бросок"; chip.append(l); }
+    box.append(chip);
+  }
+}
+
+function renderFeed(newKey) {
+  const ul = $("feed"); ul.replaceChildren();
+  const vis = visibleRolls();
+  $("empty").hidden = vis.length > 0;
+  $("clearZone").hidden = vis.length === 0;
+  for (const r of vis) {
+    const li = document.createElement("li");
+    li.className = "roll " + cls(r.value) + (r.key === newKey ? " new" : "");
+    const ava = document.createElement("span"); ava.className = "ava"; ava.style.background = colorFor(r.pid); ava.textContent = initials(r.name);
+    const meta = document.createElement("div"); meta.className = "meta";
+    const nm = document.createElement("div"); nm.className = "name"; nm.textContent = r.name + (r.pid === pid ? " (вы)" : "");
+    meta.append(nm);
+    if (r.note) { const n = document.createElement("div"); n.className = "note"; n.textContent = r.note; meta.append(n); }
+    const sub = document.createElement("div"); sub.className = "sub";
+    const parts = [fmtTime(r.ts)];
+    if (r.mode) parts.push(modeLabel(r) + ", второй кубик " + r.alt);
+    const vt = verdictText(r.value); if (vt) parts.push(vt.toLowerCase());
+    sub.textContent = parts.filter(Boolean).join(" · ");
+    meta.append(sub);
+    const val = document.createElement("span"); val.className = "val"; val.textContent = r.value;
+    li.append(ava, meta, val);
+    ul.append(li);
+  }
+}
+
+// ---------- кость ----------
+const die = $("die");
+function paintDie(value) {
+  $("dieNum").textContent = value;
+  die.classList.remove("win", "fail");
+  const c = cls(value); if (c) die.classList.add(c);
+  const v = $("verdict"); v.className = "verdict " + c; v.textContent = verdictText(value);
+}
+function resetDie() {
+  $("dieNum").textContent = "20"; die.classList.remove("win", "fail");
+  $("verdict").textContent = ""; $("who").textContent = "Нажмите на кость, чтобы бросить";
+}
+function setWho(r, rollingNow) {
+  const who = $("who"); who.replaceChildren();
+  const b = document.createElement("b"); b.textContent = r.pid === pid ? "Вы" : r.name;
+  who.append(b);
+  if (rollingNow) {
+    let t = r.pid === pid ? " бросаете" : " бросает";
+    if (r.mode) t += " с " + (r.mode === "adv" ? "преимуществом" : "помехой");
+    t += "…";
+    if (r.note) t += " " + r.note;
+    who.append(document.createTextNode(t));
+    return;
+  }
+  let tail = (r.pid === pid ? " выбросили " : " выбросил(а) ") + r.value;
+  if (r.mode) tail += " (" + modeLabel(r) + ", второй кубик " + r.alt + ")";
+  if (r.note) tail += " · " + r.note;
+  who.append(document.createTextNode(tail));
+}
+function showResult(r, animate) {
+  paintDie(r.value);
+  setWho(r, false);
+  if (animate) { die.classList.remove("landed"); void die.offsetWidth; die.classList.add("landed"); }
+}
+
+// Анимация броска. Запускается у всех игроков в момент, когда бросок пришёл из базы.
+function startTumble(r) {
+  if (animating) { if (queued && queued.key !== r.key) hiddenKeys.delete(queued.key); queued = r; return; }
+  animating = true;
+  setWho(r, true);
+  die.classList.remove("win", "fail", "landed");
+  $("verdict").className = "verdict"; $("verdict").textContent = "";
+  const finish = () => {
+    hiddenKeys.delete(r.key);
+    showResult(r, true);
+    renderFeed(r.key);
+    renderPlayers();
+    if (r.pid === pid && (r.value === 20 || r.value === 1)) { try { navigator.vibrate && navigator.vibrate(r.value === 20 ? [60, 40, 120] : 200); } catch {} }
+    animating = false;
+    if (queued) { const next = queued; queued = null; if (hiddenKeys.has(next.key)) startTumble(next); }
+  };
+  if (reduceMotion()) { setTimeout(finish, 250); return; }
+  die.classList.remove("rolling"); void die.offsetWidth; die.classList.add("rolling");
+  const t0 = performance.now();
+  (function tick() {
+    const left = TUMBLE_MS - (performance.now() - t0);
+    if (left <= 0) { die.classList.remove("rolling"); finish(); return; }
+    $("dieNum").textContent = randInt(20);
+    setTimeout(tick, left < 250 ? 110 : 55); // к концу замедляется
+  })();
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+}
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+async function doRoll() {
+  if (!room || animating || cooldown) return;
+  cooldown = true; $("rollBtn").disabled = true;
+  setTimeout(() => { cooldown = false; $("rollBtn").disabled = false; }, TUMBLE_MS + 200);
+  const a = randInt(20), b = randInt(20);
+  let value = a, alt = null;
+  if (mode === "adv") { value = Math.max(a, b); alt = Math.min(a, b); }
+  if (mode === "dis") { value = Math.min(a, b); alt = Math.max(a, b); }
+  const note = $("noteInput").value.trim().slice(0, 80);
+  const data = { pid, name: myName, value, ts: serverTimestamp() };
+  if (mode) { data.mode = mode; data.alt = alt; }
+  if (note) data.note = note;
+  try {
+    // запись сразу уходит всем игрокам; анимацию запускает подписка на базу, у вас и у друзей одинаково
+    await set(push(ref(db, `rooms/${room}/rolls`)), data);
+    $("noteInput").value = "";
+  } catch (e) {
+    toast("Бросок не сохранился. Проверьте интернет.");
+  }
+}
+die.addEventListener("click", doRoll);
+$("rollBtn").addEventListener("click", doRoll);
+
+// ---------- приглашение, имя, очистка ----------
+$("inviteBtn").addEventListener("click", async () => {
+  const url = new URL(location.origin + location.pathname); url.searchParams.set("room", room);
+  const link = url.toString();
+  if (navigator.share) {
+    try { await navigator.share({ title: "DnD Roll", text: "Садись за стол " + room, url: link }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(link); toast("Ссылка скопирована"); }
+  catch { toast(link, 6000); }
+});
+$("renameBtn").addEventListener("click", () => { leaveRoom(); room = null; showJoin(); });
+
+function makeClearBtn() {
+  const b = document.createElement("button");
+  b.id = "clearBtn"; b.className = "btn small danger"; b.type = "button"; b.textContent = "Очистить историю";
+  b.addEventListener("click", askClear);
+  return b;
+}
+function askClear() {
+  const zone = $("clearZone"); zone.replaceChildren();
+  const q = document.createElement("span"); q.className = "q"; q.textContent = "Удалить историю у всех?";
+  const yes = document.createElement("button"); yes.className = "btn small danger"; yes.type = "button"; yes.textContent = "Да, очистить";
+  const no = document.createElement("button"); no.className = "btn small ghost"; no.type = "button"; no.textContent = "Отмена";
+  yes.addEventListener("click", async () => {
+    try { await remove(ref(db, `rooms/${room}/rolls`)); toast("История очищена"); }
+    catch { toast("Не получилось очистить историю"); }
+    zone.replaceChildren(makeClearBtn());
+  });
+  no.addEventListener("click", () => zone.replaceChildren(makeClearBtn()));
+  zone.append(q, yes, no);
+}
+$("clearBtn").addEventListener("click", askClear);
+
+window.addEventListener("pagehide", () => { if (room) remove(ref(db, `rooms/${room}/players/${pid}`)).catch(() => {}); });
+
+// ---------- старт ----------
+if (myName && ROOM_RE.test(invitedRoom)) enterRoom(invitedRoom);
+else showJoin();
+</script>
+
+</body>
+</html>
