@@ -240,6 +240,11 @@
   .player em { font-style: normal; color: var(--muted); font-size: 12px; }
   .player .last { font-family: var(--display); color: var(--brass); }
   .player.watching { opacity: .55; }
+  .player.me { cursor: pointer; }
+  .player.me:hover { border-color: rgba(236, 208, 143, .6); }
+  .chip-gear { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; margin-left: -2px; }
+  .profile-head { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+  .profile-head .ava { width: 34px; height: 34px; font-size: 16px; }
   .player.turn { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(207, 167, 90, .5), 0 0 14px rgba(207, 167, 90, .35); }
   /* игрок садится за стол: фишка раздвигает соседей, падает на место и вспыхивает золотом */
   .player.join { animation: seat .75s var(--ease) both, seatglow 1.6s ease-out .2s both; }
@@ -368,19 +373,19 @@
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .dz-cap { margin-top: 2px; text-align: center; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--ivory); text-shadow: 0 1px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .3s, opacity .35s; }
   .dz[data-pos^=back] .dz-cap { font-size: 28px; color: var(--muted); }
-  .arena.swap .dz { transition-duration: .38s, .3s, .3s; }
-  .arena.swap .dz.lost .die-body { animation: shove .38s ease-out; }
+  .arena.swap .dz { transition-duration: .3s, .25s, .25s; }
+  .arena.swap .dz.lost .die-body { animation: shove .3s ease-out; }
   @keyframes shove { 30% { transform: translateX(var(--shove, 10%)) rotate(14deg); } }
   .dz[data-side=a] { --shove: -12%; }
   .dz[data-side=b] { --shove: 12%; }
   .dz.won canvas { filter: drop-shadow(0 0 18px rgba(236, 208, 143, .7)); }
-  .dz.won .die-body { animation: winflash .7s var(--ease); }
+  .dz.won .die-body { animation: winflash .5s var(--ease); }
   @keyframes winflash { 35% { transform: scale(1.14); filter: brightness(1.45); } }
   .dz.lost { filter: brightness(.6) saturate(.55); }
   .dz.tie .die-body { animation: tieshake .5s ease-in-out; }
   @keyframes tieshake { 20%, 60% { transform: rotate(-6deg); } 40%, 80% { transform: rotate(6deg); } }
   .plus { position: absolute; top: 2%; right: 0; font-family: var(--display); font-size: 30px; color: var(--gold-hi); opacity: 0; text-shadow: 0 2px 10px #000; pointer-events: none; }
-  .dz.won .plus { animation: plusup 1.2s ease-out forwards; }
+  .dz.won .plus { animation: plusup .9s ease-out forwards; }
   @keyframes plusup { 0% { opacity: 0; transform: translateY(10px) scale(.7); } 25% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-20px); } }
 
   .verdict { flex: none; min-height: 1.45em; text-align: center; font-family: var(--display); font-size: 21px; letter-spacing: .05em; }
@@ -624,6 +629,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div id="menu" class="menu gilded" role="dialog" aria-label="Меню" hidden>
   <div id="menuList">
     <button class="menu-item" type="button" data-act="create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18M5 9.5v9M19 9.5v9M8 9.5V6.5a4 4 0 0 1 8 0v3"/><path d="M12 13v5M9.5 15.5h5"/></svg><span>Создать стол<small>Новый стол со случайным кодом</small></span></button>
+    <button class="menu-item" type="button" data-act="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.9v9.2L12 21.5l-8.5-4.9V7.4z"/><path d="M12 7.5l4.2 7.3H7.8z"/></svg><span>Профиль<small>Цвет вашего кубика</small></span></button>
     <button class="menu-item" type="button" data-act="code"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3.5M21 12v2.5"/></svg><span>Войти по коду<small>Если друг прислал код стола</small></span></button>
   </div>
   <form id="joinForm" class="menu-form" autocomplete="off" novalidate hidden>
@@ -661,6 +667,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <button id="pickStart" class="btn primary" type="button">Начать раунд</button>
   </div>
 </div>
+<div id="profile" class="sheet gilded" role="dialog" aria-label="Профиль" hidden>
+  <div class="grabber"></div>
+  <div class="sheet-head"><span class="sheet-title">Профиль</span><button class="icon-btn bare" type="button" data-close="profile" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="profile-head"><span id="profileAva"></span><b id="profileName"></b></div>
+    <div>
+      <div class="modal-label">Цвет кубика</div>
+      <div id="profileSwatches" class="swatches"></div>
+    </div>
+    <p id="profileNote" class="hint-text"></p>
+  </div>
+</div>
 <div id="history" class="sheet gilded" role="dialog" aria-label="История" hidden>
   <div class="grabber"></div>
   <div class="sheet-head"><span class="sheet-title">История</span><button class="icon-btn bare" type="button" data-close="history" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -696,13 +714,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <svg class="modal-crest" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 10l20 20M10 10h6M10 10v6M38 10L18 30M38 10h-6M38 10v6"/><path d="M15 33l-5 5M33 33l5 5M13 27l8 8M35 27l-8 8"/></svg>
   <h3 id="readyTitle" class="modal-title">Раунд</h3>
   <p id="readySub" class="modal-sub"></p>
-  <div id="readyList" class="ready-list"></div>
-  <div id="readyPick">
-    <div class="modal-label">Цвет вашего кубика</div>
-    <div id="swatches" class="swatches"></div>
-  </div>
-  <button id="readyYes" class="btn primary big-btn" type="button">Подтвердить</button>
-  <button id="readyNo" class="link-btn" type="button">Отклонить</button>
+  <button id="readyYes" class="btn primary big-btn" type="button">Готов</button>
+  <button id="readyNo" class="link-btn" type="button">Отмена</button>
   <button id="readyHide" class="link-btn" type="button" hidden>Скрыть окно</button>
 </div>
 <div id="banner" class="banner" role="status" hidden></div>
@@ -732,7 +745,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
 const PALETTE = ["#8c3b2f", "#2f6b5a", "#3e528c", "#6b4a9c", "#8a6a2c", "#7a4a2e", "#4f6b2a", "#8c3f62"];
-const TUMBLE_MS = 2500;
+const TUMBLE_MS = 4000;
 const WIN_POINTS = 3;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -806,7 +819,18 @@ const DIE_COLORS = [
 ];
 const DIE_HEX = DIE_COLORS.map((c) => c.hex);
 function defaultColor(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return DIE_HEX[h % DIE_HEX.length]; }
+// цвет выдаётся случайно при входе за стол (свободный от других игроков); выбранный в профиле — сохраняется
+let colorPicked = store.get("dndroll.colorPicked") === "1";
 let myColor = DIE_HEX.includes(store.get("dndroll.color")) ? store.get("dndroll.color") : defaultColor(pid);
+function takenColors() { return new Map(Object.entries(players).filter(([k, p]) => k !== pid && p && DIE_HEX.includes(p.color)).map(([k, p]) => [p.color, p.name || "Игрок"])); }
+function assignColor() {
+  const used = takenColors();
+  if (!(colorPicked && !used.has(myColor))) {
+    const free = DIE_HEX.filter((c) => !used.has(c)), pool = free.length ? free : DIE_HEX;
+    myColor = pool[randInt(pool.length) - 1];
+  }
+  if (room) set(R("players/" + pid), { name: myName, seen: serverTimestamp(), color: myColor }).catch(() => {});
+}
 function colorOfPid(id) { if (id === pid) return myColor; const p = players[id]; return p && DIE_HEX.includes(p.color) ? p.color : defaultColor(id); }
 function rollColor(r) {
   if (r.seat != null) { const info = readyInfo(round); if (info && info.colors[r.seat]) return info.colors[r.seat]; }
@@ -1009,7 +1033,7 @@ function showForm(kind) {
 }
 $("menuBtn").addEventListener("click", () => ($("menu").hidden || $("menu").classList.contains("closing") ? openMenu() : closeMenu()));
 $("scrim").addEventListener("click", () => closeMenu());
-document.querySelectorAll("#menuList .menu-item").forEach((b) => b.addEventListener("click", () => showForm(b.dataset.act)));
+document.querySelectorAll("#menuList .menu-item").forEach((b) => b.addEventListener("click", () => { if (b.dataset.act === "profile") { closeMenu(); openProfile(); } else showForm(b.dataset.act); }));
 $("formBack").addEventListener("click", () => { showMenuList(false); const f = $("menu").querySelector(".menu-item"); if (f) f.focus(); });
 $("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); animateIn($("newRoomBtn"), "spin"); });
 $("roomInput").addEventListener("input", () => { $("formErr").hidden = true; });
@@ -1030,7 +1054,7 @@ function closeSheet(id) {
 }
 $("sheetScrim").addEventListener("click", () => closeSheet($("sheetScrim").dataset.for));
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeSheet(b.dataset.close)));
-document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; closeMenu(); ["picker", "history", "closeSheet"].forEach(closeSheet); });
+document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; closeMenu(); ["picker", "history", "closeSheet", "profile"].forEach(closeSheet); });
 
 // ---------- стол: вход и выход ----------
 function enterRoom(r) {
@@ -1065,6 +1089,7 @@ function enterRoom(r) {
     if (firstPlayers) {
       firstPlayers = false;
       if (Object.keys(players).filter((k) => k !== pid).length >= MAX_SEATS) { goLobby(); toast("За столом " + r + " уже " + MAX_SEATS + " игроков — мест нет", 3200); return; }
+      assignColor();
     }
     renderAll(); playersReady = true;
   }));
@@ -1144,7 +1169,7 @@ function leaveRoom() {
   }
 }
 function goLobby() {
-  ["picker", "history", "closeSheet"].forEach(closeSheet); closeReady();
+  ["picker", "history", "closeSheet", "profile"].forEach(closeSheet); closeReady();
   transition(() => {
     leaveRoom(); room = null; invitedRoom = "";
     const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
@@ -1279,33 +1304,41 @@ const D20 = (() => {
     const sx = dir * (.42 + .2 * rnd()) * Math.max(arenaW, dieW * 1.6);
     const sy = (.42 + .25 * rnd()) * Math.max(arenaH, dieW * 1.4);
     const curve = (rnd() - .5) * .35 * dieW;
-    const US = .86, N = 220;
-    const ease = (u) => { const t = Math.min(1, u / .96); return 1 - Math.pow(1 - t, 2.6); };
-    const pos = (u) => { const e = ease(u); return [sx * (1 - e) + curve * Math.sin(Math.PI * e), sy * (1 - e)]; };
-    const B = [0, .15, .28, .38, .46, .52];
-    const PEAK = [1.3, .55, .26, .11, .04];
+    // бросок и отскоки — первая треть; дальше кость быстро крутится почти на месте, слегка «гуляя» по столу
+    const US = .9, N = 380, ARRIVE = .34;
+    const ease = (u) => { const t = Math.min(1, u / ARRIVE); return 1 - Math.pow(1 - t, 2.2); };
+    const wob = .1 * dieW, ph = rnd() * 6.283, turns = 1.4 + rnd() * .8, wdir = rnd() < .5 ? -1 : 1;
+    const pos = (u) => {
+      const e = ease(u);
+      let x = sx * (1 - e) + curve * Math.sin(Math.PI * e), y = sy * (1 - e);
+      if (u > ARRIVE * .7) {
+        const k = Math.min(1, (u - ARRIVE * .7) / .12) * Math.max(0, 1 - (u - ARRIVE) / (US - ARRIVE));
+        const a = ph + wdir * turns * 6.283 * u;
+        x += Math.cos(a) * wob * k; y += Math.sin(a) * wob * .6 * k;
+      }
+      return [x, y];
+    };
+    const B = [0, .1, .18, .24, .29, .33];
+    const PEAK = [1.3, .5, .22, .09, .03];
     const height = (u) => {
       if (u < B[1]) { const t = u / B[1]; return PEAK[0] * (1 - t * t); }
       for (let i = 1; i < B.length - 1; i++) if (u < B[i + 1]) { const t = (u - B[i]) / (B[i + 1] - B[i]); return PEAK[i] * 4 * t * (1 - t); }
       return 0;
     };
-    // вращение: в полёте — свободное, при касании стола — перекат в сторону движения
+    // вращение: всё время быстрое, ось «гуляет», при ударах о стол меняется; в самом конце резко гаснет
     let q = qnorm([rnd() - .5, rnd() - .5, rnd() - .5, rnd() - .5]);
-    let w = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * (8 + 5 * rnd()));
-    const rpx = dieW * .36, T = TUMBLE_MS / 1000;
+    let axis = nrm([rnd() - .5, rnd() - .5, rnd() - .5]), target = nrm([rnd() - .5, rnd() - .5, rnd() - .5]);
+    const spin = 15 + 4 * rnd(), T = TUMBLE_MS / 1000;
     const Q = [q]; let lastGround = false;
     for (let i = 1; i <= N; i++) {
       const u0 = (i - 1) / N * US, u1 = i / N * US, dt = (u1 - u0) * T;
-      const p0 = pos(u0), p1 = pos(u1), v = [(p1[0] - p0[0]) / dt, -(p1[1] - p0[1]) / dt, 0];
       const ground = height(u1) < .03;
-      const roll = mul(cross([0, 0, 1], v), 1 / rpx);
-      if (ground && !lastGround) { // удар о стол: часть вращения гасится, добавляется случайный толчок
-        const kick = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * 5 * (1 - u1));
-        w = add(add(mul(w, .35), mul(roll, .65)), kick);
-      } else if (ground) w = add(mul(w, .8), mul(roll, .2));
+      if (ground && !lastGround) axis = nrm(add(mul(axis, .35), nrm([rnd() - .5, rnd() - .5, rnd() - .5])));
       lastGround = ground;
-      const ang = Math.hypot(w[0], w[1], w[2]) * dt;
-      if (ang > 1e-6) q = qnorm(qmul(qaxis(w, ang), q));
+      if (i % 45 === 0) target = nrm([rnd() - .5, rnd() - .5, rnd() - .5]);
+      axis = nrm(add(mul(axis, .965), mul(target, .035)));
+      const mag = spin * (u1 < .8 ? 1 : Math.max(.12, 1 - (u1 - .8) / .1 * .88));
+      q = qnorm(qmul(qaxis(axis, mag * dt), q));
       Q.push(q);
     }
     // какая грань оказалась сверху — на неё «переносим» выпавшее число (поворот-симметрия кости)
@@ -1325,7 +1358,7 @@ const D20 = (() => {
       let qq;
       u = Math.max(0, Math.min(1, u));
       if (u <= US) { const x = u / US * N, i = Math.max(0, Math.min(N - 1, Math.floor(x))); qq = qslerp(Q[i], Q[i + 1], x - i); }
-      else { const t = Math.min(1, (u - US) / (1 - US)); qq = qslerp(Qs, Qrest, t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2); }
+      else { const t = Math.min(1, (u - US) / (1 - US)); qq = qslerp(Qs, Qrest, 1 - Math.pow(1 - t, 3)); }
       return qmul(qq, Rsym);
     };
     return { pos, height, orient, firstImpact: B[1] };
@@ -1383,7 +1416,7 @@ class Die3D {
         if (u >= 1) finish(); else requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
-      setTimeout(finish, T + 900); // если кадры не рисуются (свёрнутое окно), всё равно заканчиваем вовремя
+      setTimeout(finish, T + 1200); // если кадры не рисуются (свёрнутое окно), всё равно заканчиваем вовремя
     });
   }
 }
@@ -1661,18 +1694,18 @@ async function playRound(r) {
   for (const k of [...pipHold.keys()]) if (k !== ex.point) pipHold.delete(k);
   revealEx = st.exchanges.length;
   renderDuel();
-  await wait(250);
+  await wait(80);
   if (n === 2) {
     if (ex.point !== null) {
       const winSide = sideOf(ex.point, 2);
       const winDie = front.dataset.side === winSide ? front : back, loseDie = winDie === front ? back : front;
       if (winDie) winDie.classList.add("won"); if (loseDie) loseDie.classList.add("lost");
       if (winDie && winDie === back) { // победила кость с заднего плана: быстро выходит вперёд и отталкивает соперника
-        await wait(420);
+        await wait(180);
         arena.classList.add("swap");
         place(back, "front"); place(front, "back-" + sideOf(1 - ex.point, 2));
         [front, back] = [back, front];
-        setTimeout(() => arena.classList.remove("swap"), 500);
+        setTimeout(() => arena.classList.remove("swap"), 360);
       }
     } else { front.classList.add("tie"); if (back) back.classList.add("tie"); }
   } else {
@@ -1681,20 +1714,20 @@ async function playRound(r) {
   setLines(ex.point !== null ? "Очко получает " + st.seats[ex.point].name : tieText(st), exchangeLine(st, ex), ex.point !== null ? "win" : "");
   if (ex.point !== null) {
     const winEl = n === 2 ? front : slotDice.get(ex.point);
-    await wait(350);
+    await wait(120);
     await flyPoint(winEl, ex.point);
     pipHold.delete(ex.point); flashSeat = ex.point; renderDuel();
     haptic(st.seats[ex.point].pid === pid ? "win" : "light");
   }
   pipHold.clear(); revealEx = 0; renderDuel();
   if (st.winner !== null) {
-    await wait(500);
+    await wait(250);
     const w = st.seats[st.winner];
     setLines(w.name + " выигрывает раунд!", "Счёт " + scoreLine(st), "win");
     banner(w.name + " побеждает", "Раунд " + round.num + " — " + scoreLine(st));
     if (w.pid === pid) { buzz([60, 40, 60, 40, 160]); haptic("win"); }
-  } else { await wait(700); showNextPill(st); }
-  await wait(400);
+  }
+  await wait(200);
 }
 // Очко золотым шаром летит от кости победителя к его табло, там загорается кружок.
 async function flyPoint(fromEl, seat) {
@@ -1710,14 +1743,14 @@ async function flyPoint(fromEl, seat) {
     { transform: "translate(-50%, -50%) scale(1.35)", opacity: 1, offset: .18 },
     { transform: `translate(calc(-50% + ${(dx * .5).toFixed(1)}px), calc(-50% + ${(dy * .5 - lift).toFixed(1)}px)) scale(1.1)`, opacity: 1, offset: .58 },
     { transform: `translate(calc(-50% + ${dx.toFixed(1)}px), calc(-50% + ${dy.toFixed(1)}px)) scale(.75)`, opacity: 1 }
-  ], { duration: 860, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
-  await Promise.race([anim.finished.catch(() => {}), wait(1300)]);
+  ], { duration: 560, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
+  await Promise.race([anim.finished.catch(() => {}), wait(900)]);
   orb.remove();
 }
 function clearNextPill() { arena.querySelectorAll(".next-pill").forEach((x) => x.remove()); }
 function showNextPill(st) {
   clearNextPill();
-  if (!st || st.winner !== null || !roundStarted() || st.nextSeat === null) return;
+  return; // подсказка над столом убрана: ход видно по кнопке и табло
   const p = st.seats[st.nextSeat];
   const pill = el("div", "next-pill");
   pill.append(el("span", "np-stage", (st.n > 2 ? "Круг " : "Обмен ") + (st.exchanges.length + 1)),
@@ -1764,7 +1797,7 @@ function announceRound(rd) {
 }
 
 // ---------- отрисовка стола ----------
-function renderAll() { if (!room) return; $("closeTableBtn").hidden = !isOwner(); renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); renderReady(); }
+function renderAll() { if (!room) return; $("closeTableBtn").hidden = !isOwner(); renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); renderReady(); renderProfile(); }
 function onlinePlayers() {
   const list = Object.entries(players).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" }));
   if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
@@ -1808,7 +1841,12 @@ function renderPlayers() {
     chip.replaceChildren(...parts);
     chip.title = watching ? "Зритель в этом раунде" : "";
     if (meta && meta.owner === p.pid) { chip.insertAdjacentHTML("beforeend", OWNER_SEAL); chip.title = (chip.title ? chip.title + ". " : "") + "Создатель стола"; }
-    if (p.pid === pid) chip.append(el("em", "", "вы"));
+    if (p.pid === pid) {
+      chip.append(el("em", "", "вы"));
+      chip.insertAdjacentHTML("beforeend", '<svg class="chip-gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>');
+      if (!chip.dataset.wired) { chip.dataset.wired = "1"; chip.classList.add("me"); chip.setAttribute("role", "button"); chip.tabIndex = 0; chip.addEventListener("click", openProfile); chip.addEventListener("keydown", (e) => { if (e.key === "Enter") openProfile(); }); }
+      chip.title = "Профиль: цвет кубика";
+    }
     const lr = visFree.find((x) => x.pid === p.pid);
     if (lr && !full) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
     if (chip !== cursor) box.insertBefore(chip, cursor); else cursor = cursor.nextElementSibling;
@@ -2049,7 +2087,7 @@ $("pickStart").addEventListener("click", async () => {
   try { await set(R("round"), data); closeSheet("picker"); }
   catch { toast("Не получилось начать раунд. Проверьте интернет."); $("pickStart").disabled = false; }
 });
-// --- окно готовности: цвет кубика и «Подтвердить» / «Отклонить» ---
+// --- окно готовности: только «Готов» и «Отмена» ---
 function renderReady() {
   const modal = $("readyModal");
   const info = round && roundShown() ? readyInfo(round) : null, st = info ? roundState() : null;
@@ -2060,37 +2098,13 @@ function renderReady() {
     animateIn(modal, "opening");
   }
   const mine = (round.ready || {})[pid], confirmed = !!(mine && mine.ok === true);
-  const taken = info.taken(pid);
-  if (!readyPick || taken.has(readyPick)) readyPick = !taken.has(myColor) ? myColor : DIE_HEX.find((c) => !taken.has(c));
+  const others = info.seats.filter((p) => p.pid !== pid).map((p) => p.name);
+  const waiting = info.seats.filter((p, i) => !info.ok[i] && p.pid !== pid).map((p) => p.name);
   $("readyTitle").textContent = "Раунд " + round.num;
-  $("readySub").textContent = confirmed ? "Вы готовы. Ждём остальных…" : (st.n === 2 ? "Вас вызвали на дуэль." : "Вас позвали в раунд: " + players_(st.n) + ".") + " Выберите цвет кубика и подтвердите готовность.";
-  const list = $("readyList"); list.replaceChildren();
-  info.seats.forEach((p, i) => {
-    const row = el("div", "ready-row" + (info.ok[i] ? " ok" : ""));
-    const dot = el("span", "ready-dot"); dot.style.background = info.ok[i] ? info.colors[i] : "transparent";
-    row.append(dot, el("span", "ready-name", p.pid === pid ? p.name + " (вы)" : p.name), el("span", "ready-state", info.ok[i] ? "готов" : "думает…"));
-    list.append(row);
-  });
-  $("readyPick").hidden = confirmed; $("readyYes").hidden = confirmed; $("readyNo").hidden = confirmed; $("readyHide").hidden = !confirmed;
-  if (!confirmed) {
-    const sw = $("swatches");
-    if (sw.dataset.built !== "1") {
-      sw.replaceChildren();
-      DIE_COLORS.forEach((c) => {
-        const b = el("button", "swatch"); b.type = "button"; b.dataset.hex = c.hex; b.title = c.name; b.setAttribute("aria-label", "Цвет кубика: " + c.name);
-        b.append(miniDie(c.hex, 46), el("span", "swatch-owner"));
-        b.addEventListener("click", () => { if (b.disabled) return; readyPick = c.hex; animateIn(b, "picked"); renderReady(); });
-        sw.append(b);
-      });
-      sw.dataset.built = "1";
-    }
-    sw.querySelectorAll(".swatch").forEach((b) => {
-      const owner = taken.get(b.dataset.hex);
-      b.disabled = !!owner; b.setAttribute("aria-pressed", String(b.dataset.hex === readyPick));
-      b.querySelector(".swatch-owner").textContent = owner ? initials(owner.name) : "";
-      b.title = owner ? "Занят: " + owner.name : DIE_COLORS.find((c) => c.hex === b.dataset.hex).name;
-    });
-  }
+  $("readySub").textContent = confirmed
+    ? (waiting.length ? "Вы готовы. Ждём: " + waiting.join(", ") : "Все готовы!")
+    : (st.n === 2 ? "Дуэль с игроком " + others[0] : "Играете вы, " + others.join(", ")) + ". Готовы?";
+  $("readyYes").hidden = confirmed; $("readyNo").hidden = confirmed; $("readyHide").hidden = !confirmed;
 }
 function closeReady() {
   const modal = $("readyModal"); if (modal.hidden || modal.classList.contains("closing")) return;
@@ -2099,14 +2113,9 @@ function closeReady() {
 }
 $("readyYes").addEventListener("click", async () => {
   if (!round) return;
-  const color = readyPick || myColor;
-  myColor = color; store.set("dndroll.color", color);
   $("readyYes").disabled = true;
-  try {
-    await set(R("round/ready/" + pid), { ok: true, color, ts: serverTimestamp() });
-    set(R("players/" + pid), { name: myName, seen: serverTimestamp(), color }).catch(() => {});
-    haptic("light");
-  } catch { toast("Не получилось подтвердить. Проверьте интернет."); }
+  try { await set(R("round/ready/" + pid), { ok: true, color: myColor, ts: serverTimestamp() }); haptic("light"); }
+  catch { toast("Не получилось подтвердить. Проверьте интернет."); }
   $("readyYes").disabled = false;
 });
 $("readyNo").addEventListener("click", async () => {
@@ -2114,6 +2123,40 @@ $("readyNo").addEventListener("click", async () => {
   try { await set(R("round/ready/" + pid), { ok: false, ts: serverTimestamp() }); } catch { toast("Не получилось отклонить. Проверьте интернет."); }
 });
 $("readyHide").addEventListener("click", () => { readyHidden = round && round.id; closeReady(); });
+
+// --- профиль: цвет кубика (можно менять вне своего раунда) ---
+function openProfile() { renderProfile(true); openSheet("profile"); }
+function renderProfile(force) {
+  if ($("profile").hidden && !force) return;
+  const taken = room ? takenColors() : new Map();
+  const locked = !!(room && roundShown() && roundLive() && mySeat() >= 0);
+  const pa = $("profileAva"); pa.replaceChildren(ava(pid, myName || "?"));
+  $("profileName").textContent = myName || "Без имени";
+  const sw = $("profileSwatches");
+  if (sw.dataset.built !== "1") {
+    DIE_COLORS.forEach((c) => {
+      const b = el("button", "swatch"); b.type = "button"; b.dataset.hex = c.hex; b.setAttribute("aria-label", "Цвет кубика: " + c.name);
+      b.append(miniDie(c.hex, 46), el("span", "swatch-owner"));
+      b.addEventListener("click", () => {
+        if (b.disabled) return;
+        myColor = c.hex; colorPicked = true; store.set("dndroll.color", myColor); store.set("dndroll.colorPicked", "1");
+        animateIn(b, "picked"); haptic("light");
+        if (room) set(R("players/" + pid), { name: myName, seen: serverTimestamp(), color: myColor }).catch(() => {});
+        renderAll(); renderProfile();
+      });
+      sw.append(b);
+    });
+    sw.dataset.built = "1";
+  }
+  sw.querySelectorAll(".swatch").forEach((b) => {
+    const owner = taken.get(b.dataset.hex), name = DIE_COLORS.find((c) => c.hex === b.dataset.hex).name;
+    b.disabled = locked || !!owner; b.setAttribute("aria-pressed", String(b.dataset.hex === myColor));
+    b.querySelector(".swatch-owner").textContent = owner ? initials(owner) : "";
+    b.title = owner ? name + " — занят: " + owner : name;
+  });
+  $("profileNote").textContent = locked ? "Сейчас идёт ваш раунд — цвет можно сменить после него."
+    : room ? "Погашенные цвета заняты другими игроками за столом." : "Выбранный цвет закрепится за вами за столом, если его никто не занял.";
+}
 
 function saveResultIfFinished() {
   const st = roundState();
