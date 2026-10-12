@@ -769,7 +769,7 @@ function modeLabel(r) { return r.mode === "adv" ? "преимущество" : r
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- автообновление: если на сайте вышла новая версия, а у нас старая копия из кэша — тихо перезагружаемся ----------
-const BUILD = "202610122002";
+const BUILD = "202610122350";
 (async () => {
   try {
     const res = await fetch(location.pathname + "?nc=" + Date.now(), { cache: "no-store" });
@@ -1305,155 +1305,330 @@ const D20 = (() => {
   function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   function hash(s) { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 
-  // соседние грани (общее ребро) и грани вокруг каждой вершины
+  // соседние грани (общее ребро) — нужны для двугранного угла
   const NEIGH = F.map((f, i) => F.map((g, j) => j).filter((j) => j !== i && FI[j].filter((v) => FI[i].includes(v)).length === 2));
-  const AROUND = V.map((_, vi) => FI.map((f, j) => j).filter((j) => FI[j].includes(vi)));
   const DIH = Math.acos(Math.max(-1, Math.min(1, dot(F[0].n, F[NEIGH[0][0]].n)))); // ≈ 41.8°: перекат на соседнюю грань
   const Z = [0, 0, 1];
-  const easeOut = (t) => 1 - Math.pow(1 - t, 3), easeIn = (t) => t * t * t, easeIO = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const clamp01 = (t) => Math.max(0, Math.min(1, t));
   function flatten(Q, face) { // минимальный наклон, чтобы грань легла ровно вверх
     const m = qrot(Q, F[face].n), ax = cross(m, Z);
     return Math.hypot(ax[0], ax[1], ax[2]) < 1e-9 ? Q : qmul(qaxis(ax, Math.acos(Math.max(-1, Math.min(1, m[2])))), Q);
   }
-  function tipper(Q, from, to) { // перекат через общее ребро: при φ = DIH грань «to» ложится вверх
-    const nF = qrot(Q, F[from].n), nG = qrot(Q, F[to].n), a = cross(nG, nF);
-    return (phi) => qmul(qaxis(a, phi), Q);
+
+  // ---------- физика броска ----------
+  // Единицы: радиус описанной сферы кости = 1, время в секундах. Сила тяжести одна на все фазы
+  // (слегка замедленная, как в рапиде), поэтому подскоки, волчок, падение и перекаты согласованы между собой.
+  const GRAV = 36, KI = .29;                 // KI — момент инерции икосаэдра, I / (m·R²)
+  const KG = 1.5, CD = 1.8;                  // гироскопическая связь волчка и трение в точке опоры
+  const KH = .5, GH = 39;                    // высота для отрисовки: на единицу подъёма центра и «g» подскоков
+  const SDT = 1 / 240, TDT = 1 / 240, PDT = 1 / 480;
+  const RIN = Math.hypot(F[0].c[0], F[0].c[1], F[0].c[2]);       // кость лежит на грани: центр на этой высоте
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const EDGE = Math.min(...V.slice(1).map((v) => dist(V[0], v)));
+  const VADJ = V.map((a, i) => V.map((b, j) => j).filter((j) => j !== i && Math.abs(dist(a, V[j]) - EDGE) < 1e-6));
+  const RHO = Math.hypot(...mul(add(V[0], V[VADJ[0][0]]), .5));  // расстояние от центра до ребра
+  const BETA = DIH / 2;                                            // наклон граней, когда кость стоит на ребре
+  const WE2 = GRAV * RHO / (KI + RHO * RHO), WV2 = GRAV / (KI + 1); // «маятник» на ребре и на вершине
+  const WSEP = 2 * Math.sqrt(WE2) * Math.sin(BETA / 2);           // с этой скоростью кость с грани ровно доходит до равновесия на ребре
+  const conj = (q) => [q[0], -q[1], -q[2], -q[3]];
+  const spinZ = (a) => [Math.cos(a / 2), 0, 0, Math.sin(a / 2)];
+  const swing = (x, y) => { const th = Math.hypot(x, y); return th < 1e-12 ? [1, 0, 0, 0] : qaxis([-y, x, 0], th); };
+  const wrapPi = (a) => { a = (a + Math.PI) % (2 * Math.PI); if (a < 0) a += 2 * Math.PI; return a - Math.PI; };
+  const rot2 = (p, a) => [p[0] * Math.cos(a) - p[1] * Math.sin(a), p[0] * Math.sin(a) + p[1] * Math.cos(a)];
+  function downQ(v) { // поворот, который ставит вершину v вниз
+    const ax = cross(v, [0, 0, -1]), s = Math.hypot(ax[0], ax[1], ax[2]), c = -v[2];
+    return s < 1e-9 ? (c > 0 ? [1, 0, 0, 0] : [0, 1, 0, 0]) : qaxis(ax, Math.atan2(s, c));
+  }
+  function angVel(q1, q0, dt) { let d = qmul(q1, conj(q0)); if (d[0] < 0) d = d.map((x) => -x); return [2 * d[1] / dt, 2 * d[2] / dt, 2 * d[3] / dt]; }
+  const VDOWN = V.map((v, vi) => { // для каждой вершины: поворот «вершиной вниз» и соседи вокруг неё
+    const Q = downQ(v);
+    const nb = VADJ[vi].map((w) => { const b = qrot(Q, sub(V[w], v)); return { w, az: Math.atan2(b[1], b[0]) }; });
+    const b = qrot(Q, sub(V[VADJ[vi][0]], v));
+    return { Q, nb, ratio: b[2] / Math.hypot(b[0], b[1]) };
+  });
+
+  // Волчок на вершине. a — вектор наклона (куда и насколько отклонился центр от вертикали над точкой опоры).
+  // Уравнение тяжёлого волчка: тяжесть валит, вращение (гироскоп) превращает падение в прецессию,
+  // трение гасит дрожь после касания. Пока кость крутится быстро — она стоит; когда вращение слабеет — валится.
+  function simTop(c, stopS = 99) {
+    let ax = c.a0[0], ay = c.a0[1], vx = c.v0[0], vy = c.v0[1], s = 0;
+    const A = [[ax, ay]];
+    const f = (s, ax, ay, vx, vy) => {
+      const g = KG * c.sg * Math.max(0, c.w0 - c.ks * s), th = Math.hypot(ax, ay), k = WV2 * (th < 1e-9 ? 1 : Math.sin(th) / th);
+      return [vx, vy, k * ax - g * vy - CD * vx, k * ay + g * vx - CD * vy];
+    };
+    for (let i = 1; s < c.tmax; i++) {
+      const h = TDT, k1 = f(s, ax, ay, vx, vy);
+      const k2 = f(s + h / 2, ax + h / 2 * k1[0], ay + h / 2 * k1[1], vx + h / 2 * k1[2], vy + h / 2 * k1[3]);
+      const k3 = f(s + h / 2, ax + h / 2 * k2[0], ay + h / 2 * k2[1], vx + h / 2 * k2[2], vy + h / 2 * k2[3]);
+      const k4 = f(s + h, ax + h * k3[0], ay + h * k3[1], vx + h * k3[2], vy + h * k3[3]);
+      ax += h / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]); ay += h / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+      vx += h / 6 * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]); vy += h / 6 * (k1[3] + 2 * k2[3] + 2 * k3[3] + k4[3]);
+      s += h;
+      A.push([ax, ay]);
+      if (ax * ax + ay * ay > .5625) break;
+      if (s > stopS) break;
+    }
+    let i45 = 0; while (i45 < A.length - 1 && A[i45][0] * A[i45][0] + A[i45][1] * A[i45][1] < .2025) i45++;
+    A.i45 = i45;
+    return A;
+  }
+  const fallTime = (A, th) => { for (let i = 0; i < A.length; i++) if (Math.hypot(A[i][0], A[i][1]) >= th) return i * SDT; return 99; };
+  const psiAt = (c, s) => { const sm = Math.min(s, c.w0 / c.ks); return c.sg * (c.w0 * sm - c.ks * sm * sm / 2); };
+  const aAt = (A, s) => { const x = Math.max(0, Math.min(A.length - 1.000001, s / SDT)), i = Math.floor(x), f = x - i; return [A[i][0] + (A[i + 1][0] - A[i][0]) * f, A[i][1] + (A[i + 1][1] - A[i][1]) * f]; };
+  const topQ = (c, A, s, psi0) => { const a = aAt(A, s); return qmul(swing(a[0], a[1]), qmul(spinZ(psiAt(c, s) + psi0), VDOWN[c.v].Q)); };
+
+  // Когда кость, падая с вершины, коснётся стола ребром — и каким
+  function contact(c, A, psi0) {
+    const D = VDOWN[c.v];
+    const g = (i) => {
+      const th = Math.hypot(A[i][0], A[i][1]); if (th < .45) return { g: -9 };
+      const rel = psiAt(c, i * SDT) + psi0 - Math.atan2(A[i][1], A[i][0]);
+      let best = -9, w = -1; for (const n of D.nb) { const cs = Math.cos(n.az + rel); if (cs > best) { best = cs; w = n.w; } }
+      return { g: best - D.ratio * Math.cos(th) / Math.sin(th), w };
+    };
+    const i0 = Math.max(1, A.i45 || 1);
+    let prev = g(i0 - 1);
+    for (let i = i0; i < A.length; i++) {
+      const cur = g(i);
+      if (cur.g >= 0) {
+        const fr = prev.g > -9 ? prev.g / (prev.g - cur.g) : 1, s = (i - 1 + fr) * SDT;
+        const O = topQ(c, A, s, psi0), O0 = topQ(c, A, s - SDT, psi0), om = angVel(O, O0, SDT);
+        let e = qrot(O, sub(V[cur.w], V[c.v])); e = nrm([e[0], e[1], 0]);
+        const cc = qrot(O, mul(V[c.v], -1)), sh = cross(e, Z), cp = sub(cc, mul(e, dot(cc, e)));
+        const phi0 = Math.atan2(dot(cp, sh), dot(cp, Z));
+        let dphi0 = dot(om, e);
+        if (Math.abs(phi0) > BETA * .97) dphi0 = Math.sign(phi0) * Math.max(Math.abs(dphi0), .6 * Math.hypot(om[0], om[1])); // сразу на грань: удар целиком
+        return { s, O, cc, e, w: cur.w, phi0, dphi0, wz: om[2] };
+      }
+      prev = cur;
+    }
+    return null;
   }
 
-  // План броска: путь по столу, высота над столом и вращение. 70% бросков — обычная концовка,
-  // 30% — с интригой: кость балансирует на ребре, крутится волчком на вершине или «обманывает» соседним числом.
-  // Всё задаётся ключом броска, поэтому у всех игроков бросок выглядит одинаково.
-  function plan(value, key, side, dieW, arenaW, arenaH) {
-    const rnd = rng(hash(key));
-    const vr = rnd();
-    const variant = vr < .7 ? "plain" : vr < .82 ? "teeter" : vr < .92 ? "vertex" : "nearmiss";
-    const TC = variant === "plain" ? 3.3 : 3.15;                 // конец свободного вращения, с
-    const DUR = variant === "plain" ? 4.0 : variant === "vertex" ? 5.15 : 5.1;
-    const dir = side === "a" ? -1 : side === "b" ? 1 : (rnd() < .5 ? -1 : 1);
-    const sx = dir * (.42 + .2 * rnd()) * Math.max(arenaW, dieW * 1.6);
-    const sy = (.42 + .25 * rnd()) * Math.max(arenaH, dieW * 1.4);
-    const curve = (rnd() - .5) * .35 * dieW;
-    // траектория: бросок и отскоки до ~1.25 с, затем кость крутится почти на месте, слегка кружа, и замирает к TC
-    const ARR = 1.25;
-    const wob = .1 * dieW, ph = rnd() * 6.283, turns = 1.2 + rnd() * .6, wdir = rnd() < .5 ? -1 : 1;
-    const posT = (t) => {
-      const e = 1 - Math.pow(1 - clamp01(t / ARR), 2.2);
-      let x = sx * (1 - e) + curve * Math.sin(Math.PI * e), y = sy * (1 - e);
-      if (t > ARR * .7 && t < TC) {
-        const k = Math.min(1, (t - ARR * .7) / .4) * Math.pow(1 - (t - ARR) / (TC - ARR), 1.5) * (t > ARR ? 1 : 1);
-        const a = ph + wdir * turns * 6.283 * t / DUR;
-        x += Math.cos(a) * wob * Math.max(0, k); y += Math.sin(a) * wob * .6 * Math.max(0, k);
+  // Кость на ребре: маятник вокруг ребра. Ложится на грань при |φ| = β, отскакивает (er) и в итоге замирает.
+  function simPivot(phi0, w0, er, maxT = 3) {
+    let p = phi0, w = w0, t = 0;
+    const out = [p], lands = [];
+    const acc = (p) => WE2 * Math.sin(p);
+    for (let i = 1; t < maxT; i++) {
+      const h = PDT, a1 = acc(p), a2 = acc(p + h / 2 * w), a3 = acc(p + h / 2 * (w + h / 2 * a1)), a4 = acc(p + h * (w + h / 2 * a2));
+      const np = p + h * w + h * h / 6 * (a1 + a2 + a3), nw = w + h / 6 * (a1 + 2 * a2 + 2 * a3 + a4);
+      p = np; w = nw; t += h;
+      if (Math.abs(p) >= BETA && p * w > 0) {
+        p = Math.sign(p) * BETA;
+        lands.push({ t, side: Math.sign(p), w: Math.abs(w) });
+        w = -(lands.length === 1 ? er[0] : er[1]) * w;
+        if (Math.abs(w) < .35) { out.push(p); return { phis: out, lands, end: t, side: Math.sign(p) }; }
       }
-      return [x, y];
-    };
-    const B = [0, .38, .7, .93, 1.11, 1.25], PEAK = [1.3, .5, .22, .09, .03];
-    // высота: отскоки; на ребре или вершине центр кости чуть выше стола
-    let endLift = () => 0;
-    const heightT = (t) => {
-      if (t < B[1]) { const s = t / B[1]; return PEAK[0] * (1 - s * s); }
-      for (let i = 1; i < B.length - 1; i++) if (t < B[i + 1]) { const s = (t - B[i]) / (B[i + 1] - B[i]); return PEAK[i] * 4 * s * (1 - s); }
-      return t > TC ? endLift(t - TC) : 0;
-    };
-    // свободное вращение: быстро, потом плавно замедляется к TC
-    let q = qnorm([rnd() - .5, rnd() - .5, rnd() - .5, rnd() - .5]);
-    let axis = nrm([rnd() - .5, rnd() - .5, rnd() - .5]), target = nrm([rnd() - .5, rnd() - .5, rnd() - .5]);
-    const spin = 15 + 4 * rnd(), SLOW = 1.85, N = 380;
-    const Q = [q]; let lastGround = false;
-    for (let i = 1; i <= N; i++) {
-      const t0 = (i - 1) / N * TC, t1 = i / N * TC, dt = t1 - t0;
-      const ground = heightT(t1) < .03;
-      if (ground && !lastGround) axis = nrm(add(mul(axis, .35), nrm([rnd() - .5, rnd() - .5, rnd() - .5])));
-      lastGround = ground;
-      if (i % 45 === 0) target = nrm([rnd() - .5, rnd() - .5, rnd() - .5]);
-      axis = nrm(add(mul(axis, .965), mul(target, .035)));
-      const k = t1 < SLOW ? 1 : .2 + .8 * .5 * (1 + Math.cos(Math.PI * clamp01((t1 - SLOW) / (TC - SLOW))));
-      q = qnorm(qmul(qaxis(axis, spin * k * dt), q));
-      Q.push(q);
+      if (i % 2 === 0) out.push(p);
     }
-    const Qs = Q[N];
-    // грань, ближайшая к верху в момент TC, — с неё начинается концовка
-    let C = 0, best = -2;
-    for (let i = 0; i < 20; i++) { const z = qrot(Qs, F[i].n)[2]; if (z > best) { best = z; C = i; } }
-    const Qc = flatten(Qs, C);
-    // концовка без поворота вокруг вертикали: E(s) для s ≥ 0 (секунды после TC), итоговая грань Fp
-    let Fp = C, E, catchDur, catchTo, pickPsi = null;
+    return { phis: out, lands, end: t, side: Math.sign(p), timeout: true };
+  }
+  const sepE = (p, w) => .5 * w * w - WE2 * (1 - Math.cos(p)); // > 0 — хватит сил перевалить через ребро
+
+  // Настройки волчка для каждого варианта: длительность до падения и характер вращения
+  const TOP = {
+    plain: { w0: [14, 16.5], tilt: [.14, .22], nut: [.5, 1.1], fall: [2.25, 2.5] },
+    teeter: { w0: [14, 16], tilt: [.12, .18], nut: [.4, .9], fall: [1.95, 2.15] },
+    nearmiss: { w0: [14.5, 16.5], tilt: [.26, .34], nut: [.4, .9], fall: [1.95, 2.15] },
+    vertex: { w0: [16, 17.5], tilt: [.03, .05], nut: [.15, .3], fall: [3.25, 3.5] }
+  };
+  const ARCS = [.36, .3, .22, .16, .11]; // подлёт и подскоки до приземления на вершину
+
+  // План броска. Вариант выбирается сразу, и под него строится всё движение с первого кадра:
+  // подлёт и подскоки → кость встаёт на вершину и крутится волчком → вращение слабеет, она валится на ребро →
+  // ложится на грань. 70% — обычная концовка; 30% — с интригой:
+  //   teeter — падает на ребро и около секунды балансирует, потом валится на одну из двух граней;
+  //   nearmiss — шлёпается на грань, отскакивает обратно на ребро, балансирует и решает, куда упасть;
+  //   vertex — долго стоит на вершине, медленно кружа, и валится на одну из пяти граней вокруг неё.
+  // Всё задаётся ключом броска, поэтому у всех игроков бросок выглядит одинаково.
+  function plan(value, key, side, dieW, arenaW, arenaH, force) {
+    const rnd = rng(hash(key));
+    const between = (r) => r[0] + (r[1] - r[0]) * rnd();
+    const vr = rnd();
+    let variant = force || (vr < .7 ? "plain" : vr < .82 ? "teeter" : vr < .91 ? "nearmiss" : "vertex");
+    const T = TOP[variant];
+    const arcs = ARCS.map((x) => x * (.94 + .12 * rnd()));
+    const tL = arcs.reduce((a, b) => a + b, 0);
+    const lam0 = rnd() * 2 * Math.PI, tilt = between(T.tilt), nut = between(T.nut), nutA = rnd() * 2 * Math.PI;
+    const c = {
+      v: Math.floor(rnd() * 12), sg: rnd() < .5 ? -1 : 1, w0: between(T.w0), tmax: 6,
+      a0: [tilt * Math.cos(lam0), tilt * Math.sin(lam0)],
+      v0: [nut * Math.cos(nutA), nut * Math.sin(nutA)]                // дрожь от удара о стол
+    };
+    // скорость затухания вращения подбираем так, чтобы кость повалилась к нужному моменту
+    const want = between(T.fall);
+    let lo = .3, hi = 14;
+    for (let k = 0; k < 16; k++) { c.ks = (lo + hi) / 2; if (fallTime(simTop(c, want + .02), .6) > want) lo = c.ks; else hi = c.ks; }
+    c.ks = (lo + hi) / 2;
+    const A = simTop(c);
+
+    // фаза вращения ψ0 решает, на какое ребро и как именно ляжет кость
+    const GRID = 240, period = 2 * Math.PI / 5, scan = [];
+    if (variant !== "plain") for (let j = 0; j < GRID; j++) { const psi0 = j / GRID * period, ct = contact(c, A, psi0); scan.push({ psi0, ct }); }
+    const er0 = [.3, .3];
+    let pick = null, er = er0;
+    const pivotOf = (psi0, e) => { const ct = contact(c, A, psi0); return ct && { ct, pv: simPivot(ct.phi0, ct.dphi0, e) }; };
+    const timeTo = (r) => (r.pv.lands.length ? r.pv.lands[0].t : 9);
+    if (variant === "teeter") {
+      const over = rnd() < .5, target = between([.95, 1.2]);
+      const cands = [];
+      for (let j = 0; j < GRID; j++) {
+        const a = scan[j].ct, b = scan[(j + 1) % GRID].ct; if (!a || !b || a.w !== b.w) continue;
+        if (a.phi0 * a.dphi0 >= 0 || b.phi0 * b.dphi0 >= 0 || Math.abs(a.phi0) > BETA * .9) continue;
+        const ea = sepE(a.phi0, a.dphi0), eb = sepE(b.phi0, b.dphi0);
+        if (ea * eb < 0) cands.push(j);
+      }
+      if (cands.length) {
+        const j = cands[Math.floor(rnd() * cands.length)];
+        const ps = (x) => scan[(x + GRID) % GRID].psi0 + (x >= GRID ? period : x < 0 ? -period : 0);
+        let pa = ps(j), pb = ps(j + 1);
+        const sgnE = (psi) => { const ct = contact(c, A, psi); return ct ? sepE(ct.phi0, ct.dphi0) : 0; };
+        const ea = sgnE(pa);
+        for (let k = 0; k < 50; k++) { const m = (pa + pb) / 2; if ((sgnE(m) > 0) === (ea > 0)) pa = m; else pb = m; }
+        const root = (pa + pb) / 2;
+        // с какой стороны от корня энергии хватает перевалить
+        const dir = ((ea > 0) === over) ? -1 : 1; // ea — значение в точке j (слева от корня)
+        let far = root;
+        for (let k = 0; k < 40; k++) {
+          const nx = far + dir * period / GRID, r = pivotOf(nx, er0);
+          if (!r || r.ct.w !== scan[j].ct.w) break;
+          far = nx; if (timeTo(r) < target) break;
+        }
+        let near = root, farP = far;
+        for (let k = 0; k < 50; k++) { const m = (near + farP) / 2, r = pivotOf(m, er0); if (r && timeTo(r) > target) near = m; else farP = m; }
+        pick = farP;
+      } else variant = "plain";
+    }
+    if (variant === "nearmiss") {
+      const over = rnd() < .55, target = between([.85, 1.05]);
+      const good = [];
+      for (let j = 0; j < GRID; j++) {
+        const a = scan[j].ct; if (!a || a.phi0 * a.dphi0 <= 0 || Math.abs(a.phi0) > BETA * .8) continue;
+        const wl = Math.sqrt(a.dphi0 * a.dphi0 + 2 * WE2 * (Math.cos(a.phi0) - Math.cos(BETA))), need = WSEP / wl;
+        if (need > .3 && need < .75) good.push({ j, need });
+      }
+      if (good.length) {
+        good.sort((x, y) => Math.abs(x.need - .5) - Math.abs(y.need - .5));
+        const g = good[Math.floor(rnd() * Math.min(6, good.length))];
+        pick = scan[g.j].psi0;
+        const ct = scan[g.j].ct;
+        // упругость первого удара: чуть больше или чуть меньше нужной, чтобы кость зависла на ребре на ~секунду
+        const hang = (e) => { const pv = simPivot(ct.phi0, ct.dphi0, [e, .3]); return pv.lands.length > 1 ? pv.lands[1].t - pv.lands[0].t : 9; };
+        let a = over ? g.need * 1.5 : g.need * .6, b = g.need;
+        for (let k = 0; k < 50; k++) { const m = (a + b) / 2; if (hang(m) < target) a = m; else b = m; }
+        er = [a, .3];
+      } else variant = "plain";
+    }
+    if (variant === "vertex") {
+      let best = null;
+      for (let j = 0; j < GRID; j++) {
+        const a = scan[j].ct; if (!a) continue;
+        const sc = Math.abs(a.phi0) + (a.phi0 * a.dphi0 > 0 ? .02 : 0);
+        if (!best || sc > best.sc) best = { j, sc };
+      }
+      pick = scan[best.j].psi0;
+    }
     if (variant === "plain") {
-      catchDur = DUR - TC; catchTo = Qc; E = () => Qc;
-    } else if (variant === "teeter" || variant === "nearmiss") {
-      const G = C; Fp = NEIGH[G][Math.floor(rnd() * 3)];
-      const P = tipper(Qc, G, Fp), bal = DIH / 2;
-      const seg = variant === "teeter"
-        ? [[0, .35, 4 * Math.PI / 180, 4 * Math.PI / 180, null], [.35, .75, 4 * Math.PI / 180, bal, easeOut], [.75, 1.55, bal, bal, "wobble"], [1.55, 1.82, bal, DIH, easeIn], [1.82, DUR - TC, DIH, DIH, "bounce"]]
-        : [[0, .4, 9 * Math.PI / 180, 9 * Math.PI / 180, null], [.4, 1.05, 9 * Math.PI / 180, 9 * Math.PI / 180, "tremble"], [1.05, 1.55, 9 * Math.PI / 180, bal, easeIO], [1.55, 1.8, bal, DIH, easeIn], [1.8, DUR - TC, DIH, DIH, "bounce"]];
-      catchDur = seg[0][1]; catchTo = P(seg[0][2]);
-      E = (s) => {
-        for (const [a, b, p0, p1, f] of seg) if (s <= b || b === seg[seg.length - 1][1]) {
-          const x = clamp01((s - a) / (b - a));
-          if (f === "wobble") return P(bal + 2.4 * Math.PI / 180 * Math.sin(x * Math.PI * 3) * (1 - .4 * x));
-          if (f === "tremble") return P(p0 + 1.6 * Math.PI / 180 * Math.sin(x * Math.PI * 4));
-          if (f === "bounce") return P(DIH - 3.5 * Math.PI / 180 * Math.sin(x * Math.PI) * (1 - x * .3));
-          if (!f) return P(p1);
-          return P(p0 + (p1 - p0) * f(x));
-        }
-        return P(DIH);
-      };
-      endLift = (s) => { const ph = E === null ? 0 : 0; const on = s > seg[1][0] && s < seg[3][1] ? Math.sin(Math.PI * clamp01((s - seg[1][0]) / (seg[3][1] - seg[1][0]))) : 0; return .05 * on + ph; };
-    } else { // vertex: волчок на вершине
-      const vi = FI[C][Math.floor(rnd() * 3)];
-      const vw = qrot(Qc, V[vi]), ax = cross(vw, Z);
-      const Qv = qmul(qaxis(ax, Math.acos(Math.max(-1, Math.min(1, vw[2])))), Qc);
-      Fp = AROUND[vi][Math.floor(rnd() * 5)];
-      const nf = qrot(Qv, F[Fp].n), ax2 = cross(nf, Z), ang2 = Math.acos(Math.max(-1, Math.min(1, nf[2])));
-      let psi0 = Math.PI;
-      const HOLD0 = .55, HOLD1 = 1.45, FALL = 1.78;
-      pickPsi = (Y) => { // направление и сила вращения волчка — те, что ближе всего к свободному вращению (без рывка)
-        let bestA = 9, bestP = psi0;
-        for (const c of [-1.3, -1, -.7, .7, 1, 1.3]) {
-          psi0 = c * Math.PI; const tq = qmul(Y, atV(0));
-          const a = 2 * Math.acos(Math.min(1, Math.abs(tq[0] * Qs[0] + tq[1] * Qs[1] + tq[2] * Qs[2] + tq[3] * Qs[3])));
-          if (a < bestA) { bestA = a; bestP = psi0; }
-        }
-        psi0 = bestP;
-      };
-      const atV = (s) => { // крутится на вершине, замедляясь до остановки, с лёгким покачиванием
-        const x = clamp01(s / HOLD1), psi = psi0 * Math.pow(1 - x, 2);
-        const wob = 3 * Math.PI / 180 * (1 - x), wa = [Math.cos(psi * 2.3), Math.sin(psi * 2.3), 0];
-        return qmul(qaxis(wa, wob), qmul(qaxis(Z, psi), Qv));
-      };
-      catchDur = HOLD0; catchTo = null;
-      E = (s) => {
-        if (s <= HOLD1) return atV(s);
-        if (s <= FALL) return qmul(qaxis(ax2, ang2 * easeIn(clamp01((s - HOLD1) / (FALL - HOLD1)))), Qv);
-        const x = clamp01((s - FALL) / (DUR - TC - FALL));
-        return qmul(qaxis(ax2, ang2 - 3.5 * Math.PI / 180 * Math.sin(x * Math.PI) * (1 - x * .3)), Qv);
-      };
-      endLift = (s) => (s > HOLD0 * .5 && s < FALL ? .1 * Math.sin(Math.PI * clamp01((s - HOLD0 * .5) / (FALL - HOLD0 * .5))) : 0);
+      let psi0 = rnd() * period;
+      for (let k = 0; k < 24; k++) {
+        const r = pivotOf(psi0, er0);
+        if (r && timeTo(r) < .42 && r.pv.lands.every((l) => l.side === r.pv.lands[0].side)) break;
+        psi0 += period * .137;
+      }
+      pick = psi0;
     }
-    // итоговая поза без поворота вокруг вертикали; выбираем симметрию кости и поворот так, чтобы выпавшее число стояло ровно
-    const Qf0 = E(DUR - TC + 1);
-    const flat = flatten(Qf0, Fp), A = FACE_OF[value];
-    let Rsym = null, yaw = 0, bestAbs = 9;
-    for (const S of symmetries(A, Fp)) {
-      const up = qrot(flat, qrot(S, F[A].up)), phi = Math.atan2(up[0], up[1]);
-      if (Math.abs(phi) < bestAbs) { bestAbs = Math.abs(phi); Rsym = S; yaw = phi; }
+
+    // собираем движение на столе в «рабочей» системе: точка опоры — начало координат
+    const ct = contact(c, A, pick), pv = simPivot(ct.phi0, ct.dphi0, er);
+    const tq = [], tc = [], ts = [];
+    for (let s = 0; s < ct.s; s += SDT) {
+      const O = topQ(c, A, s, pick); tq.push(O); tc.push(qrot(O, mul(V[c.v], -1))); ts.push(s);
     }
-    const Y = qaxis(Z, yaw);
-    if (pickPsi) pickPsi(Y);
-    // «подхват»: разница между свободным вращением и концовкой плавно гаснет (без скачков, даже если концовка сама вращается)
-    const tgt0 = qmul(Y, catchTo || E(0)), Off0 = qmul(Qs, [tgt0[0], -tgt0[1], -tgt0[2], -tgt0[3]]), I = [1, 0, 0, 0];
-    const orientT = (t) => {
-      let qq;
-      if (t <= TC) { const x = clamp01(t / TC) * N, i = Math.max(0, Math.min(N - 1, Math.floor(x))); qq = qslerp(Q[i], Q[i + 1], x - i); }
-      else if (t <= TC + catchDur) qq = qmul(qslerp(Off0, I, easeOut(clamp01((t - TC) / catchDur))), qmul(Y, catchTo || E(t - TC)));
-      else qq = qmul(Y, E(t - TC));
-      return qmul(qq, Rsym);
+    // вращение вокруг вертикали после касания не обрывается, а быстро гаснет от трения
+    const TAU = .15, yawAt = (t) => ct.wz * TAU * (1 - Math.exp(-t / TAU)), np = pv.phis.length;
+    const pt = pv.phis.map((ph, j) => (j === np - 1 ? pv.end : j * 2 * PDT));
+    const Oend0 = qmul(spinZ(yawAt(pv.end)), qmul(qaxis(ct.e, pv.phis[np - 1] - ct.phi0), ct.O));
+    let top = 0, bz = -2; for (let i = 0; i < 20; i++) { const z = qrot(Oend0, F[i].n)[2]; if (z > bz) { bz = z; top = i; } }
+    const Orest = flatten(Oend0, top), corr = qmul(Orest, conj(Oend0));
+    pv.phis.forEach((ph, j) => {
+      const R = qmul(spinZ(yawAt(pt[j])), qaxis(ct.e, ph - ct.phi0)), O = qmul(qslerp([1, 0, 0, 0], corr, j / (np - 1)), qmul(R, ct.O));
+      tq.push(O); tc.push(qrot(R, ct.cc)); ts.push(ct.s + pt[j]);
+    });
+    const tEnd = ts[ts.length - 1], cEnd = tc[tc.length - 1];
+
+    // выпавшее число — на верхнюю грань (симметрия кости) и ровно; бросок прилетает со стороны игрока
+    const Rpx = .4 * dieW;
+    const dir = side === "a" ? -1 : side === "b" ? 1 : (rnd() < .5 ? -1 : 1);
+    const S = [dir * (.42 + .2 * rnd()) * Math.max(arenaW, dieW * 1.6) / Rpx, -(.42 + .25 * rnd()) * Math.max(arenaH, dieW * 1.4) / Rpx];
+    const thDes = Math.atan2(-S[1], -S[0]);
+    const FA = FACE_OF[value], hangs = variant === "teeter" || variant === "nearmiss";
+    let Rsym = null, alpha = 0, bestS = 1e9;
+    for (const Sy of symmetries(FA, top)) {
+      const up = qrot(Orest, qrot(Sy, F[FA].up)), al = Math.atan2(up[0], up[1]);
+      const land = rot2([tc[0][0] - cEnd[0], tc[0][1] - cEnd[1]], al);
+      // ребро, на котором кость балансирует, должно идти наискосок: тогда обе грани-кандидата видны рядом, слева и справа
+      // и чтобы волчок крутился сбоку от места падения, а не над ним или под ним: по бокам арены больше места
+      const sc = (hangs && Math.abs(rot2(ct.e, al)[1]) < .5 ? 100 : 0) + Math.abs(land[1]) * 4 + Math.max(0, Math.abs(land[0]) - .6) * 2 + Math.abs(wrapPi(al - thDes)) * .15;
+      if (sc < bestS) { bestS = sc; Rsym = Sy; alpha = al; }
+    }
+    const Ya = qaxis(Z, alpha);
+    const tablePos = (i) => rot2([tc[i][0] - cEnd[0], tc[i][1] - cEnd[1]], alpha);
+
+    // полёт: подлёт и подскоки с постоянной угловой скоростью между ударами, строим назад от приземления
+    const OL = qmul(Ya, tq[0]), uL = qrot(Ya, tc[0]);
+    const om = new Array(5);
+    om[4] = add(mul(uL, c.sg * c.w0), [(rnd() - .5) * 1.2, (rnd() - .5) * 1.2, 0]);
+    let hdir = nrm([rnd() - .5, rnd() - .5, 0]);
+    const HOR = [12, 9.5, 7, 4];
+    for (let k = 3; k >= 0; k--) {
+      hdir = nrm(add(mul(hdir, .45), nrm([rnd() - .5, rnd() - .5, (rnd() - .5) * .4])));
+      om[k] = add(mul(Z, c.sg * c.w0 * (.55 + .1 * k)), mul(hdir, HOR[k] * (.9 + .2 * rnd())));
+    }
+    const tb = [0]; for (const a of arcs) tb.push(tb[tb.length - 1] + a);
+    const Ob = new Array(6); Ob[5] = OL;
+    for (let k = 4; k >= 0; k--) Ob[k] = qmul(qaxis(om[k], -Math.hypot(...om[k]) * arcs[k]), Ob[k + 1]);
+    // горизонтальный путь: последний подскок — по ходу «толчка» (+X рабочей системы), скорость гаснет на каждом ударе
+    const L = tablePos(0), lastDir = Math.atan2(L[1] - S[1], L[0] - S[0]) + (rnd() - .5) * .5;
+    const pts = new Array(6); pts[5] = L;
+    const span = Math.hypot(L[0] - S[0], L[1] - S[1]), w = [0, .6, .36, .216, .13];
+    const sig = .32 * span / (w[1] * arcs[1] + w[2] * arcs[2] + w[3] * arcs[3] + w[4] * arcs[4]);
+    for (let k = 4; k >= 1; k--) {
+      const ang = lastDir + wrapPi(thDes - lastDir) * (4 - k) / 4, l = sig * w[k] * arcs[k];
+      pts[k] = [pts[k + 1][0] - Math.cos(ang) * l, pts[k + 1][1] - Math.sin(ang) * l];
+    }
+    pts[0] = S;
+    const hL = (tc[0][2] - RIN) * KH, base = [0, .04, .04, .04, .04, hL], h0 = 1;
+    const v0 = (GH * arcs[0] * arcs[0] / 2 + base[1] - h0) / arcs[0];
+    const air = (t) => {
+      let k = 0; while (k < 4 && t > tb[k + 1]) k++;
+      const x = Math.max(0, t - tb[k]), f = x / arcs[k];
+      const pos = [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f];
+      const h = k === 0 ? h0 + v0 * x - GH * x * x / 2 : base[k] + (base[k + 1] - base[k]) * f + GH * x * (arcs[k] - x) / 2;
+      return { O: qmul(qaxis(om[k], Math.hypot(...om[k]) * x), Ob[k]), pos, h };
     };
-    const restO = qmul(qmul(Y, flat), Rsym);
+    const table = (s) => {
+      let lo = 0, hi = ts.length - 1;
+      if (s <= 0) return { O: qmul(Ya, tq[0]), pos: tablePos(0), h: (tc[0][2] - RIN) * KH };
+      if (s >= ts[hi]) return { O: qmul(Ya, tq[hi]), pos: tablePos(hi), h: 0 };
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ts[m] <= s) lo = m; else hi = m; }
+      const f = (s - ts[lo]) / (ts[hi] - ts[lo]), p0 = tablePos(lo), p1 = tablePos(hi);
+      const z = tc[lo][2] + (tc[hi][2] - tc[lo][2]) * f;
+      return { O: qmul(Ya, qslerp(tq[lo], tq[hi], f)), pos: [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f], h: Math.max(0, (z - RIN) * KH) };
+    };
+    const DUR = tL + tEnd;
+    const at = (u) => { const t = clamp01(u) * DUR; return t < tL ? air(t) : table(t - tL); };
+    const restO = qmul(qmul(Ya, Orest), Rsym);
     return {
       variant, duration: DUR * 1000,
-      pos: (u) => posT(clamp01(u) * DUR), height: (u) => heightT(clamp01(u) * DUR),
-      orient: (u) => (u >= 1 ? restO : orientT(clamp01(u) * DUR)), firstImpact: B[1] / DUR
+      pos: (u) => { const p = at(u).pos; return [p[0] * Rpx, -p[1] * Rpx]; },
+      height: (u) => at(u).h,
+      orient: (u) => (u >= 1 ? restO : qmul(at(u).O, Rsym)),
+      firstImpact: arcs[0] / DUR,
+      // удары о стол для лёгкой вибрации: первый отскок, касание ребром, приземление на грань
+      impacts: [arcs[0], tL + ct.s, ...pv.lands.filter((l) => l.w > 1.2).map((l) => tL + ct.s + l.t)].map((t) => t / DUR).sort((x, y) => x - y),
+      debug: { c, ct, pv, er, tL, tEnd, pick, top, alpha, thDes }
     };
   }
 
@@ -1489,7 +1664,7 @@ class Die3D {
     const p = D20.plan(value, key, side, dieW, arena.clientWidth / scale, arena.clientHeight / scale);
     const T = p.duration || TUMBLE_MS, t0 = performance.now();
     this.dz.dataset.variant = p.variant || "";
-    let impact = false;
+    const impacts = p.impacts || [p.firstImpact]; let hit = 0;
     const token = {}; this.current = token; // у каждого броска своё состояние: старый таймер не может остановить новый бросок
     return new Promise((resolve) => {
       let done = false, fallback = 0;
@@ -1510,7 +1685,7 @@ class Die3D {
         this.shadow.style.transform = `translate(${(x + h * dieW * .22).toFixed(1)}px, ${(y + h * dieW * .3).toFixed(1)}px) scale(${(1 + .3 * h).toFixed(3)})`;
         this.shadow.style.opacity = String(Math.max(.15, .8 - .45 * h));
         try { this.O = p.orient(u); this.paint(); } catch (e) { console.error(e); finish(); return; }
-        if (!impact && u >= p.firstImpact) { impact = true; haptic("light"); }
+        if (hit < impacts.length && u >= impacts[hit]) { while (hit < impacts.length && u >= impacts[hit]) hit++; haptic("light"); }
         if (u >= 1) finish(); else requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
