@@ -767,6 +767,19 @@ function cls(value) { return value === 20 ? "win" : value === 1 ? "fail" : ""; }
 function critText(value) { return value === 20 ? "Критический успех" : value === 1 ? "Критический провал" : ""; }
 function modeLabel(r) { return r.mode === "adv" ? "преимущество" : r.mode === "dis" ? "помеха" : ""; }
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- автообновление: если на сайте вышла новая версия, а у нас старая копия из кэша — тихо перезагружаемся ----------
+const BUILD = "202610122002";
+(async () => {
+  try {
+    const res = await fetch(location.pathname + "?nc=" + Date.now(), { cache: "no-store" });
+    const m = /const BUILD = "([^"]+)"/.exec(await res.text());
+    if (!m || m[1] === BUILD) return;
+    let seen = null; try { seen = sessionStorage.getItem("dndroll.reloadedFor"); sessionStorage.setItem("dndroll.reloadedFor", m[1]); } catch {}
+    if (seen === m[1]) return; // уже пробовали — не зацикливаемся
+    const u = new URL(location.href); u.searchParams.set("v", m[1]); location.replace(u.toString());
+  } catch {}
+})();
 const byTs = (x, y) => ((x.ts || 0) - (y.ts || 0)) || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0);
 const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };
 function transition(fn) { if (document.startViewTransition && !reduceMotion()) document.startViewTransition(fn); else fn(); }
