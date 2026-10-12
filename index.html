@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DnD Roll</title>
 <meta name="description" content="Общий стол для бросков d20: все игроки видят результаты друг друга в реальном времени.">
-<meta name="theme-color" content="#0f2a24">
+<meta name="theme-color" content="#0b0807">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -14,30 +14,35 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
 <style>
-  /* Игровой стол: зелёное сукно, латунные акценты, кость d20 в центре. Одна тёмная тема намеренно. */
+  /* Кости при свечах: почти чёрная умбра, живопись Латура из темноты, золотая филигрань в духе интерфейса BG3.
+     Одна тёмная тема намеренно: играют вечером, при приглушённом свете. */
   :root {
-    --felt: #0f2a24;
-    --felt-2: #143630;
-    --felt-3: #1c463d;
-    --line: #2a5a4f;
-    --ivory: #f1ead8;
-    --muted: #a3b5ab;
-    --brass: #d6a446;
-    --brass-ink: #1a1408;
-    --blood: #e0574a;
-    --ok: #7fd1a3;
-    --display: "Alegreya SC", "Palatino Linotype", Georgia, serif;
+    --felt: #0b0807;
+    --felt-2: #18120e;
+    --felt-3: #251c15;
+    --line: rgba(207, 167, 90, .26);
+    --ivory: #ece2cc;
+    --muted: #a99b81;
+    --brass: #cfa75a;
+    --gold-hi: #ecd08f;
+    --brass-ink: #160f08;
+    --blood: #d2574a;
+    --ok: #8fcf9f;
+    --tadpole: #a57de2;
+    --display: "Forum", "Trajan Pro", "Palatino Linotype", Georgia, serif;
     --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
-    --r: 14px;
+    --r: 4px;
     color-scheme: dark;
+    font-synthesis: none;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
     background:
-      radial-gradient(120% 70% at 50% 0%, #17463b 0%, var(--felt) 60%) fixed,
+      radial-gradient(130% 60% at 50% 0%, #1d140e 0%, var(--felt) 62%) fixed,
       var(--felt);
     color: var(--ivory);
     font: 400 17px/1.45 var(--body);
@@ -45,10 +50,13 @@
     -webkit-tap-highlight-color: transparent;
   }
   [hidden] { display: none !important; }
-  .wrap { max-width: 520px; margin: 0 auto; display: grid; gap: 18px; padding-block: 16px; }
-  h1, h2 { font-family: var(--display); font-weight: 800; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+  ::selection { background: rgba(207, 167, 90, .38); color: #fff8e8; }
+  input { caret-color: var(--gold-hi); }
+  html { scrollbar-color: #4a3a26 var(--felt); }
+  .wrap { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-block: 16px; }
+  h1, h2 { font-family: var(--display); font-weight: 400; letter-spacing: .04em; margin: 0; text-wrap: balance; }
   h1 { font-size: 34px; line-height: 1.1; }
-  h2 { font-size: 15px; letter-spacing: .12em; color: var(--muted); }
+  h2 { font-size: 15px; letter-spacing: .16em; color: var(--muted); }
   .lead { color: var(--muted); margin: 6px 0 0; }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
@@ -58,16 +66,19 @@
   label { display: grid; gap: 6px; font-weight: 500; }
   label small { color: var(--muted); font-weight: 400; }
   input[type=text] {
-    width: 100%; padding: 12px 14px; border-radius: 10px;
-    background: var(--felt-2); border: 1px solid var(--line); color: var(--ivory);
+    width: 100%; padding: 12px 14px; border-radius: 3px;
+    background: #110c09; border: 1px solid var(--line); color: var(--ivory);
   }
-  input[type=text]::placeholder { color: #7f978b; }
+  input[type=text]::placeholder { color: #8a7d66; }
+  input[type=text]:focus { border-color: var(--brass); outline: none; box-shadow: 0 0 0 3px rgba(207, 167, 90, .14); }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line);
-    background: var(--felt-3); font-weight: 700;
+    padding: 12px 18px; border-radius: 3px; border: 1px solid rgba(207, 167, 90, .38);
+    background: linear-gradient(180deg, #221a13, #17110d); font-weight: 700; transition: border-color .2s, box-shadow .2s, filter .2s;
   }
-  .btn.primary { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+  .btn:hover { border-color: rgba(236, 208, 143, .7); }
+  .btn.primary { background: linear-gradient(180deg, #e7c98a 0%, #c99d51 55%, #b08442 100%); color: var(--brass-ink); border-color: #e7c98a; box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55), 0 6px 16px rgba(0, 0, 0, .35); }
+  .btn.primary:hover { filter: brightness(1.06); }
   .btn.ghost { background: transparent; }
   .btn.small { padding: 7px 12px; font-size: 15px; }
   .btn:disabled { opacity: .5; cursor: default; }
@@ -78,10 +89,13 @@
 
   /* экран входа */
   .card { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
-  .invite-note { background: rgba(214,164,70,.12); border: 1px solid rgba(214,164,70,.4); color: var(--ivory); border-radius: 10px; padding: 10px 12px; }
+  .invite-note { background: rgba(214,164,70,.12); border: 1px solid rgba(214,164,70,.4); color: var(--ivory); border-radius: 4px; padding: 10px 12px; }
 
   /* шапка стола */
-  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+  .topbar .room-chip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .topbar > .btn, .topbar > .conn { flex: none; }
+  @media (max-width: 420px) { .topbar .conn { font-size: 0; gap: 0; } .topbar .room-chip > span:first-child { display: none; } }
   .room-chip { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; }
   .room-chip span { color: var(--muted); font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; margin-right: 6px; }
   .conn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
@@ -93,15 +107,15 @@
   .player b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .player em { font-style: normal; color: var(--muted); font-size: 13px; }
   .player .last { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
-  .ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--brass-ink); flex: none; }
+  .ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #f3e9d2; flex: none; box-shadow: 0 0 0 1px rgba(207, 167, 90, .6), inset 0 1px 0 rgba(255, 255, 255, .12); }
 
   /* кость */
   .stage { display: grid; justify-items: center; gap: 6px; padding: 8px 0 0; }
   .die-btn { background: none; border: 0; padding: 0; width: min(64vw, 250px); aspect-ratio: 1; max-width: 100%; position: relative; touch-action: manipulation; }
   .die-btn svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .die-face { fill: var(--felt-3); stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
+  .die-face { fill: #1c150f; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
   .die-edge { stroke: var(--brass); stroke-width: 2; opacity: .55; fill: none; }
-  .die-tri { fill: #22574b; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
+  .die-tri { fill: #2b2017; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
   .die-num { font-family: var(--display); font-weight: 800; font-size: 50px; fill: var(--ivory); text-anchor: middle; dominant-baseline: central; font-variant-numeric: lining-nums; }
   .die-btn.win .die-tri { fill: var(--brass); }
   .die-btn.win .die-num { fill: var(--brass-ink); }
@@ -120,7 +134,7 @@
 
   /* управление */
   .controls { display: grid; gap: 12px; }
-  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--felt-2); border: 1px solid var(--line); border-radius: 10px; padding: 4px; gap: 4px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 4px; gap: 4px; }
   .seg button { border: 0; background: transparent; padding: 9px 4px; border-radius: 7px; font-weight: 500; font-size: 15px; color: var(--muted); }
   .seg button[aria-pressed=true] { background: var(--felt-3); color: var(--ivory); box-shadow: inset 0 0 0 1px var(--brass); }
   .roll-btn { width: 100%; padding: 15px; font-size: 19px; font-family: var(--display); letter-spacing: .05em; }
@@ -128,24 +142,24 @@
   /* история */
   .feed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .roll { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .roll { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; }
   .roll.new { animation: slidein .45s ease-out; }
   @keyframes slidein { from { transform: translateY(-8px); opacity: .2; } to { transform: none; opacity: 1; } }
   .roll .meta { min-width: 0; }
   .roll .name { font-weight: 700; overflow-wrap: anywhere; }
   .roll .note { color: var(--ivory); opacity: .85; overflow-wrap: anywhere; }
   .roll .sub { color: var(--muted); font-size: 14px; }
-  .val { font-family: var(--display); font-weight: 800; font-size: 30px; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 10px; background: var(--felt-3); font-variant-numeric: lining-nums tabular-nums; }
+  .val { font-family: var(--display); font-weight: 800; font-size: 30px; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 4px; background: var(--felt-3); font-variant-numeric: lining-nums tabular-nums; }
   .roll.win { border-color: var(--brass); }
   .roll.win .val { background: var(--brass); color: var(--brass-ink); }
   .roll.fail { border-color: var(--blood); }
   .roll.fail .val { background: var(--blood); color: #1b0805; }
-  .empty { color: var(--muted); text-align: center; padding: 18px 10px; border: 1px dashed var(--line); border-radius: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 18px 10px; border: 1px dashed var(--line); border-radius: 4px; }
   .danger-zone { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; }
   .danger-zone .q { color: var(--muted); }
   .btn.danger { border-color: var(--blood); color: var(--blood); background: transparent; }
 
-  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 10px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: calc(100% - 32px); }
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: calc(100% - 32px); }
   .err { color: var(--blood); }
 
   @media (prefers-reduced-motion: reduce) {
@@ -153,18 +167,123 @@
   }
 
   /* лобби */
-  .tables { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
-  .table-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
-  .table-row:hover { border-color: var(--brass); }
-  .table-row.invited { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
-  .table-row .code { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: .03em; overflow-wrap: anywhere; }
-  .table-row .count { color: var(--muted); font-size: 14px; font-weight: 400; font-family: var(--body); letter-spacing: 0; margin-left: 6px; }
-  .table-row .sitters { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; min-width: 0; }
-  .mini { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; min-width: 0; }
-  .mini .ava { width: 22px; height: 22px; font-size: 12px; }
-  .recent { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .recent .btn { font-family: var(--display); letter-spacing: .03em; }
-  .invite { border-color: var(--brass); }
+  .lobby { gap: 0; }
+  .gilded { position: relative; border: 1px solid rgba(207, 167, 90, .3); border-radius: 3px;
+    background: linear-gradient(180deg, #1d1611 0%, #130e0b 100%);
+    box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .12), 0 10px 24px rgba(0, 0, 0, .42); }
+  .gilded::before { content: ""; position: absolute; inset: -1px; pointer-events: none; --c: var(--brass);
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) top left / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) top right / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom left / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom right / 2px 16px no-repeat; }
+
+  .lobby-top { position: relative; z-index: 4; height: 0; }
+  .sigil { position: absolute; top: 10px; left: 0; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; color: var(--brass);
+    background: radial-gradient(circle, rgba(11, 8, 7, .88) 62%, rgba(11, 8, 7, .5) 100%); box-shadow: 0 6px 18px rgba(0, 0, 0, .55); transition: color .2s, transform .2s; }
+  .sigil svg { width: 100%; height: 100%; display: block; }
+  .sigil .ring { fill: none; stroke: currentColor; stroke-width: 1.2; }
+  .sigil .studs { fill: currentColor; }
+  .sigil .cross { stroke: var(--gold-hi); stroke-width: 2.2; stroke-linecap: round; transform-origin: 24px 24px; transition: transform .35s cubic-bezier(.2, .9, .25, 1); }
+  .sigil:hover { color: var(--gold-hi); }
+  .sigil[aria-expanded=true] .cross { transform: rotate(45deg); }
+
+  .hero { position: relative; z-index: 1; margin: -16px -16px 0; height: min(108vw, 450px); overflow: hidden; background: var(--felt);
+    --fade: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, .86) 56%, rgba(0, 0, 0, .5) 74%, rgba(0, 0, 0, .16) 89%, transparent 100%);
+    -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  .hero img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 63% 50%;
+    filter: saturate(.86) contrast(1.07) brightness(.9) sepia(.08); }
+  .hero::before { content: ""; position: absolute; inset: 0; z-index: 1;
+    background: radial-gradient(150px 150px at 34px 36px, rgba(11, 8, 7, .78), transparent 72%),
+                radial-gradient(140% 95% at 62% 62%, transparent 52%, rgba(11, 8, 7, .78) 100%); }
+  .flame { position: absolute; z-index: 1; left: var(--fx, 73%); top: var(--fy, 67%); width: 52%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 196, 104, .34) 0%, rgba(255, 150, 60, .12) 34%, transparent 64%); mix-blend-mode: screen;
+    animation: flicker 3.4s ease-in-out infinite; }
+  @keyframes flicker { 0%, 100% { opacity: .72; transform: scale(1); } 18% { opacity: 1; transform: scale(1.05); } 37% { opacity: .8; } 55% { opacity: .96; transform: scale(.97); } 74% { opacity: .68; } 88% { opacity: .9; } }
+
+  .nameplate { position: relative; z-index: 2; margin-top: -92px; display: grid; justify-items: center; gap: 0; }
+  .nameplate input { width: 100%; max-width: 440px; background: transparent; border: 0; border-radius: 0; text-align: center; padding: 6px 8px 0;
+    font-family: var(--display); font-size: clamp(32px, 9vw, 42px); letter-spacing: .05em; color: var(--ivory);
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .95), 0 0 3px rgba(0, 0, 0, .9); }
+  .nameplate input::placeholder { color: rgba(236, 226, 204, .5); }
+  .nameplate input:focus { outline: none; box-shadow: none; border: 0; }
+  .flourish { width: min(300px, 82%); height: 20px; color: var(--brass); transition: color .2s; overflow: visible; }
+  .flourish path, .flourish line { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; }
+  .flourish .gem { fill: currentColor; stroke: none; }
+  .nameplate:focus-within .flourish { color: var(--gold-hi); }
+  .nameplate .err { color: #f09484; font-size: 15px; margin-top: 4px; }
+  .nameplate.shake { animation: shake .42s cubic-bezier(.36, .07, .19, .97); }
+  @keyframes shake { 20%, 80% { transform: translateX(-2px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-4px); } }
+
+  .plaques { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 12px; }
+  .plaque { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 16px 14px 16px 18px; text-align: left; color: var(--ivory);
+    transition: border-color .2s, box-shadow .2s, transform .15s; }
+  .plaque:hover, .plaque:focus-visible { outline: none; border-color: rgba(236, 208, 143, .62);
+    box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .24), 0 12px 28px rgba(0, 0, 0, .5), 0 0 26px rgba(207, 167, 90, .12); }
+  .plaque:active { transform: translateY(1px); }
+  .plaque.invited { border-color: rgba(236, 208, 143, .75); }
+  .plaque.invited::before { --c: var(--gold-hi); }
+  .plaque-info { min-width: 0; display: grid; gap: 10px; }
+  .plaque-code { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 23px; letter-spacing: .07em; text-transform: uppercase; line-height: 1.05; overflow-wrap: anywhere; }
+  .live-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--tadpole); box-shadow: 0 0 0 3px rgba(165, 125, 226, .18), 0 0 12px rgba(165, 125, 226, .75); animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(165, 125, 226, .08), 0 0 18px rgba(165, 125, 226, .9); } }
+  .seal { width: 14px; height: 14px; flex: none; color: var(--gold-hi); }
+  .sitters { display: flex; flex-wrap: wrap; gap: 6px 14px; min-width: 0; }
+  .mini { display: inline-flex; align-items: center; gap: 7px; font-size: 16px; min-width: 0; color: #d9cdb4; }
+  .mini .ava { width: 24px; height: 24px; font-size: 12px; }
+  .more { color: var(--muted); font-size: 15px; }
+  .plaque-go { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(207, 167, 90, .5); color: var(--brass); transition: background .2s, color .2s; }
+  .plaque-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .plaque:hover .plaque-go, .plaque:focus-visible .plaque-go { background: var(--brass); color: var(--brass-ink); }
+  .loading-plaque { height: 86px; border: 1px solid rgba(207, 167, 90, .14); border-radius: 3px; background: linear-gradient(100deg, #130e0b 30%, #1d1611 50%, #130e0b 70%); background-size: 220% 100%; animation: sheen 1.5s linear infinite; }
+  @keyframes sheen { to { background-position: -220% 0; } }
+
+  .lair { position: relative; display: grid; justify-items: center; gap: 16px; margin-top: 8px; padding: 168px 16px 8px; text-align: center; }
+  .leviathan { position: absolute; inset: 0 -16px auto; height: 240px; background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/122.The_Destruction_of_Leviathan.jpg/500px-122.The_Destruction_of_Leviathan.jpg") center 60% / 128% auto no-repeat;
+    filter: grayscale(1) sepia(1) saturate(1.5) hue-rotate(-6deg) brightness(.72) contrast(1.25); opacity: .62;
+    -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 30%, transparent 100%); }
+  .lair-title { position: relative; margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: .1em; text-transform: uppercase; color: var(--ivory); text-shadow: 0 2px 10px #000; }
+  .lair .btn { position: relative; min-width: 220px; font-family: var(--display); font-size: 18px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
+
+  /* меню «+» */
+  .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(6, 4, 3, .62); animation: fadein .25s ease-out; }
+  @keyframes fadein { from { opacity: 0; } }
+  .menu { position: fixed; z-index: 21; top: calc(env(safe-area-inset-top, 0px) + 68px); left: max(16px, calc(50% - 260px)); width: min(344px, calc(100% - 32px));
+    padding: 10px; transform-origin: top left; animation: unfurl .34s cubic-bezier(.2, .9, .25, 1);
+    box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .14), 0 26px 50px rgba(0, 0, 0, .65); }
+  @keyframes unfurl { from { opacity: 0; clip-path: inset(0 100% 100% 0); transform: translateY(-6px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
+  .menu-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 15px 12px; border: 0; border-radius: 2px; background: transparent; color: var(--ivory);
+    font-family: var(--display); font-size: 20px; letter-spacing: .06em; text-transform: uppercase; text-align: left; }
+  .menu-item + .menu-item { border-top: 1px solid rgba(207, 167, 90, .14); }
+  .menu-item svg { width: 24px; height: 24px; flex: none; color: var(--brass); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .menu-item:hover, .menu-item:focus-visible { outline: none; background: rgba(207, 167, 90, .09); color: var(--gold-hi); }
+  .menu-form { display: grid; gap: 12px; padding: 4px 4px 4px; }
+  .form-head { display: flex; align-items: center; gap: 6px; }
+  .form-title { font-family: var(--display); font-size: 20px; letter-spacing: .06em; text-transform: uppercase; }
+  .icon-btn { width: 46px; height: 46px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid rgba(207, 167, 90, .35); border-radius: 3px; background: #110c09; color: var(--brass); transition: color .2s, border-color .2s; }
+  .icon-btn.bare { border-color: transparent; background: transparent; width: 38px; height: 38px; }
+  .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn:hover { color: var(--gold-hi); border-color: rgba(236, 208, 143, .6); }
+  .icon-btn.spin svg { animation: spin .5s cubic-bezier(.2, .9, .25, 1); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .menu-form .err { color: #f09484; font-size: 15px; margin: 0; }
+  .menu-form .btn { font-family: var(--display); font-size: 18px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
+  .menu-sub { margin: 6px 0 0; padding: 12px 8px 8px; border-top: 1px solid rgba(207, 167, 90, .14); font-family: var(--display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .recent { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 6px 6px; }
+  .recent .btn { font-family: var(--display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; font-size: 16px; }
+  .back-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (min-width: 600px) {
+    .hero { width: min(820px, 100vw); margin: -16px 0 0; left: 50%; translate: -50% 0; height: 470px;
+      --fade: radial-gradient(ellipse 50% 62% at 50% 40%, #000 38%, rgba(0, 0, 0, .7) 62%, rgba(0, 0, 0, .25) 84%, transparent 100%); }
+    .hero img { object-position: 58% 44%; }
+    .flame { --fx: 69%; --fy: 76%; }
+    .nameplate { margin-top: -110px; }
+    .sigil { top: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flame, .live-dot, .loading-plaque, .menu, .scrim, .nameplate.shake { animation: none; }
+  }
 
   /* раунд */
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -172,7 +291,7 @@
   .duel.live { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(214,164,70,.25), 0 10px 30px rgba(0,0,0,.25); }
   .duel-title { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .06em; }
   .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
-  .fighter { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--felt); text-align: center; min-width: 0; transition: border-color .2s, box-shadow .2s; }
+  .fighter { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 10px 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--felt); text-align: center; min-width: 0; transition: border-color .2s, box-shadow .2s; }
   .fighter .fname { font-weight: 700; overflow-wrap: anywhere; line-height: 1.2; }
   .fighter .tag { font-size: 13px; color: var(--muted); min-height: 1.3em; }
   .fighter.turn { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
@@ -207,7 +326,7 @@
   @keyframes drop { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
   .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .results li { background: var(--felt-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .results li { background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .results li b { font-weight: 700; }
   .results .sc { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
   .tally { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -220,51 +339,45 @@
 </style>
 </head>
 <body>
+<!--
+THESIS: Лобби как стол с костями при свече, выступающий из темноты; отказ от стопки форм-карточек.
+OWN-WORLD: умбра почти чёрная, картина Латура «Игроки в кости» растворяется в черноте, золотая филигрань и угловые скобы в грамматике интерфейса BG3, надписи Forum капителью; фиолетовый «головастик» только для живых столов.
+STORY: открыл — видишь своё имя на гравированной табличке и кто за каким столом; одно касание — сел; всё прочее за «+».
+FIRST VIEWPORT: верхние ~45% — картина (свеча и кости в нижней трети, пламя мерцает), «+» сигил слева сверху; имя крупно по центру на краю затухания; ниже золочёные плашки столов на всю ширину.
+FORM: интерфейс партии BG3; семя: нет (скрипт concept-seed недоступен в этой среде).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <main class="wrap">
 
   <!-- Лобби -->
-  <section id="join" class="wrap" style="padding:0" hidden>
-    <div>
-      <h1>DnD Roll</h1>
-      <p class="lead">Общий стол для бросков d20. Каждый бросает со своего телефона, а результаты сразу видят все игроки за столом.</p>
+  <section id="join" class="wrap lobby" style="padding:0" hidden>
+    <div class="lobby-top">
+      <button id="menuBtn" class="sigil" type="button" aria-label="Меню: создать стол или войти по коду" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ring" cx="24" cy="24" r="21.5"/><circle class="ring" cx="24" cy="24" r="17.5" opacity=".45"/><path class="studs" d="M24 0.8l2.2 2.2-2.2 2.2-2.2-2.2zM24 42.8l2.2 2.2-2.2 2.2-2.2-2.2zM0.8 24l2.2-2.2 2.2 2.2-2.2 2.2zM42.8 24l2.2-2.2 2.2 2.2-2.2 2.2z"/><path class="cross" d="M24 15v18M15 24h18"/></svg></button>
     </div>
-    <label for="nameInput" class="card">Ваше имя
-      <input id="nameInput" type="text" maxlength="24" placeholder="Например, Игорь" required>
-      <span id="joinErr" class="err" hidden></span>
-    </label>
-
-    <div id="inviteCard" class="card invite" hidden>
-      <div>Вас пригласили за стол <b id="inviteRoom"></b></div>
-      <button id="inviteJoin" class="btn primary" type="button">Сесть за этот стол</button>
+    <figure class="hero" aria-hidden="true">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Georges_de_La_Tour_035.jpg/1280px-Georges_de_La_Tour_035.jpg"
+           srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Georges_de_La_Tour_035.jpg/960px-Georges_de_La_Tour_035.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Georges_de_La_Tour_035.jpg/1280px-Georges_de_La_Tour_035.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Georges_de_La_Tour_035.jpg/1920px-Georges_de_La_Tour_035.jpg 1920w"
+           sizes="(max-width: 600px) 150vw, 760px" alt="" decoding="async" fetchpriority="high">
+      <span class="flame"></span>
+    </figure>
+    <div id="nameplate" class="nameplate">
+      <input id="nameInput" type="text" maxlength="24" placeholder="Ваше имя" aria-label="Ваше имя" autocomplete="nickname" enterkeyhint="done">
+      <svg class="flourish" viewBox="0 0 300 20" aria-hidden="true"><path d="M8 10h112M180 10h112"/><path d="M120 10c8 0 10-6 16-6M180 10c-8 0-10-6-16-6M120 10c8 0 10 6 16 6M180 10c-8 0-10 6-16 6"/><path class="gem" d="M150 3l7 7-7 7-7-7z"/><path class="gem" d="M136 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM164 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM8 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM292 8.6l1.4 1.4-1.4 1.4-1.4-1.4z"/></svg>
+      <span id="joinErr" class="err" role="alert" hidden></span>
     </div>
-
-    <div>
-      <h2>СТОЛЫ СЕЙЧАС</h2>
-      <ol id="lobbyList" class="tables"></ol>
-      <p id="lobbyEmpty" class="empty">Загружаем столы…</p>
+    <ol id="lobbyList" class="plaques" aria-label="Столы"></ol>
+    <div id="lobbyLoading" class="plaques" aria-hidden="true"><div class="loading-plaque"></div></div>
+    <div id="lobbyEmpty" class="lair" hidden>
+      <div class="leviathan" aria-hidden="true"></div>
+      <p class="lair-title">Пока никто не играет</p>
+      <button id="emptyCreate" class="btn primary" type="button">Создать стол</button>
     </div>
-
-    <div id="recentBlock" hidden>
-      <h2>ВАШИ НЕДАВНИЕ СТОЛЫ</h2>
-      <div id="recentList" class="recent"></div>
-    </div>
-
-    <form id="joinForm" class="card" autocomplete="off" novalidate>
-      <div class="duel-title">Новый стол</div>
-      <label for="roomInput">Код стола <small>Латиница, цифры и дефис. Друзья увидят этот стол в списке и смогут сесть за него.</small>
-        <div class="row">
-          <input id="roomInput" class="grow" type="text" maxlength="24" placeholder="stol-1234" required>
-          <button id="newRoomBtn" class="btn small ghost" type="button">Другой код</button>
-        </div>
-      </label>
-      <button class="btn primary" type="submit">Создать стол и сесть</button>
-    </form>
   </section>
 
   <!-- Стол -->
   <section id="table" class="wrap" style="padding:0" hidden>
     <header class="topbar">
-      <button id="backBtn" class="btn small ghost" type="button" aria-label="К списку столов">← Столы</button>
+      <button id="backBtn" class="btn small ghost back-btn" type="button" aria-label="К списку столов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Столы</button>
       <div class="room-chip grow"><span>Стол</span><span id="roomName" style="all:unset"></span></div>
       <span id="conn" class="conn">нет связи</span>
       <button id="inviteBtn" class="btn small" type="button">Пригласить</button>
@@ -347,6 +460,31 @@
     <div class="danger-zone" id="clearZone"></div>
   </section>
 </main>
+
+<!-- Меню «+» -->
+<div id="scrim" class="scrim" hidden></div>
+<div id="menu" class="menu gilded" role="dialog" aria-label="Меню" hidden>
+  <div id="menuList">
+    <button class="menu-item" type="button" data-act="create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18M5 9.5v9M19 9.5v9M8 9.5V6.5a4 4 0 0 1 8 0v3"/><path d="M12 13v5M9.5 15.5h5"/></svg><span>Создать стол</span></button>
+    <button class="menu-item" type="button" data-act="code"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3.5M21 12v2.5"/></svg><span>Войти по коду</span></button>
+  </div>
+  <form id="joinForm" class="menu-form" autocomplete="off" novalidate hidden>
+    <div class="form-head">
+      <button id="formBack" class="icon-btn bare" type="button" aria-label="Назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span id="formTitle" class="form-title">Новый стол</span>
+    </div>
+    <div class="row">
+      <input id="roomInput" class="grow" type="text" maxlength="24" placeholder="код стола" aria-label="Код стола" autocapitalize="none" spellcheck="false">
+      <button id="newRoomBtn" class="icon-btn" type="button" aria-label="Другой код"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.9v9.2L12 21.5l-8.5-4.9V7.4z"/><path d="M12 7.5l4.2 7.3H7.8z"/><path d="M12 2.5v5M20.5 7.4l-4.3 7.4M3.5 7.4l4.3 7.4M12 21.5l-4.2-6.7M12 21.5l4.2-6.7"/></svg></button>
+    </div>
+    <p id="formErr" class="err" role="alert" hidden></p>
+    <button id="formSubmit" class="btn primary" type="submit">Создать и сесть</button>
+  </form>
+  <div id="recentBlock" hidden>
+    <div class="menu-sub">Недавние столы</div>
+    <div id="recentList" class="recent"></div>
+  </div>
+</div>
 <div id="banner" class="banner" role="status" hidden></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
@@ -371,7 +509,7 @@ const db = getDatabase(initializeApp(firebaseConfig));
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
-const PALETTE = ["#d6a446", "#7fd1a3", "#8fb8e8", "#e79b7a", "#c9a2e6", "#e6d27a", "#87d6d0", "#e88fb0"];
+const PALETTE = ["#8c3b2f", "#2f6b5a", "#3e528c", "#6b4a9c", "#8a6a2c", "#7a4a2e", "#4f6b2a", "#8c3f62"];
 const TUMBLE_MS = 900;
 const WIN_POINTS = 3;
 
@@ -477,7 +615,9 @@ function myTurn() {
 }
 
 // ---------- лобби: список столов ----------
-let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false;
+let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false, formMode = "create";
+const ICON_GO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const ICON_SEAL = '<svg class="seal" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1l7 7-7 7-7-7z"/></svg>';
 function recentRooms() { try { const a = JSON.parse(store.get("dndroll.recent") || "[]"); return Array.isArray(a) ? a.filter((x) => ROOM_RE.test(x)) : []; } catch { return []; } }
 function addRecent(r) { const a = [r, ...recentRooms().filter((x) => x !== r)].slice(0, 6); store.set("dndroll.recent", JSON.stringify(a)); }
 
@@ -485,16 +625,11 @@ function showLobby() {
   $("table").hidden = true; $("join").hidden = false;
   if (tg && tg.BackButton) { try { tg.BackButton.hide(); } catch {} }
   if (!$("nameInput").value) $("nameInput").value = myName;
-  if (!ROOM_RE.test($("roomInput").value)) $("roomInput").value = newRoomCode();
-  const inv = ROOM_RE.test(invitedRoom);
-  $("inviteCard").hidden = !inv;
-  if (inv) $("inviteRoom").textContent = invitedRoom;
   if (!lobbyUnsub) {
     lobbyUnsub = onValue(ref(db, "lobby"), (snap) => { lobbyData = snap.val() || {}; lobbyLoaded = true; renderLobby(); },
-      () => { lobbyLoaded = true; $("lobbyEmpty").textContent = "Не удалось загрузить список столов. Проверьте интернет."; });
+      () => { lobbyLoaded = true; renderLobby(); toast("Не удалось загрузить столы. Проверьте интернет."); });
   }
   renderLobby();
-  if (!myName) $("nameInput").focus();
 }
 function liveTables() {
   return Object.entries(lobbyData)
@@ -505,41 +640,94 @@ function liveTables() {
 }
 function renderLobby() {
   const list = liveTables();
+  // стол из приглашения показываем первым, даже если за ним пока никого нет
+  if (ROOM_RE.test(invitedRoom)) {
+    const i = list.findIndex((t) => t.code === invitedRoom);
+    const t = i >= 0 ? list.splice(i, 1)[0] : { code: invitedRoom, people: [] };
+    t.invited = true; list.unshift(t);
+  }
   const ol = $("lobbyList"); ol.replaceChildren();
   for (const t of list) {
-    const li = el("li", "table-row" + (t.code === invitedRoom ? " invited" : ""));
-    const info = el("div"); info.style.minWidth = "0";
-    const code = el("div", "code", t.code); code.append(el("span", "count", "· " + t.people.length + " " + plural(t.people.length, "игрок", "игрока", "игроков")));
-    const sitters = el("div", "sitters");
-    t.people.slice(0, 8).forEach((p) => { const m = el("span", "mini"); m.append(ava(p.pid, p.name), el("span", "", p.name)); sitters.append(m); });
-    info.append(code, sitters);
-    const b = el("button", "btn small primary", "Сесть"); b.type = "button";
-    b.addEventListener("click", (e) => { e.stopPropagation(); joinRoom(t.code); });
-    li.addEventListener("click", () => joinRoom(t.code));
-    li.append(info, b); ol.append(li);
+    const li = el("li");
+    const b = el("button", "plaque gilded" + (t.invited ? " invited" : "")); b.type = "button";
+    b.setAttribute("aria-label", "Сесть за стол " + t.code + (t.people.length ? ". За столом: " + t.people.map((p) => p.name).join(", ") : ""));
+    const info = el("span", "plaque-info");
+    const head = el("span", "plaque-code");
+    if (t.people.length) head.append(el("span", "live-dot"));
+    else if (t.invited) head.insertAdjacentHTML("beforeend", ICON_SEAL);
+    head.append(document.createTextNode(t.code));
+    info.append(head);
+    if (t.people.length) {
+      const sitters = el("span", "sitters");
+      t.people.slice(0, 6).forEach((p) => { const m = el("span", "mini"); m.append(ava(p.pid, p.name), el("span", "", p.name)); sitters.append(m); });
+      if (t.people.length > 6) sitters.append(el("span", "more", "+" + (t.people.length - 6)));
+      info.append(sitters);
+    }
+    const go = el("span", "plaque-go"); go.innerHTML = ICON_GO;
+    b.append(info, go);
+    b.addEventListener("click", () => joinRoom(t.code));
+    li.append(b); ol.append(li);
   }
-  const empty = $("lobbyEmpty");
-  empty.hidden = list.length > 0;
-  if (lobbyLoaded) empty.textContent = "Сейчас никто не играет. Создайте стол ниже и позовите друзей.";
-  const live = new Set(list.map((t) => t.code));
-  const rec = recentRooms().filter((x) => !live.has(x));
+  $("lobbyLoading").hidden = lobbyLoaded;
+  $("lobbyEmpty").hidden = !lobbyLoaded || list.length > 0;
+  renderRecent(new Set(list.map((t) => t.code)));
+}
+function renderRecent(live) {
+  const rec = recentRooms().filter((x) => !(live || new Set()).has(x));
   $("recentBlock").hidden = rec.length === 0;
   const rl = $("recentList"); rl.replaceChildren();
   rec.forEach((code) => { const b = el("button", "btn small", code); b.type = "button"; b.addEventListener("click", () => joinRoom(code)); rl.append(b); });
 }
-function plural(n, one, few, many) { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many; }
+function saveName(n) { myName = n; store.set("dndroll.name", n); }
+function nameError(msg) {
+  const e = $("joinErr"); e.textContent = msg; e.hidden = false;
+  const np = $("nameplate"); np.classList.remove("shake"); void np.offsetWidth; np.classList.add("shake");
+  closeMenu(); $("nameInput").focus();
+}
+$("nameInput").addEventListener("input", () => { $("joinErr").hidden = true; });
+$("nameInput").addEventListener("change", () => { const n = $("nameInput").value.trim().slice(0, 24); if (n) saveName(n); });
+$("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 function joinRoom(code) {
   const name = $("nameInput").value.trim().slice(0, 24);
-  const err = $("joinErr");
-  if (!name) { err.textContent = "Введите имя, чтобы остальные видели, кто бросает."; err.hidden = false; $("nameInput").focus(); return; }
-  if (!ROOM_RE.test(code)) { err.textContent = "Код стола: от 3 до 24 символов, только латинские буквы, цифры и дефис."; err.hidden = false; return; }
-  err.hidden = true;
-  myName = name; store.set("dndroll.name", name);
-  enterRoom(code);
+  if (!name) { nameError("Введите имя, чтобы друзья видели, кто бросает"); return; }
+  if (!ROOM_RE.test(code)) { const fe = $("formErr"); fe.textContent = "Код: от 3 до 24 символов, латиница, цифры и дефис"; fe.hidden = false; return; }
+  saveName(name); closeMenu(); enterRoom(code);
 }
-$("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); });
+
+// --- меню «+» ---
+function openMenu() {
+  $("menu").hidden = false; $("scrim").hidden = false; $("menuBtn").setAttribute("aria-expanded", "true");
+  showMenuList(); renderRecent(new Set(liveTables().map((t) => t.code)));
+  const first = $("menu").querySelector(".menu-item"); if (first) first.focus({ preventScroll: true });
+}
+function closeMenu() {
+  if ($("menu").hidden) return;
+  $("menu").hidden = true; $("scrim").hidden = true; $("menuBtn").setAttribute("aria-expanded", "false");
+}
+function showMenuList() { $("menuList").hidden = false; $("joinForm").hidden = true; $("formErr").hidden = true; }
+function showForm(mode) {
+  formMode = mode;
+  $("menuList").hidden = true; $("joinForm").hidden = false; $("formErr").hidden = true;
+  const create = mode === "create";
+  $("formTitle").textContent = create ? "Новый стол" : "Войти по коду";
+  $("formSubmit").textContent = create ? "Создать и сесть" : "Сесть";
+  $("newRoomBtn").hidden = !create;
+  $("roomInput").value = create ? newRoomCode() : "";
+  $("roomInput").focus();
+}
+$("menuBtn").addEventListener("click", () => ($("menu").hidden ? openMenu() : closeMenu()));
+$("scrim").addEventListener("click", closeMenu);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+document.querySelectorAll("#menuList .menu-item").forEach((b) => b.addEventListener("click", () => showForm(b.dataset.act)));
+$("formBack").addEventListener("click", () => { showMenuList(); const f = $("menu").querySelector(".menu-item"); if (f) f.focus(); });
+$("newRoomBtn").addEventListener("click", () => {
+  $("roomInput").value = newRoomCode();
+  const b = $("newRoomBtn"); b.classList.remove("spin"); void b.offsetWidth; b.classList.add("spin");
+});
+$("roomInput").addEventListener("input", () => { $("formErr").hidden = true; });
 $("joinForm").addEventListener("submit", (e) => { e.preventDefault(); joinRoom($("roomInput").value.trim().toLowerCase()); });
-$("inviteJoin").addEventListener("click", () => joinRoom(invitedRoom));
+$("emptyCreate").addEventListener("click", () => { openMenu(); showForm("create"); });
+
 function goLobby() {
   leaveRoom(); room = null; invitedRoom = "";
   const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);

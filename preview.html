@@ -53,7 +53,7 @@
   ::selection { background: rgba(207, 167, 90, .38); color: #fff8e8; }
   input { caret-color: var(--gold-hi); }
   html { scrollbar-color: #4a3a26 var(--felt); }
-  .wrap { max-width: 520px; margin: 0 auto; display: grid; gap: 18px; padding-block: 16px; }
+  .wrap { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-block: 16px; }
   h1, h2 { font-family: var(--display); font-weight: 400; letter-spacing: .04em; margin: 0; text-wrap: balance; }
   h1 { font-size: 34px; line-height: 1.1; }
   h2 { font-size: 15px; letter-spacing: .16em; color: var(--muted); }
@@ -92,7 +92,10 @@
   .invite-note { background: rgba(214,164,70,.12); border: 1px solid rgba(214,164,70,.4); color: var(--ivory); border-radius: 4px; padding: 10px 12px; }
 
   /* шапка стола */
-  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+  .topbar .room-chip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .topbar > .btn, .topbar > .conn { flex: none; }
+  @media (max-width: 420px) { .topbar .conn { font-size: 0; gap: 0; } .topbar .room-chip > span:first-child { display: none; } }
   .room-chip { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; }
   .room-chip span { color: var(--muted); font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; margin-right: 6px; }
   .conn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
