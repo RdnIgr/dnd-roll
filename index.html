@@ -893,7 +893,7 @@ function dieOf(r, pos) { const d = makeDie(r.pid === pid ? "Вы" : rollerName(r
 async function throwDie(d, final) {
   const num = d.querySelector(".die-num"), body = d.querySelector(".die-body");
   d.classList.remove("crit-win", "crit-fail", "idle", "won", "lost", "tie");
-  if (reduceMotion()) { setNum(d, final); return; }
+  if (reduceMotion() || document.hidden) { setNum(d, final); return; }
   const anim = body.animate([
     { transform: "translateY(-34%) rotate(-300deg) scale(.62)", offset: 0 },
     { transform: "translateY(5%) rotate(-70deg) scale(1.05)", offset: .5 },
@@ -909,7 +909,9 @@ async function throwDie(d, final) {
     num.textContent = randInt(20);
     setTimeout(tick, 45 + p * p * 190);
   })();
-  try { await anim.finished; } catch {}
+  // если браузер притормаживает кадры (свёрнутое окно), не ждём дольше положенного
+  await Promise.race([anim.finished.catch(() => {}), wait(TUMBLE_MS + 500)]);
+  try { anim.finish(); } catch {}
   done = true;
   setNum(d, final);
   body.animate([{ transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: 300, easing: "cubic-bezier(.2,.9,.25,1)" });
