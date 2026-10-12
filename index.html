@@ -307,24 +307,23 @@
   .dz[data-pos=back-b] { --x: 34cqw; --y: -22cqh; --s: .48; z-index: 1; filter: brightness(.82) saturate(.85); }
   .dz[data-pos=enter] { --y: -16cqh; --s: .6; opacity: 0; }
   .dz[data-pos=out] { --y: 16cqh; --s: .45; opacity: 0; }
-  .die-body svg { width: 100%; display: block; overflow: visible; }
-  .die-face { fill: #1c150f; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
-  .die-edge { stroke: var(--brass); stroke-width: 2; opacity: .55; fill: none; }
-  .die-tri { fill: #2b2017; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; transition: fill .3s; }
-  .die-num { font-family: var(--display); font-size: 52px; fill: var(--ivory); text-anchor: middle; dominant-baseline: central; font-variant-numeric: lining-nums; }
-  .dz.idle .die-num { fill: var(--muted); }
-  .dz.crit-win .die-tri { fill: var(--brass); }
-  .dz.crit-win .die-num { fill: var(--brass-ink); }
-  .dz.crit-fail .die-tri { fill: var(--blood); }
-  .dz-cap { margin-top: 4px; text-align: center; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--ivory); text-shadow: 0 1px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .3s; }
+  .die-stage { position: relative; width: 100%; aspect-ratio: 1; }
+  .die-body { position: absolute; inset: 0; z-index: 1; will-change: transform; }
+  .die-body canvas { width: 100%; height: 100%; display: block; transition: filter .4s; }
+  .die-shadow { position: absolute; left: 17%; top: 27%; width: 74%; height: 66%; border-radius: 50%; will-change: transform, opacity; opacity: .8;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, .75) 0%, rgba(0, 0, 0, .42) 45%, rgba(0, 0, 0, 0) 72%); }
+  .dz.crit-win canvas { filter: drop-shadow(0 0 14px rgba(236, 208, 143, .8)); }
+  .dz.crit-fail canvas { filter: drop-shadow(0 0 14px rgba(210, 87, 74, .85)); }
+  .dz.rolling .dz-cap { opacity: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .dz-cap { margin-top: 2px; text-align: center; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--ivory); text-shadow: 0 1px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .3s, opacity .35s; }
   .dz[data-pos^=back] .dz-cap { font-size: 28px; color: var(--muted); }
-  .dz[data-pos^=back] .die-num { font-size: 66px; }
   .arena.swap .dz { transition-duration: .38s, .3s, .3s; }
   .arena.swap .dz.lost .die-body { animation: shove .38s ease-out; }
   @keyframes shove { 30% { transform: translateX(var(--shove, 10%)) rotate(14deg); } }
   .dz[data-side=a] { --shove: -12%; }
   .dz[data-side=b] { --shove: 12%; }
-  .dz.won svg { filter: drop-shadow(0 0 16px rgba(236, 208, 143, .6)); }
+  .dz.won canvas { filter: drop-shadow(0 0 18px rgba(236, 208, 143, .7)); }
   .dz.won .die-body { animation: winflash .7s var(--ease); }
   @keyframes winflash { 35% { transform: scale(1.14); filter: brightness(1.45); } }
   .dz.lost { filter: brightness(.6) saturate(.55); }
@@ -605,7 +604,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
 const PALETTE = ["#8c3b2f", "#2f6b5a", "#3e528c", "#6b4a9c", "#8a6a2c", "#7a4a2e", "#4f6b2a", "#8c3f62"];
-const TUMBLE_MS = 1150;
+const TUMBLE_MS = 1500;
 const WIN_POINTS = 3;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -957,48 +956,275 @@ if (tg && tg.BackButton) { try { tg.BackButton.onClick(goLobby); } catch {} }
 // ---------- арена с костями ----------
 const arena = $("arena");
 let front = null, back = null;
-const DIE_SVG = '<svg viewBox="0 0 200 200" aria-hidden="true"><polygon class="die-face" points="100,8 179.7,54 179.7,146 100,192 20.3,146 20.3,54"/><path class="die-edge" d="M100,52 L20.3,54 M100,52 L100,8 M100,52 L179.7,54 M146,132 L179.7,54 M146,132 L179.7,146 M146,132 L100,192 M54,132 L100,192 M54,132 L20.3,146 M54,132 L20.3,54"/><polygon class="die-tri" points="100,52 146,132 54,132"/><text class="die-num" x="100" y="106"></text></svg>';
-function makeDie(caption, side, pos) {
-  const d = el("div", "dz"); d.innerHTML = '<div class="die-body">' + DIE_SVG + '</div><div class="dz-cap"></div><span class="plus" aria-hidden="true">+1</span>';
+// ---------- объёмный d20: двадцатигранник на холсте ----------
+// Камера смотрит на стол сверху. Кость летит из руки бросающего, отскакивает, катится и ложится выпавшей гранью вверх.
+// Траектория задаётся ключом броска, поэтому у всех игроков кость летит одинаково.
+const D20 = (() => {
+  const P = (1 + Math.sqrt(5)) / 2;
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const nrm = (a) => mul(a, 1 / (Math.hypot(a[0], a[1], a[2]) || 1));
+  // кватернионы [w, x, y, z]
+  const qmul = (a, b) => [a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3], a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2], a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1], a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0]];
+  const qnorm = (q) => { const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return [q[0] / l, q[1] / l, q[2] / l, q[3] / l]; };
+  const qaxis = (ax, ang) => { const s = Math.sin(ang / 2), n = nrm(ax); return [Math.cos(ang / 2), n[0] * s, n[1] * s, n[2] * s]; };
+  const qrot = (q, v) => { const u = [q[1], q[2], q[3]], s = q[0]; const t = mul(cross(u, v), 2); return add(add(v, mul(t, s)), cross(u, t)); };
+  const qslerp = (a, b, t) => {
+    let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+    if (d < 0) { b = b.map((x) => -x); d = -d; }
+    if (d > .9995) return qnorm(a.map((x, i) => x + (b[i] - x) * t));
+    const th = Math.acos(d), s = Math.sin(th), wa = Math.sin((1 - t) * th) / s, wb = Math.sin(t * th) / s;
+    return a.map((x, i) => x * wa + b[i] * wb);
+  };
+  const qmat = (m) => { // матрица по строкам → кватернион
+    const tr = m[0][0] + m[1][1] + m[2][2]; let q;
+    if (tr > 0) { const s = Math.sqrt(tr + 1) * 2; q = [s / 4, (m[2][1] - m[1][2]) / s, (m[0][2] - m[2][0]) / s, (m[1][0] - m[0][1]) / s]; }
+    else if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) { const s = Math.sqrt(1 + m[0][0] - m[1][1] - m[2][2]) * 2; q = [(m[2][1] - m[1][2]) / s, s / 4, (m[0][1] + m[1][0]) / s, (m[0][2] + m[2][0]) / s]; }
+    else if (m[1][1] > m[2][2]) { const s = Math.sqrt(1 + m[1][1] - m[0][0] - m[2][2]) * 2; q = [(m[0][2] - m[2][0]) / s, (m[0][1] + m[1][0]) / s, s / 4, (m[1][2] + m[2][1]) / s]; }
+    else { const s = Math.sqrt(1 + m[2][2] - m[0][0] - m[1][1]) * 2; q = [(m[1][0] - m[0][1]) / s, (m[0][2] + m[2][0]) / s, (m[1][2] + m[2][1]) / s, s / 4]; }
+    return qnorm(q);
+  };
+  const inv3 = (m) => {
+    const [a, b, c] = m[0], [d, e, f] = m[1], [g, h, i] = m[2];
+    const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g, det = a * A + b * B + c * C;
+    return [[A / det, -(b * i - c * h) / det, (b * f - c * e) / det], [B / det, (a * i - c * g) / det, -(a * f - c * d) / det], [C / det, -(a * h - b * g) / det, (a * e - b * d) / det]];
+  };
+  const mm = (x, y) => x.map((r) => [0, 1, 2].map((j) => r[0] * y[0][j] + r[1] * y[1][j] + r[2] * y[2][j]));
+  const cols = (a, b, c) => [[a[0], b[0], c[0]], [a[1], b[1], c[1]], [a[2], b[2], c[2]]];
+
+  // геометрия: 12 вершин, 20 граней, нормали наружу
+  const V = [[-1, P, 0], [1, P, 0], [-1, -P, 0], [1, -P, 0], [0, -1, P], [0, 1, P], [0, -1, -P], [0, 1, -P], [P, 0, -1], [P, 0, 1], [-P, 0, -1], [-P, 0, 1]].map(nrm);
+  const FI = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+  const F = FI.map(([i, j, k]) => {
+    let a = V[i], b = V[j], c = V[k];
+    const cen = mul(add(add(a, b), c), 1 / 3);
+    if (dot(cross(sub(b, a), sub(c, a)), cen) < 0) [b, c] = [c, b];
+    const n = nrm(cross(sub(b, a), sub(c, a))), up = nrm(sub(a, cen));
+    return { v: [a, b, c], n, c: cen, up, right: cross(up, n) };
+  });
+  // числа: противоположные грани в сумме дают 21, как у настоящего d20
+  const LABEL = new Array(20).fill(0), FACE_OF = {};
+  let k = 1;
+  const order = [0, 15, 3, 11, 6, 18, 1, 13, 8, 16, 2, 14, 5, 17, 9, 12, 4, 10, 7, 19];
+  for (const i of order) {
+    if (LABEL[i]) continue;
+    const j = F.findIndex((g) => dot(g.n, F[i].n) < -.999);
+    LABEL[i] = k; LABEL[j] = 21 - k; k++;
+  }
+  LABEL.forEach((v, i) => { FACE_OF[v] = i; });
+  // вид чуть сбоку, чтобы кость выглядела объёмной
+  const VIEW = qaxis([1, 0, 0], -.26);
+  const LIGHT = nrm([-.6, .72, .55]), HALF = nrm(add(LIGHT, [0, 0, 1]));
+  const CAM = 7;
+
+  function restQ(value) { // нужная грань смотрит в камеру, число стоит ровно
+    const f = F[FACE_OF[value]];
+    return qmat([f.right, f.up, f.n]);
+  }
+  function symmetries(A, B) { // повороты кости, переводящие грань A в грань B
+    const MA = inv3(cols(...F[A].v)), out = [];
+    for (let s = 0; s < 3; s++) {
+      const b = F[B].v, MB = cols(b[s], b[(s + 1) % 3], b[(s + 2) % 3]);
+      out.push(qmat(mm(MB, MA)));
+    }
+    return out;
+  }
+  function hex(c) { const m = /^#?([0-9a-f]{6})$/i.exec(c || ""); const n = m ? parseInt(m[1], 16) : 0x5b4632; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+
+  function draw(ctx, W, O, o) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, W);
+    const R = W * .4, cx = W / 2, cy = W / 2, base = hex(o.color).map((x) => x * 1.05 + 6);
+    const Q = qmul(VIEW, O);
+    const proj = (p) => { const k = CAM / (CAM - p[2]); return [cx + p[0] * R * k, cy - p[1] * R * k, k]; };
+    const lw = Math.max(1, R * .018);
+    for (let i = 0; i < 20; i++) {
+      const f = F[i], n = qrot(Q, f.n), c = qrot(Q, f.c);
+      if (dot(n, [-c[0], -c[1], CAM - c[2]]) <= 0) continue;
+      const pts = f.v.map((v) => proj(qrot(Q, v)));
+      const diff = Math.max(0, dot(n, LIGHT)), spec = Math.pow(Math.max(0, dot(n, HALF)), 26);
+      const I = .3 + .95 * diff;
+      const col = base.map((x) => Math.min(255, Math.round(x * I + 255 * spec * .45)));
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); ctx.lineTo(pts[1][0], pts[1][1]); ctx.lineTo(pts[2][0], pts[2][1]); ctx.closePath();
+      ctx.fillStyle = "rgb(" + col.join(",") + ")"; ctx.fill();
+      ctx.lineJoin = "round"; ctx.lineWidth = lw;
+      ctx.strokeStyle = "rgba(236,208,143," + (.22 + .45 * Math.max(0, n[2])).toFixed(3) + ")"; ctx.stroke();
+      // число на грани
+      const label = o.top != null && i === o.topFace ? o.top : String(LABEL[i]);
+      const facing = Math.max(0, n[2]);
+      if (facing < .08) continue;
+      const pc = proj(c), s = R * pc[2], fs = .34 * (o.labelScale || 1) / 100;
+      const r = qrot(Q, f.right), u = qrot(Q, f.up);
+      ctx.setTransform(r[0] * s * fs, -r[1] * s * fs, -u[0] * s * fs, u[1] * s * fs, pc[0], pc[1]);
+      ctx.font = "100px Forum, 'Palatino Linotype', Georgia, serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const a = Math.min(1, facing * 1.5);
+      ctx.fillStyle = "rgba(10,6,4," + (a * .7).toFixed(3) + ")"; ctx.fillText(label, 0, 9);
+      ctx.fillStyle = o.ink || "rgba(240,214,150," + a.toFixed(3) + ")"; ctx.fillText(label, 0, 4);
+      if (label === "6" || label === "9") ctx.fillRect(-22, 46, 44, 7);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+  }
+
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function hash(s) { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  // План броска: путь по столу, высота над столом (отскоки) и вращение, кадр за кадром.
+  function plan(value, key, side, dieW, arenaW, arenaH) {
+    const rnd = rng(hash(key));
+    const dir = side === "a" ? -1 : side === "b" ? 1 : (rnd() < .5 ? -1 : 1);
+    const sx = dir * (.42 + .2 * rnd()) * Math.max(arenaW, dieW * 1.6);
+    const sy = (.42 + .25 * rnd()) * Math.max(arenaH, dieW * 1.4);
+    const curve = (rnd() - .5) * .35 * dieW;
+    const US = .8, N = 140;
+    const ease = (u) => { const t = Math.min(1, u / .93); return 1 - Math.pow(1 - t, 3.2); };
+    const pos = (u) => { const e = ease(u); return [sx * (1 - e) + curve * Math.sin(Math.PI * e), sy * (1 - e)]; };
+    const B = [0, .27, .48, .63, .74];
+    const PEAK = [1.25, .42, .17, .06];
+    const height = (u) => {
+      if (u < B[1]) { const t = u / B[1]; return PEAK[0] * (1 - t * t); }
+      for (let i = 1; i < B.length - 1; i++) if (u < B[i + 1]) { const t = (u - B[i]) / (B[i + 1] - B[i]); return PEAK[i] * 4 * t * (1 - t); }
+      return 0;
+    };
+    // вращение: в полёте — свободное, при касании стола — перекат в сторону движения
+    let q = qnorm([rnd() - .5, rnd() - .5, rnd() - .5, rnd() - .5]);
+    let w = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * (14 + 8 * rnd()));
+    const rpx = dieW * .36, T = TUMBLE_MS / 1000;
+    const Q = [q]; let lastGround = false;
+    for (let i = 1; i <= N; i++) {
+      const u0 = (i - 1) / N * US, u1 = i / N * US, dt = (u1 - u0) * T;
+      const p0 = pos(u0), p1 = pos(u1), v = [(p1[0] - p0[0]) / dt, -(p1[1] - p0[1]) / dt, 0];
+      const ground = height(u1) < .03;
+      const roll = mul(cross([0, 0, 1], v), 1 / rpx);
+      if (ground && !lastGround) { // удар о стол: часть вращения гасится, добавляется случайный толчок
+        const kick = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * 6 * (1 - u1));
+        w = add(add(mul(w, .35), mul(roll, .65)), kick);
+      } else if (ground) w = add(mul(w, .8), mul(roll, .2));
+      lastGround = ground;
+      const ang = Math.hypot(w[0], w[1], w[2]) * dt;
+      if (ang > 1e-6) q = qnorm(qmul(qaxis(w, ang), q));
+      Q.push(q);
+    }
+    // какая грань оказалась сверху — на неё «переносим» выпавшее число (поворот-симметрия кости)
+    const Qs = Q[N];
+    let top = 0, best = -2;
+    for (let i = 0; i < 20; i++) { const z = qrot(Qs, F[i].n)[2]; if (z > best) { best = z; top = i; } }
+    const m = qrot(Qs, F[top].n), ax = cross(m, [0, 0, 1]);
+    const D = Math.hypot(ax[0], ax[1], ax[2]) < 1e-6 ? [1, 0, 0, 0] : qaxis(ax, Math.acos(Math.max(-1, Math.min(1, m[2]))));
+    const pre = qmul(D, Qs), A = FACE_OF[value];
+    let Rsym = null, twist = 0, bestAbs = 9;
+    for (const S of symmetries(A, top)) {
+      const up = qrot(pre, qrot(S, F[A].up)), phi = Math.atan2(up[0], up[1]);
+      if (Math.abs(phi) < bestAbs) { bestAbs = Math.abs(phi); Rsym = S; twist = phi; }
+    }
+    const Qrest = qmul(qaxis([0, 0, 1], twist), pre);
+    const orient = (u) => {
+      let qq;
+      u = Math.max(0, Math.min(1, u));
+      if (u <= US) { const x = u / US * N, i = Math.max(0, Math.min(N - 1, Math.floor(x))); qq = qslerp(Q[i], Q[i + 1], x - i); }
+      else { const t = Math.min(1, (u - US) / (1 - US)); qq = qslerp(Qs, Qrest, t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2); }
+      return qmul(qq, Rsym);
+    };
+    return { pos, height, orient, firstImpact: B[1] };
+  }
+
+  return { draw, plan, restQ, FACE_OF, LABEL };
+})();
+
+// Одна кость на арене: холст, тень и бросок.
+class Die3D {
+  constructor(dz) {
+    this.dz = dz;
+    this.stage = dz.querySelector(".die-stage");
+    this.body = dz.querySelector(".die-body");
+    this.shadow = dz.querySelector(".die-shadow");
+    this.canvas = dz.querySelector("canvas");
+    this.ctx = this.canvas.getContext("2d");
+    this.color = "#5b4632"; this.O = D20.restQ(20); this.top = "?"; this.labelScale = 1;
+    this.ro = new ResizeObserver(() => this.paint());
+    this.ro.observe(this.stage);
+  }
+  size() {
+    const w = this.stage.clientWidth, dpr = Math.min(3, window.devicePixelRatio || 1), px = Math.round(w * dpr);
+    if (px > 0 && this.canvas.width !== px) { this.canvas.width = px; this.canvas.height = px; }
+    return px;
+  }
+  paint() {
+    const W = this.size(); if (!W) return;
+    D20.draw(this.ctx, W, this.O, { color: this.color, top: this.top, topFace: D20.FACE_OF[20], labelScale: this.labelScale });
+  }
+  rest(value) { this.top = value === "?" ? "?" : null; this.O = D20.restQ(value === "?" ? 20 : value); this.paint(); }
+  roll(value, key, side) {
+    this.top = null;
+    const arenaRect = arena.getBoundingClientRect(), dieW = this.stage.clientWidth || 120;
+    const p = D20.plan(value, key, side, dieW, arenaRect.width, arenaRect.height);
+    const T = TUMBLE_MS, t0 = performance.now();
+    let impact = false;
+    return new Promise((resolve) => {
+      const finish = () => {
+        if (this.done) return; this.done = true;
+        this.O = p.orient(1); this.paint();
+        this.body.style.transform = ""; this.shadow.style.transform = ""; this.shadow.style.opacity = "";
+        resolve();
+      };
+      this.done = false;
+      const frame = (now) => {
+        if (this.done) return;
+        const u = Math.max(0, Math.min(1, (now - t0) / T));
+        const [x, y] = p.pos(u), h = p.height(u);
+        this.body.style.transform = `translate(${x.toFixed(1)}px, ${(y - h * dieW * .12).toFixed(1)}px) scale(${(1 + .34 * h).toFixed(3)})`;
+        this.shadow.style.transform = `translate(${(x + h * dieW * .22).toFixed(1)}px, ${(y + h * dieW * .3).toFixed(1)}px) scale(${(1 + .3 * h).toFixed(3)})`;
+        this.shadow.style.opacity = String(Math.max(.15, .8 - .45 * h));
+        this.O = p.orient(u); this.paint();
+        if (!impact && u >= p.firstImpact) { impact = true; haptic("light"); }
+        if (u >= 1) finish(); else requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+      setTimeout(finish, T + 600); // если кадры не рисуются (свёрнутое окно), всё равно заканчиваем вовремя
+    });
+  }
+}
+
+function makeDie(caption, side, pos, color) {
+  const d = el("div", "dz");
+  d.innerHTML = '<div class="die-stage"><div class="die-shadow"></div><div class="die-body"><canvas aria-hidden="true"></canvas></div></div><div class="dz-cap"></div><span class="plus" aria-hidden="true">+1</span><span class="die-num sr-only"></span>';
   d.querySelector(".dz-cap").textContent = caption || "";
   if (side) d.dataset.side = side;
   d.dataset.pos = pos || "enter";
   arena.append(d);
+  d.die = new Die3D(d);
+  if (color) d.die.color = color;
+  d.die.labelScale = (pos || "").startsWith("back") ? 1.3 : 1;
   return d;
 }
-function setNum(d, v) { d.querySelector(".die-num").textContent = v; d.classList.toggle("crit-win", v === 20); d.classList.toggle("crit-fail", v === 1); d.classList.toggle("idle", v === "?"); }
-function place(d, pos) { if (d) { void d.offsetWidth; d.dataset.pos = pos; } }
+function critClasses(d, v) { d.classList.toggle("crit-win", v === 20); d.classList.toggle("crit-fail", v === 1); d.classList.toggle("idle", v === "?"); }
+function setNum(d, v) { d.querySelector(".die-num").textContent = v; critClasses(d, v); d.die.rest(v); }
+function place(d, pos) {
+  if (!d) return;
+  void d.offsetWidth; d.dataset.pos = pos;
+  const ls = pos.startsWith("back") ? 1.3 : 1;
+  if (d.die && d.die.labelScale !== ls) { d.die.labelScale = ls; d.die.paint(); }
+}
 function dropDie(d, instant) { if (!d) return; if (instant) { d.remove(); return; } d.classList.remove("won", "lost", "tie"); d.dataset.pos = "out"; setTimeout(() => d.remove(), 520); }
 function clearArena(instant) { dropDie(front, instant); dropDie(back, instant); front = back = null; }
 function placeholder(caption, instant) { clearArena(instant); front = makeDie(caption, null, instant ? "front" : "enter"); setNum(front, "?"); place(front, "front"); }
-function dieOf(r, pos) { const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), r.side, pos); setNum(d, r.value); return d; }
+function dieOf(r, pos) { const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), r.side, pos, colorFor(r.pid)); setNum(d, r.value); return d; }
 
-// Бросок: кость кувыркается и подпрыгивает, цифры мелькают и замедляются; финальное число появляется ровно в момент остановки.
-async function throwDie(d, final) {
-  const num = d.querySelector(".die-num"), body = d.querySelector(".die-body");
+// Бросок: кость вылетает со стороны бросающего, кувыркается, отскакивает от стола и ложится выпавшей гранью вверх.
+async function throwDie(d, final, r, caption) {
+  const cap = d.querySelector(".dz-cap");
+  if (caption != null) setTimeout(() => { cap.textContent = caption; }, 360);
   d.classList.remove("crit-win", "crit-fail", "idle", "won", "lost", "tie");
+  d.die.color = colorFor(r.pid);
   if (reduceMotion() || document.hidden) { setNum(d, final); return; }
-  const anim = body.animate([
-    { transform: "translateY(-34%) rotate(-300deg) scale(.62)", offset: 0 },
-    { transform: "translateY(5%) rotate(-70deg) scale(1.05)", offset: .5 },
-    { transform: "translateY(-7%) rotate(-18deg) scale(.98)", offset: .7 },
-    { transform: "translateY(1%) rotate(-3deg) scale(1.01)", offset: .86 },
-    { transform: "translateY(0) rotate(0deg) scale(1)", offset: 1 }
-  ], { duration: TUMBLE_MS, easing: "cubic-bezier(.25,.75,.3,1)" });
-  let done = false;
-  const t0 = performance.now();
-  (function tick() {
-    const p = (performance.now() - t0) / TUMBLE_MS;
-    if (done || p >= .97) return;
-    num.textContent = randInt(20);
-    setTimeout(tick, 45 + p * p * 190);
-  })();
-  // если браузер притормаживает кадры (свёрнутое окно), не ждём дольше положенного
-  await Promise.race([anim.finished.catch(() => {}), wait(TUMBLE_MS + 500)]);
-  try { anim.finish(); } catch {}
-  done = true;
-  setNum(d, final);
-  body.animate([{ transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: 300, easing: "cubic-bezier(.2,.9,.25,1)" });
+  d.classList.add("rolling");
+  await d.die.roll(final, r.key, r.side);
+  d.classList.remove("rolling");
+  d.querySelector(".die-num").textContent = final;
+  critClasses(d, final);
+  d.querySelector(".die-body").animate([{ transform: "scale(1.06)" }, { transform: "scale(1)" }], { duration: 260, easing: "cubic-bezier(.2,.9,.25,1)" });
 }
 
 // Статическая картина без анимации: последний бросок свободный или текущее положение раунда.
@@ -1069,11 +1295,10 @@ async function playFree(r) {
   rollingLine(r);
   if (back) { dropDie(back); back = null; }
   if (front && front.dataset.side) { dropDie(front); front = null; }
-  if (!front) front = makeDie("", null, "enter");
-  front.querySelector(".dz-cap").textContent = r.pid === pid ? "Вы" : r.name;
+  if (!front) front = makeDie("", null, "front");
+  front.classList.add("rolling");
   place(front, "front");
-  haptic("light");
-  await throwDie(front, r.value);
+  await throwDie(front, r.value, r, r.pid === pid ? "Вы" : r.name);
   hiddenKeys.delete(r.key);
   describeFree(r);
   if (r.value === 20 || r.value === 1) { haptic(r.value === 20 ? "win" : "fail"); if (r.pid === pid) buzz(r.value === 20 ? [60, 40, 120] : 200); }
@@ -1082,18 +1307,17 @@ async function playDuel(r) {
   const before = visibleState();
   if (!before) { hiddenKeys.delete(r.key); return; }
   rollingLine(r, " в раунде " + round.num);
-  haptic("light");
   const caption = r.pid === pid ? "Вы" : rollerName(r);
   if (!before.pending) {
     // первый бросок обмена: прошлые кости уходят, новая выкатывается в центр
-    if (front && !front.dataset.side && !back) { front.dataset.side = r.side; front.querySelector(".dz-cap").textContent = caption; }
-    else { clearArena(); front = makeDie(caption, r.side, "enter"); place(front, "front"); }
+    if (front && !front.dataset.side && !back) { front.dataset.side = r.side; front.classList.add("rolling"); }
+    else { clearArena(); front = makeDie(caption, r.side, "front"); front.classList.add("rolling"); }
   } else {
     // второй бросок: первая кость отходит на задний план к своему игроку, новая — в центр
     if (front) { place(front, "back-" + (front.dataset.side || other(r.side))); back = front; }
-    front = makeDie(caption, r.side, "enter"); place(front, "front");
+    front = makeDie(caption, r.side, "front"); front.classList.add("rolling");
   }
-  await throwDie(front, r.value);
+  await throwDie(front, r.value, r, caption);
   hiddenKeys.delete(r.key);
   renderDuel();
   const st = visibleState();
@@ -1437,6 +1661,8 @@ $("inviteBtn").addEventListener("click", async () => {
   catch { toast(link, 6000); }
 });
 window.addEventListener("pagehide", () => { if (room) { remove(R(`players/${pid}`)).catch(() => {}); remove(ref(db, `lobby/${room}/${pid}`)).catch(() => {}); } });
+
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => arena.querySelectorAll(".dz").forEach((d) => d.die && d.die.paint()));
 
 // ---------- старт ----------
 if (myName && ROOM_RE.test(invitedRoom)) enterRoom(invitedRoom);
