@@ -775,7 +775,7 @@ let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound =
 const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
 const animQueue = []; let animating = false, cooldown = false;
 let dismissedRound = null, picked = [], arenaStale = false, declineShown = null, readyHidden = null, readyPick = null, startedSeen = null, readyWatched = null;
-const pipHold = new Map(); let flashSeat = null;
+const pipHold = new Map(); let flashSeat = null, revealEx = 0;
 const params = new URLSearchParams(location.search);
 let invitedRoom = (params.get("room") || "").toLowerCase();
 
@@ -1120,7 +1120,7 @@ function enterRoom(r) {
       if (firstRound && !animating) syncArena(true);
     } else if (prevId && !firstRound) {
       if (declineShown !== prevId) toast("Раунд отменён");
-      pipHold.clear();
+      pipHold.clear(); revealEx = 0;
       if (!animating) syncArena(false); else arenaStale = true;
     }
     firstRound = false;
@@ -1594,7 +1594,7 @@ async function runNext() {
     else if (round && evt.roundId === round.id) await playRound(evt.roll);
     else hiddenKeys.delete(evt.roll.key);
   }
-  catch (e) { console.error(e); if (evt.roll) hiddenKeys.delete(evt.roll.key); pipHold.clear(); }
+  catch (e) { console.error(e); if (evt.roll) hiddenKeys.delete(evt.roll.key); pipHold.clear(); revealEx = 0; }
   renderAll();
   await wait(animQueue.length ? 350 : 0);
   runNext();
@@ -1659,6 +1659,7 @@ async function playRound(r) {
     return;
   }
   for (const k of [...pipHold.keys()]) if (k !== ex.point) pipHold.delete(k);
+  revealEx = st.exchanges.length;
   renderDuel();
   await wait(250);
   if (n === 2) {
@@ -1685,7 +1686,7 @@ async function playRound(r) {
     pipHold.delete(ex.point); flashSeat = ex.point; renderDuel();
     haptic(st.seats[ex.point].pid === pid ? "win" : "light");
   }
-  pipHold.clear(); renderDuel();
+  pipHold.clear(); revealEx = 0; renderDuel();
   if (st.winner !== null) {
     await wait(500);
     const w = st.seats[st.winner];
@@ -1752,7 +1753,7 @@ async function playIntro() {
   syncArena(false); renderAll();
 }
 function announceRound(rd) {
-  pipHold.clear(); readyHidden = null; readyPick = null;
+  pipHold.clear(); revealEx = 0; readyHidden = null; readyPick = null;
   dismissedRound = null;
   const s = seatsOf(rd); if (!s) return;
   const names = s.map((p) => p.name);
@@ -1834,7 +1835,7 @@ function renderDuel() {
   box.classList.toggle("done", winner !== null);
   $("duelTitle").textContent = "Раунд " + round.num;
   const info = readyInfo(round), started = info.all;
-  const exNo = st.exchanges.length + (pipHold.size && st.current.length === 0 && st.exchanges.length ? 0 : 1);
+  const exNo = revealEx || st.exchanges.length + 1;
   $("duelSub").textContent = winner !== null ? "завершён" : !started ? "подготовка" : (st.n > 2 ? players_(st.n) + " · круг " : "обмен ") + exNo;
   $("duelSub").title = "До " + WIN_POINTS + " очков";
   const fbox = $("fighters");
