@@ -150,6 +150,58 @@
   @media (prefers-reduced-motion: reduce) {
     .die-btn.rolling svg, .die-btn.landed svg, .roll.new { animation: none; }
   }
+
+  /* раунд */
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .duel { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 12px; }
+  .duel.live { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(214,164,70,.25), 0 10px 30px rgba(0,0,0,.25); }
+  .duel-title { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .06em; }
+  .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+  .fighter { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--felt); text-align: center; min-width: 0; transition: border-color .2s, box-shadow .2s; }
+  .fighter .fname { font-weight: 700; overflow-wrap: anywhere; line-height: 1.2; }
+  .fighter .tag { font-size: 13px; color: var(--muted); min-height: 1.3em; }
+  .fighter.turn { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+  .fighter.turn .tag { color: var(--brass); font-weight: 700; }
+  .fighter.won { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+  .fighter.won .tag { color: var(--brass-ink); font-weight: 700; }
+  .fighter.won .pip.on { background: var(--brass-ink); border-color: var(--brass-ink); }
+  .fighter.won .pip { border-color: var(--brass-ink); }
+  .vs { align-self: center; font-family: var(--display); font-weight: 800; color: var(--muted); font-size: 18px; }
+  .pips { display: flex; gap: 6px; }
+  .pip { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--brass); }
+  .pip.on { background: var(--brass); }
+  .pip.pop { animation: pop .5s ease-out; }
+  @keyframes pop { 0%{transform:scale(.4)} 60%{transform:scale(1.35)} 100%{transform:scale(1)} }
+  .exlog { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 15px; }
+  .exlog li { display: grid; grid-template-columns: 2.2em 1fr; gap: 8px; color: var(--muted); }
+  .exlog li b { color: var(--ivory); font-family: var(--display); font-weight: 800; font-variant-numeric: lining-nums tabular-nums; }
+  .exlog .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .duel-end { display: grid; gap: 10px; justify-items: center; text-align: center; }
+  .duel-end .big { font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--brass); }
+  .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .confirm .q { color: var(--muted); font-size: 15px; }
+
+  .picker { display: grid; gap: 12px; }
+  .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--felt); font-weight: 500; }
+  .pick[aria-pressed=true] { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: var(--felt-3); }
+  .hint { color: var(--muted); font-size: 15px; margin: 0; }
+
+  .banner { position: fixed; z-index: 10; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(480px, calc(100% - 32px)); background: var(--brass); color: var(--brass-ink); border-radius: 14px; padding: 12px 16px; text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.4); animation: drop .45s cubic-bezier(.2,.9,.3,1.2); }
+  .banner strong { display: block; font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .04em; }
+  @keyframes drop { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+  .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .results li { background: var(--felt-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .results li b { font-weight: 700; }
+  .results .sc { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
+  .tally { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tally span { padding: 4px 10px; border-radius: 999px; background: var(--felt-3); border: 1px solid var(--line); font-size: 15px; }
+  .tally b { color: var(--brass); font-family: var(--display); font-weight: 800; margin-left: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pip.pop, .banner { animation: none; }
+  }
 </style>
 </head>
 <body>
@@ -186,8 +238,42 @@
     </header>
 
     <div>
-      <h2 id="playersTitle">ЗА СТОЛОМ</h2>
+      <div class="section-head">
+        <h2 id="playersTitle">ЗА СТОЛОМ</h2>
+        <button id="roundBtn" class="btn small" type="button">Объявить раунд</button>
+      </div>
       <div id="players" class="players" style="margin-top:8px"></div>
+    </div>
+
+    <!-- выбор участников раунда -->
+    <div id="picker" class="card picker" hidden>
+      <div class="duel-title">Новый раунд</div>
+      <p class="hint">Приложение выбрало двоих случайно. Нажмите на имя, чтобы поменять участника.</p>
+      <div id="pickList" class="pick-list"></div>
+      <div class="row">
+        <button id="pickRandom" class="btn small ghost" type="button">Выбрать случайно</button>
+        <span class="grow"></span>
+        <button id="pickCancel" class="btn small ghost" type="button">Отмена</button>
+        <button id="pickStart" class="btn small primary" type="button">Начать раунд</button>
+      </div>
+    </div>
+
+    <!-- текущий раунд -->
+    <div id="duel" class="duel" hidden>
+      <div class="section-head">
+        <div id="duelTitle" class="duel-title">РАУНД</div>
+        <div id="abortZone" class="confirm"></div>
+      </div>
+      <div class="fighters">
+        <div id="fa" class="fighter"><div class="fname"></div><div class="pips"></div><div class="tag"></div></div>
+        <div class="vs">vs</div>
+        <div id="fb" class="fighter"><div class="fname"></div><div class="pips"></div><div class="tag"></div></div>
+      </div>
+      <ol id="exlog" class="exlog"></ol>
+      <div id="duelEnd" class="duel-end" hidden>
+        <div id="duelEndText" class="big"></div>
+        <button id="nextRoundBtn" class="btn primary" type="button">Новый раунд</button>
+      </div>
     </div>
 
     <div class="stage">
@@ -204,7 +290,7 @@
     </div>
 
     <div class="controls">
-      <div class="seg" role="group" aria-label="Режим броска">
+      <div id="modeSeg" class="seg" role="group" aria-label="Режим броска">
         <button type="button" data-mode="" aria-pressed="true">Обычный</button>
         <button type="button" data-mode="adv" aria-pressed="false">Преимущество</button>
         <button type="button" data-mode="dis" aria-pressed="false">Помеха</button>
@@ -213,18 +299,23 @@
       <button id="rollBtn" class="btn primary roll-btn" type="button">Бросить d20</button>
     </div>
 
+    <div id="resultsBox" hidden>
+      <h2>ИТОГИ РАУНДОВ</h2>
+      <div id="tally" class="tally" style="margin:8px 0"></div>
+      <ol id="results" class="results"></ol>
+    </div>
+
     <div class="feed-head">
-      <h2>ИСТОРИЯ БРОСКОВ</h2>
+      <h2>СВОБОДНЫЕ БРОСКИ</h2>
       <button id="renameBtn" class="btn small ghost" type="button">Сменить имя</button>
     </div>
     <ol id="feed" class="feed"></ol>
-    <p id="empty" class="empty">Пока никто не бросал. Первый бросок появится здесь у всех игроков.</p>
+    <p id="empty" class="empty">Здесь появятся броски вне раундов.</p>
 
-    <div class="danger-zone" id="clearZone">
-      <button id="clearBtn" class="btn small danger" type="button">Очистить историю</button>
-    </div>
+    <div class="danger-zone" id="clearZone"></div>
   </section>
 </main>
+<div id="banner" class="banner" role="status" hidden></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script type="module">
@@ -246,9 +337,11 @@ const firebaseConfig = {
 const db = getDatabase(initializeApp(firebaseConfig));
 
 const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
 const PALETTE = ["#d6a446", "#7fd1a3", "#8fb8e8", "#e79b7a", "#c9a2e6", "#e6d27a", "#87d6d0", "#e88fb0"];
 const TUMBLE_MS = 900;
+const WIN_POINTS = 3;
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -260,28 +353,28 @@ function randInt(n) { // честный бросок без перекоса
   let x; do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
   return 1 + (x % n);
 }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1) - 1; [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function newRoomCode() {
   const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = "";
   for (let i = 0; i < 4; i++) s += a[randInt(a.length) - 1];
   return "stol-" + s;
 }
-function colorFor(id) {
-  let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return PALETTE[h % PALETTE.length];
-}
+function colorFor(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }
 function initials(name) { return (name || "?").trim().slice(0, 1).toUpperCase(); }
-function fmtTime(ts) {
-  if (typeof ts !== "number") return "";
-  return new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-}
-function toast(msg, ms = 2200) {
-  const t = $("toast"); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms);
+function ava(id, name) { const a = el("span", "ava", initials(name)); a.style.background = colorFor(id); return a; }
+function fmtTime(ts) { return typeof ts === "number" ? new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : ""; }
+function toast(msg, ms = 2200) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms); }
+function banner(title, text, ms = 3800) {
+  const b = $("banner"); b.replaceChildren(el("strong", "", title), document.createTextNode(text || ""));
+  b.hidden = false; b.style.animation = "none"; void b.offsetWidth; b.style.animation = "";
+  clearTimeout(banner._t); banner._t = setTimeout(() => (b.hidden = true), ms);
 }
 function cls(value) { return value === 20 ? "win" : value === 1 ? "fail" : ""; }
-function verdictText(value) { return value === 20 ? "Критический успех" : value === 1 ? "Критический провал" : ""; }
+function critText(value) { return value === 20 ? "Критический успех" : value === 1 ? "Критический провал" : ""; }
 function modeLabel(r) { return r.mode === "adv" ? "преимущество" : r.mode === "dis" ? "помеха" : ""; }
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const byTs = (x, y) => ((x.ts || 0) - (y.ts || 0)) || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0);
+const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };
 
 // ---------- состояние ----------
 let pid = store.get("dndroll.pid");
@@ -289,25 +382,54 @@ if (!pid || pid.length > 40) { pid = crypto.randomUUID ? crypto.randomUUID() : S
 let myName = store.get("dndroll.name") || "";
 let room = null, mode = "";
 let unsubs = [];
-let knownKeys = new Set(), firstFeed = true;
-let players = {}, rolls = [];
-// ключи бросков, которые ещё катятся: их не показываем в истории, чтобы не раскрыть результат раньше времени
-const hiddenKeys = new Set();
-let animating = false, queued = null, cooldown = false;
+let players = {}, freeRolls = [], round = null, results = [];
+let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound = true;
+const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
+const animQueue = []; let animating = false, cooldown = false;
+let picked = [];
 
 const params = new URLSearchParams(location.search);
 const invitedRoom = (params.get("room") || "").toLowerCase();
+const R = (p) => ref(db, `rooms/${room}/${p}`);
+
+// ---------- логика раунда ----------
+// Состояние раунда целиком выводится из списка бросков, поэтому у всех игроков оно одинаковое.
+function deriveRound(rd, onlyVisible) {
+  if (!rd || !rd.a || !rd.b) return null;
+  const order = rd.first === "b" ? ["b", "a"] : ["a", "b"];
+  const rolls = Object.entries(rd.rolls || {}).map(([key, v]) => ({ key, ...v }))
+    .filter((x) => !onlyVisible || !hiddenKeys.has(x.key)).sort(byTs);
+  const score = { a: 0, b: 0 }, exchanges = []; let pending = null, winner = null, count = 0;
+  for (const r of rolls) {
+    if (winner) break;
+    const expected = order[count % 2];
+    if (r.side !== expected || r.pid !== rd[expected].pid) continue; // чужой или внеочередной бросок не засчитывается
+    count++;
+    if (!pending) { pending = r; continue; }
+    const first = pending, second = r; pending = null;
+    const ex = { [first.side]: first, [second.side]: second, point: null };
+    if (first.value > second.value) ex.point = first.side; else if (second.value > first.value) ex.point = second.side;
+    if (ex.point) score[ex.point]++;
+    exchanges.push(ex);
+    if (score.a >= WIN_POINTS) winner = "a"; else if (score.b >= WIN_POINTS) winner = "b";
+  }
+  return { order, score, exchanges, pending, winner, nextSide: winner ? null : order[count % 2], lastKey: rolls.length ? rolls[rolls.length - 1].key : null };
+}
+const roundState = () => deriveRound(round, false);
+const visibleState = () => deriveRound(round, true);
+function roundLive() { const s = roundState(); return !!(s && !s.winner); }
+function myTurn() {
+  if (!roundLive() || animating || cooldown) return false;
+  const full = roundState(), vis = visibleState();
+  return round[full.nextSide].pid === pid && vis.nextSide === full.nextSide;
+}
 
 // ---------- вход ----------
 function showJoin() {
   $("table").hidden = true; $("join").hidden = false;
   $("nameInput").value = myName;
-  const r = ROOM_RE.test(invitedRoom) ? invitedRoom : (store.get("dndroll.room") || newRoomCode());
-  $("roomInput").value = r;
-  if (ROOM_RE.test(invitedRoom)) {
-    $("inviteNote").textContent = "Вас пригласили за стол «" + invitedRoom + "». Введите имя и садитесь.";
-    $("inviteNote").hidden = false;
-  }
+  $("roomInput").value = ROOM_RE.test(invitedRoom) ? invitedRoom : (store.get("dndroll.room") || newRoomCode());
+  if (ROOM_RE.test(invitedRoom)) { $("inviteNote").textContent = "Вас пригласили за стол «" + invitedRoom + "». Введите имя и садитесь."; $("inviteNote").hidden = false; }
   (myName ? $("roomInput") : $("nameInput")).focus();
 }
 $("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); });
@@ -327,169 +449,379 @@ $("joinForm").addEventListener("submit", (e) => {
 function enterRoom(r) {
   leaveRoom();
   room = r;
-  const url = new URL(location.href); url.searchParams.set("room", r);
-  history.replaceState(null, "", url);
+  const url = new URL(location.href); url.searchParams.set("room", r); history.replaceState(null, "", url);
   $("roomName").textContent = r;
   $("join").hidden = true; $("table").hidden = false;
-  knownKeys = new Set(); firstFeed = true; hiddenKeys.clear(); queued = null;
+  knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true;
+  hiddenKeys.clear(); animQueue.length = 0; round = null; results = []; freeRolls = [];
 
-  const meRef = ref(db, `rooms/${r}/players/${pid}`);
+  const meRef = R(`players/${pid}`);
   unsubs.push(onValue(ref(db, ".info/connected"), (snap) => {
     const on = snap.val() === true;
-    $("conn").textContent = on ? "онлайн" : "нет связи";
-    $("conn").classList.toggle("on", on);
+    $("conn").textContent = on ? "онлайн" : "нет связи"; $("conn").classList.toggle("on", on);
     if (on) onDisconnect(meRef).remove().then(() => set(meRef, { name: myName, seen: serverTimestamp() })).catch(() => {});
   }));
-  unsubs.push(onValue(ref(db, `rooms/${r}/players`), (snap) => { players = snap.val() || {}; renderPlayers(); }));
+  unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); }));
 
-  const q = query(ref(db, `rooms/${r}/rolls`), orderByChild("ts"), limitToLast(50));
-  unsubs.push(onValue(q, (snap) => {
-    const list = [];
-    snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
-    list.reverse(); // новые сверху
-    const fresh = firstFeed ? [] : list.filter((x) => !knownKeys.has(x.key));
-    list.forEach((x) => knownKeys.add(x.key));
-    rolls = list;
-    if (firstFeed) {
-      firstFeed = false;
-      if (list[0]) showResult(list[0], false); else resetDie();
-    } else if (fresh.length) {
-      // самый свежий бросок катится на кости у всех; остальные новые сразу попадают в историю
-      const newest = fresh[0];
-      hiddenKeys.add(newest.key);
-      startTumble(newest);
-    } else if (!list.length) {
+  unsubs.push(onValue(query(R("rolls"), orderByChild("ts"), limitToLast(50)), (snap) => {
+    const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
+    list.reverse();
+    const fresh = firstFree ? [] : list.filter((x) => !knownFree.has(x.key));
+    list.forEach((x) => knownFree.add(x.key));
+    freeRolls = list;
+    if (firstFree) { firstFree = false; if (!roundLive() && list[0]) showFreeResult(list[0]); }
+    fresh.sort(byTs).forEach((x) => enqueue({ kind: "free", roll: x }));
+    renderAll();
+  }, () => toast("Нет доступа к столу. Проверьте код.")));
+
+  unsubs.push(onValue(R("round"), (snap) => {
+    const v = snap.val();
+    const prevId = round && round.id;
+    round = v || null;
+    if (round) {
+      const rolls = Object.entries(round.rolls || {}).map(([key, x]) => ({ key, ...x })).sort(byTs);
+      if (firstRound || round.id !== prevId) {
+        // новый раунд или первая загрузка: старые броски не анимируем
+        if (!firstRound) rolls.forEach((x) => { if (!knownDuel.has(x.key)) enqueue({ kind: "duel", roll: x }); knownDuel.add(x.key); });
+        else rolls.forEach((x) => knownDuel.add(x.key));
+        if (!firstRound && round.id !== prevId) announceRound(round);
+      } else {
+        rolls.filter((x) => !knownDuel.has(x.key)).forEach((x) => { knownDuel.add(x.key); enqueue({ kind: "duel", roll: x }); });
+      }
+      if (firstRound && roundLive()) idleDuelDie();
+    } else if (prevId && !firstRound) {
+      toast("Раунд отменён");
       resetDie();
     }
-    renderFeed();
-    renderPlayers();
-  }, () => toast("Нет доступа к столу. Проверьте код.")));
+    firstRound = false;
+    renderAll();
+    saveResultIfFinished();
+  }));
+
+  unsubs.push(onValue(R("results"), (snap) => {
+    const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
+    results = list.sort(byTs).reverse();
+    renderAll();
+  }));
 }
 function leaveRoom() {
   unsubs.forEach((u) => { try { u(); } catch {} });
   unsubs = [];
-  if (room) remove(ref(db, `rooms/${room}/players/${pid}`)).catch(() => {});
+  if (room) remove(R(`players/${pid}`)).catch(() => {});
 }
 
-const visibleRolls = () => rolls.filter((x) => !hiddenKeys.has(x.key));
+// ---------- отрисовка ----------
+function renderAll() { renderPlayers(); renderPicker(); renderDuel(); renderControls(); renderResults(); renderFeed(); }
+
+function onlinePlayers() {
+  const list = Object.entries(players).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" }));
+  if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
+  return list.sort((x, y) => (x.pid === pid ? -1 : y.pid === pid ? 1 : x.name.localeCompare(y.name, "ru")));
+}
 
 function renderPlayers() {
   const box = $("players"); box.replaceChildren();
-  const ids = Object.keys(players);
-  if (!ids.includes(pid)) ids.push(pid);
-  ids.sort((a, b) => (a === pid ? -1 : b === pid ? 1 : 0));
-  $("playersTitle").textContent = "ЗА СТОЛОМ · " + ids.length;
-  const vis = visibleRolls();
-  for (const id of ids) {
-    const name = id === pid ? myName : (players[id] && players[id].name) || "Игрок";
-    const chip = document.createElement("span"); chip.className = "player";
-    const ava = document.createElement("span"); ava.className = "ava"; ava.style.background = colorFor(id); ava.textContent = initials(name);
-    const b = document.createElement("b"); b.textContent = name;
-    chip.append(ava, b);
-    if (id === pid) { const em = document.createElement("em"); em.textContent = "вы"; chip.append(em); }
-    const lr = vis.find((x) => x.pid === id);
-    if (lr) { const l = document.createElement("span"); l.className = "last"; l.textContent = lr.value; l.title = "Последний бросок"; chip.append(l); }
+  const list = onlinePlayers();
+  $("playersTitle").textContent = "ЗА СТОЛОМ · " + list.length;
+  const visFree = freeRolls.filter((x) => !hiddenKeys.has(x.key));
+  for (const p of list) {
+    const chip = el("span", "player");
+    chip.append(ava(p.pid, p.name), el("b", "", p.name));
+    if (p.pid === pid) chip.append(el("em", "", "вы"));
+    const lr = visFree.find((x) => x.pid === p.pid);
+    if (lr) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
     box.append(chip);
   }
+  $("roundBtn").hidden = roundLive() || !$("picker").hidden;
 }
 
-function renderFeed(newKey) {
+// --- выбор участников ---
+function randomPair() { return shuffle(onlinePlayers()).slice(0, 2).map((p) => p.pid); }
+function openPicker() {
+  if (onlinePlayers().length < 2) { toast("Для раунда нужно минимум двое за столом"); return; }
+  picked = randomPair();
+  $("picker").hidden = false; renderAll();
+}
+function closePicker() { $("picker").hidden = true; renderAll(); }
+function renderPicker() {
+  if ($("picker").hidden) return;
+  const list = onlinePlayers();
+  picked = picked.filter((id) => list.some((p) => p.pid === id));
+  const box = $("pickList"); box.replaceChildren();
+  for (const p of list) {
+    const b = el("button", "pick"); b.type = "button";
+    b.setAttribute("aria-pressed", String(picked.includes(p.pid)));
+    b.append(ava(p.pid, p.name), document.createTextNode(p.name + (p.pid === pid ? " (вы)" : "")));
+    b.addEventListener("click", () => {
+      if (picked.includes(p.pid)) picked = picked.filter((x) => x !== p.pid);
+      else { picked.push(p.pid); if (picked.length > 2) picked.shift(); }
+      renderPicker();
+    });
+    box.append(b);
+  }
+  $("pickStart").disabled = picked.length !== 2;
+}
+$("roundBtn").addEventListener("click", openPicker);
+$("nextRoundBtn").addEventListener("click", openPicker);
+$("pickRandom").addEventListener("click", () => { picked = randomPair(); renderPicker(); });
+$("pickCancel").addEventListener("click", closePicker);
+$("pickStart").addEventListener("click", async () => {
+  const list = onlinePlayers();
+  const [a, b] = shuffle(picked).map((id) => list.find((p) => p.pid === id));
+  if (!a || !b) { toast("Выберите двух игроков"); return; }
+  const lastNum = Math.max(round ? round.num || 0 : 0, ...results.map((x) => x.num || 0), 0);
+  const data = { id: push(R("results")).key, num: lastNum + 1, a: { pid: a.pid, name: a.name }, b: { pid: b.pid, name: b.name }, first: randInt(2) === 1 ? "a" : "b", by: pid, ts: serverTimestamp() };
+  $("pickStart").disabled = true;
+  try { await set(R("round"), data); closePicker(); }
+  catch { toast("Не получилось начать раунд. Проверьте интернет."); $("pickStart").disabled = false; }
+});
+
+// --- панель раунда ---
+function renderDuel() {
+  const box = $("duel");
+  if (!round) { box.hidden = true; return; }
+  const st = visibleState(); if (!st) { box.hidden = true; return; }
+  box.hidden = false;
+  box.classList.toggle("live", !st.winner);
+  $("duelTitle").textContent = "РАУНД " + round.num;
+  for (const side of ["a", "b"]) {
+    const f = $(side === "a" ? "fa" : "fb"); const p = round[side];
+    f.className = "fighter" + (st.winner === side ? " won" : "") + (!st.winner && st.nextSide === side ? " turn" : "");
+    f.querySelector(".fname").textContent = p.name + (p.pid === pid ? " (вы)" : "");
+    const pips = f.querySelector(".pips"); const before = pips.querySelectorAll(".pip.on").length;
+    pips.replaceChildren();
+    for (let i = 0; i < WIN_POINTS; i++) { const d = el("span", "pip" + (i < st.score[side] ? " on" : "")); if (i < st.score[side] && i >= before && pips.dataset.round === round.id) d.classList.add("pop"); pips.append(d); }
+    pips.dataset.round = round.id;
+    let tag = "";
+    if (st.winner === side) tag = "победитель";
+    else if (!st.winner && st.nextSide === side) tag = p.pid === pid ? "ваш ход" : "бросает";
+    f.querySelector(".tag").textContent = tag;
+  }
+  const log = $("exlog"); log.replaceChildren();
+  st.exchanges.forEach((ex, i) => {
+    const li = el("li"); li.append(el("span", "n", (i + 1) + "."));
+    const t = el("span");
+    t.append(el("b", "", String(ex.a.value)), document.createTextNode(" : "), el("b", "", String(ex.b.value)));
+    t.append(document.createTextNode(ex.point ? " · очко получает " + round[ex.point].name : " · ничья, очко никому"));
+    li.append(t); log.append(li);
+  });
+  if (st.pending && !st.winner) {
+    const li = el("li"); li.append(el("span", "n", (st.exchanges.length + 1) + "."));
+    const t = el("span"); const side = st.pending.side;
+    t.append(document.createTextNode(round[side].name + " выбросил(а) "), el("b", "", String(st.pending.value)), document.createTextNode(", ждём ответ"));
+    li.append(t); log.append(li);
+  }
+  if (!st.exchanges.length && !st.pending && !st.winner) {
+    const li = el("li"); li.append(el("span", "n", "—"), el("span", "", "Первым бросает " + round[st.nextSide].name));
+    log.append(li);
+  }
+  $("duelEnd").hidden = !st.winner;
+  if (st.winner) {
+    const w = st.winner, l = w === "a" ? "b" : "a";
+    $("duelEndText").textContent = round[w].name + " побеждает " + st.score[w] + ":" + st.score[l];
+  }
+  renderAbort(st);
+}
+function renderAbort(st) {
+  const zone = $("abortZone");
+  if (st.winner) { zone.replaceChildren(); return; }
+  if (zone.dataset.asking === "1") return;
+  const b = el("button", "btn small ghost", "Отменить"); b.type = "button";
+  b.addEventListener("click", () => {
+    zone.dataset.asking = "1"; zone.replaceChildren();
+    const yes = el("button", "btn small danger", "Да"); yes.type = "button";
+    const no = el("button", "btn small ghost", "Нет"); no.type = "button";
+    yes.addEventListener("click", async () => { zone.dataset.asking = ""; try { await remove(R("round")); } catch { toast("Не получилось отменить раунд"); } });
+    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
+    zone.append(el("span", "q", "Отменить раунд?"), yes, no);
+  });
+  zone.replaceChildren(b);
+}
+
+function announceRound(rd) {
+  const first = rd[rd.first];
+  banner("Раунд " + rd.num, "Сражаются " + rd.a.name + " и " + rd.b.name + ". Первым бросает " + first.name + ".");
+  if (rd.a.pid === pid || rd.b.pid === pid) buzz([80, 60, 80]);
+  idleDuelDie();
+}
+function idleDuelDie() {
+  const st = roundState(); if (!st || st.winner) return;
+  $("dieNum").textContent = "20"; die.classList.remove("win", "fail");
+  $("verdict").className = "verdict"; $("verdict").textContent = "";
+  const p = round[st.nextSide];
+  $("who").replaceChildren(el("b", "", p.pid === pid ? "Ваш ход" : p.name), document.createTextNode(p.pid === pid ? ": нажмите на кость" : " бросает следующим"));
+}
+
+// --- итоги ---
+function renderResults() {
+  const st = visibleState();
+  // результат текущего раунда показываем только после того, как кость остановилась
+  const vis = results.filter((x) => !(round && x.key === round.id && !(st && st.winner)));
+  $("resultsBox").hidden = vis.length === 0;
+  const tally = {};
+  vis.forEach((x) => { const k = x.winner.pid; tally[k] = tally[k] || { name: x.winner.name, n: 0 }; tally[k].n++; });
+  const tb = $("tally"); tb.replaceChildren();
+  Object.values(tally).sort((x, y) => y.n - x.n).forEach((t) => { const s = el("span", "", t.name); s.append(el("b", "", String(t.n))); tb.append(s); });
+  const ol = $("results"); ol.replaceChildren();
+  vis.slice(0, 10).forEach((x) => {
+    const li = el("li");
+    const left = el("span"); left.append(document.createTextNode("Раунд " + x.num + ": "), el("b", "", x.winner.name), document.createTextNode(" — " + x.loser.name));
+    li.append(left, el("span", "sc", x.score));
+    ol.append(li);
+  });
+}
+function saveResultIfFinished() {
+  const st = roundState();
+  if (!st || !st.winner || results.some((x) => x.key === round.id)) return;
+  const w = st.winner, l = w === "a" ? "b" : "a";
+  // любой игрок может записать итог; правила базы пропустят только первую запись
+  set(R("results/" + round.id), { num: round.num, winner: round[w], loser: round[l], score: st.score[w] + ":" + st.score[l], ts: serverTimestamp() }).catch(() => {});
+}
+
+// --- свободные броски ---
+function renderFeed() {
   const ul = $("feed"); ul.replaceChildren();
-  const vis = visibleRolls();
+  const vis = freeRolls.filter((x) => !hiddenKeys.has(x.key));
   $("empty").hidden = vis.length > 0;
-  $("clearZone").hidden = vis.length === 0;
   for (const r of vis) {
-    const li = document.createElement("li");
-    li.className = "roll " + cls(r.value) + (r.key === newKey ? " new" : "");
-    const ava = document.createElement("span"); ava.className = "ava"; ava.style.background = colorFor(r.pid); ava.textContent = initials(r.name);
-    const meta = document.createElement("div"); meta.className = "meta";
-    const nm = document.createElement("div"); nm.className = "name"; nm.textContent = r.name + (r.pid === pid ? " (вы)" : "");
-    meta.append(nm);
-    if (r.note) { const n = document.createElement("div"); n.className = "note"; n.textContent = r.note; meta.append(n); }
-    const sub = document.createElement("div"); sub.className = "sub";
+    const li = el("li", "roll " + cls(r.value) + (r.key === renderFeed.newKey ? " new" : ""));
+    const meta = el("div", "meta");
+    meta.append(el("div", "name", r.name + (r.pid === pid ? " (вы)" : "")));
+    if (r.note) meta.append(el("div", "note", r.note));
     const parts = [fmtTime(r.ts)];
     if (r.mode) parts.push(modeLabel(r) + ", второй кубик " + r.alt);
-    const vt = verdictText(r.value); if (vt) parts.push(vt.toLowerCase());
-    sub.textContent = parts.filter(Boolean).join(" · ");
-    meta.append(sub);
-    const val = document.createElement("span"); val.className = "val"; val.textContent = r.value;
-    li.append(ava, meta, val);
+    const ct = critText(r.value); if (ct) parts.push(ct.toLowerCase());
+    meta.append(el("div", "sub", parts.filter(Boolean).join(" · ")));
+    li.append(ava(r.pid, r.name), meta, el("span", "val", String(r.value)));
     ul.append(li);
+  }
+  renderClear(vis.length > 0 || results.length > 0);
+}
+function renderClear(show) {
+  const zone = $("clearZone");
+  if (!show) { zone.replaceChildren(); return; }
+  if (zone.dataset.asking === "1") return;
+  const b = el("button", "btn small danger", "Очистить историю"); b.type = "button";
+  b.addEventListener("click", () => {
+    zone.dataset.asking = "1"; zone.replaceChildren();
+    const yes = el("button", "btn small danger", "Да, очистить"); yes.type = "button";
+    const no = el("button", "btn small ghost", "Отмена"); no.type = "button";
+    yes.addEventListener("click", async () => {
+      zone.dataset.asking = "";
+      try { await Promise.all([remove(R("rolls")), remove(R("results"))]); toast("История очищена"); } catch { toast("Не получилось очистить историю"); }
+      renderAll();
+    });
+    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
+    zone.append(el("span", "q", "Удалить свободные броски и итоги раундов у всех?"), yes, no);
+  });
+  zone.replaceChildren(b);
+}
+
+// --- управление ---
+function renderControls() {
+  const live = roundLive();
+  $("modeSeg").hidden = live; $("noteInput").hidden = live;
+  const btn = $("rollBtn");
+  if (live) {
+    const full = roundState(); const next = round[full.nextSide];
+    const participant = round.a.pid === pid || round.b.pid === pid;
+    if (myTurn()) { btn.textContent = "Ваш ход: бросить d20"; btn.disabled = false; }
+    else { btn.textContent = animating ? "Кость катится…" : (next.pid === pid ? "Ваш ход: бросить d20" : "Бросает " + next.name); btn.disabled = true; }
+    die.disabled = !myTurn();
+    die.setAttribute("aria-label", participant ? "Бросить d20 в раунде" : "Кость раунда");
+  } else {
+    btn.textContent = "Бросить d20"; btn.disabled = animating || cooldown;
+    die.disabled = false; die.setAttribute("aria-label", "Бросить d20");
   }
 }
 
-// ---------- кость ----------
+// ---------- кость и анимация ----------
 const die = $("die");
 function paintDie(value) {
   $("dieNum").textContent = value;
-  die.classList.remove("win", "fail");
-  const c = cls(value); if (c) die.classList.add(c);
-  const v = $("verdict"); v.className = "verdict " + c; v.textContent = verdictText(value);
+  die.classList.remove("win", "fail"); const c = cls(value); if (c) die.classList.add(c);
 }
-function resetDie() {
-  $("dieNum").textContent = "20"; die.classList.remove("win", "fail");
-  $("verdict").textContent = ""; $("who").textContent = "Нажмите на кость, чтобы бросить";
-}
-function setWho(r, rollingNow) {
-  const who = $("who"); who.replaceChildren();
-  const b = document.createElement("b"); b.textContent = r.pid === pid ? "Вы" : r.name;
-  who.append(b);
-  if (rollingNow) {
-    let t = r.pid === pid ? " бросаете" : " бросает";
-    if (r.mode) t += " с " + (r.mode === "adv" ? "преимуществом" : "помехой");
-    t += "…";
-    if (r.note) t += " " + r.note;
-    who.append(document.createTextNode(t));
-    return;
-  }
+function setVerdict(text, kind) { const v = $("verdict"); v.className = "verdict " + (kind || ""); v.textContent = text || ""; }
+function resetDie() { $("dieNum").textContent = "20"; die.classList.remove("win", "fail"); setVerdict(""); $("who").textContent = "Нажмите на кость, чтобы бросить"; }
+function showFreeResult(r) {
+  paintDie(r.value); setVerdict(critText(r.value), cls(r.value));
+  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : r.name));
   let tail = (r.pid === pid ? " выбросили " : " выбросил(а) ") + r.value;
   if (r.mode) tail += " (" + modeLabel(r) + ", второй кубик " + r.alt + ")";
   if (r.note) tail += " · " + r.note;
   who.append(document.createTextNode(tail));
 }
-function showResult(r, animate) {
-  paintDie(r.value);
-  setWho(r, false);
-  if (animate) { die.classList.remove("landed"); void die.offsetWidth; die.classList.add("landed"); }
-}
 
-// Анимация броска. Запускается у всех игроков в момент, когда бросок пришёл из базы.
-function startTumble(r) {
-  if (animating) { if (queued && queued.key !== r.key) hiddenKeys.delete(queued.key); queued = r; return; }
-  animating = true;
-  setWho(r, true);
-  die.classList.remove("win", "fail", "landed");
-  $("verdict").className = "verdict"; $("verdict").textContent = "";
+function rollerName(r) { return r.name || (round && r.side && round[r.side] && round[r.side].name) || "Игрок"; }
+function enqueue(evt) { hiddenKeys.add(evt.roll.key); animQueue.push(evt); if (!animating) runNext(); }
+function runNext() {
+  const evt = animQueue.shift();
+  if (!evt) { animating = false; renderAll(); if (roundLive()) idleDuelDieSoon(); return; }
+  animating = true; renderControls();
+  const r = evt.roll;
+  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : rollerName(r)));
+  let t = r.pid === pid ? " бросаете" : " бросает";
+  if (r.mode) t += " с " + (r.mode === "adv" ? "преимуществом" : "помехой");
+  if (evt.kind === "duel" && round) t += " в раунде " + round.num;
+  who.append(document.createTextNode(t + "…" + (r.note ? " " + r.note : "")));
+  die.classList.remove("win", "fail", "landed"); setVerdict("");
   const finish = () => {
+    die.classList.remove("rolling");
     hiddenKeys.delete(r.key);
-    showResult(r, true);
-    renderFeed(r.key);
-    renderPlayers();
-    if (r.pid === pid && (r.value === 20 || r.value === 1)) { try { navigator.vibrate && navigator.vibrate(r.value === 20 ? [60, 40, 120] : 200); } catch {} }
-    animating = false;
-    if (queued) { const next = queued; queued = null; if (hiddenKeys.has(next.key)) startTumble(next); }
+    reveal(evt);
+    die.classList.remove("landed"); void die.offsetWidth; die.classList.add("landed");
+    if (evt.kind === "free") { renderFeed.newKey = r.key; }
+    renderAll();
+    setTimeout(runNext, animQueue.length ? 450 : 0);
   };
   if (reduceMotion()) { setTimeout(finish, 250); return; }
   die.classList.remove("rolling"); void die.offsetWidth; die.classList.add("rolling");
   const t0 = performance.now();
   (function tick() {
     const left = TUMBLE_MS - (performance.now() - t0);
-    if (left <= 0) { die.classList.remove("rolling"); finish(); return; }
+    if (left <= 0) { finish(); return; }
     $("dieNum").textContent = randInt(20);
-    setTimeout(tick, left < 250 ? 110 : 55); // к концу замедляется
+    setTimeout(tick, left < 250 ? 110 : 55);
   })();
 }
+let idleTimer = null;
+function idleDuelDieSoon() { clearTimeout(idleTimer); idleTimer = setTimeout(() => { if (!animating && roundLive()) { const keep = $("verdict").textContent; idleDuelDie(); setVerdict(keep, $("verdict").className.replace("verdict", "").trim()); } }, 2200); }
 
-function setMode(m) {
-  mode = m;
-  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+function reveal(evt) {
+  const r = evt.roll;
+  if (evt.kind === "free") { showFreeResult(r); if (r.pid === pid && (r.value === 20 || r.value === 1)) buzz(r.value === 20 ? [60, 40, 120] : 200); return; }
+  paintDie(r.value);
+  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : rollerName(r)));
+  who.append(document.createTextNode((r.pid === pid ? " выбросили " : " выбросил(а) ") + r.value));
+  const st = visibleState(); if (!st) return;
+  const last = st.exchanges[st.exchanges.length - 1];
+  const closedExchange = last && (last.a.key === r.key || last.b.key === r.key);
+  if (st.winner && closedExchange) {
+    const w = st.winner, l = w === "a" ? "b" : "a";
+    setVerdict(round[w].name + " выигрывает раунд!", "win");
+    banner(round[w].name + " побеждает", "Раунд " + round.num + " закончился со счётом " + st.score[w] + ":" + st.score[l] + ".");
+    if (round[w].pid === pid) buzz([60, 40, 60, 40, 160]);
+  } else if (closedExchange) {
+    setVerdict(last.point ? "Очко получает " + round[last.point].name : "Ничья, очко никому", last.point ? "win" : "");
+  } else {
+    setVerdict(critText(r.value), cls(r.value));
+  }
 }
-document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+function setMode(m) { mode = m; document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m))); }
+document.querySelectorAll("#modeSeg button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
 
 async function doRoll() {
   if (!room || animating || cooldown) return;
-  cooldown = true; $("rollBtn").disabled = true;
-  setTimeout(() => { cooldown = false; $("rollBtn").disabled = false; }, TUMBLE_MS + 200);
+  if (roundLive()) {
+    if (!myTurn()) { const st = roundState(); toast("Сейчас ход: " + round[st.nextSide].name); return; }
+    const st = roundState();
+    cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 300);
+    try { await set(push(R("round/rolls")), { pid, side: st.nextSide, value: randInt(20), ts: serverTimestamp() }); }
+    catch { toast("Бросок не сохранился. Проверьте интернет."); }
+    return;
+  }
+  cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 200);
   const a = randInt(20), b = randInt(20);
   let value = a, alt = null;
   if (mode === "adv") { value = Math.max(a, b); alt = Math.min(a, b); }
@@ -498,18 +830,13 @@ async function doRoll() {
   const data = { pid, name: myName, value, ts: serverTimestamp() };
   if (mode) { data.mode = mode; data.alt = alt; }
   if (note) data.note = note;
-  try {
-    // запись сразу уходит всем игрокам; анимацию запускает подписка на базу, у вас и у друзей одинаково
-    await set(push(ref(db, `rooms/${room}/rolls`)), data);
-    $("noteInput").value = "";
-  } catch (e) {
-    toast("Бросок не сохранился. Проверьте интернет.");
-  }
+  try { await set(push(R("rolls")), data); $("noteInput").value = ""; }
+  catch { toast("Бросок не сохранился. Проверьте интернет."); }
 }
 die.addEventListener("click", doRoll);
 $("rollBtn").addEventListener("click", doRoll);
 
-// ---------- приглашение, имя, очистка ----------
+// ---------- приглашение, имя ----------
 $("inviteBtn").addEventListener("click", async () => {
   const url = new URL(location.origin + location.pathname); url.searchParams.set("room", room);
   const link = url.toString();
@@ -521,34 +848,11 @@ $("inviteBtn").addEventListener("click", async () => {
   catch { toast(link, 6000); }
 });
 $("renameBtn").addEventListener("click", () => { leaveRoom(); room = null; showJoin(); });
-
-function makeClearBtn() {
-  const b = document.createElement("button");
-  b.id = "clearBtn"; b.className = "btn small danger"; b.type = "button"; b.textContent = "Очистить историю";
-  b.addEventListener("click", askClear);
-  return b;
-}
-function askClear() {
-  const zone = $("clearZone"); zone.replaceChildren();
-  const q = document.createElement("span"); q.className = "q"; q.textContent = "Удалить историю у всех?";
-  const yes = document.createElement("button"); yes.className = "btn small danger"; yes.type = "button"; yes.textContent = "Да, очистить";
-  const no = document.createElement("button"); no.className = "btn small ghost"; no.type = "button"; no.textContent = "Отмена";
-  yes.addEventListener("click", async () => {
-    try { await remove(ref(db, `rooms/${room}/rolls`)); toast("История очищена"); }
-    catch { toast("Не получилось очистить историю"); }
-    zone.replaceChildren(makeClearBtn());
-  });
-  no.addEventListener("click", () => zone.replaceChildren(makeClearBtn()));
-  zone.append(q, yes, no);
-}
-$("clearBtn").addEventListener("click", askClear);
-
-window.addEventListener("pagehide", () => { if (room) remove(ref(db, `rooms/${room}/players/${pid}`)).catch(() => {}); });
+window.addEventListener("pagehide", () => { if (room) remove(R(`players/${pid}`)).catch(() => {}); });
 
 // ---------- старт ----------
 if (myName && ROOM_RE.test(invitedRoom)) enterRoom(invitedRoom);
 else showJoin();
 </script>
-
 </body>
 </html>
