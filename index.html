@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
 <style>
   /* Кости при свечах: почти чёрная умбра, живопись Латура из темноты, золотая филигрань в духе интерфейса BG3.
-     Одна тёмная тема намеренно: играют вечером, при приглушённом свете. */
+     Одна тёмная тема намеренно: играют вечером, при приглушённом свете. Всё помещается в один экран. */
   :root {
     --felt: #0b0807;
     --felt-2: #18120e;
@@ -34,140 +34,63 @@
     --tadpole: #a57de2;
     --display: "Forum", "Trajan Pro", "Palatino Linotype", Georgia, serif;
     --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
-    --r: 4px;
+    --ease: cubic-bezier(.2, .9, .25, 1);
+    --app-h: 100vh;
     color-scheme: dark;
     font-synthesis: none;
   }
+  @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
+  html.tg { --app-h: var(--tg-viewport-stable-height, 100vh); }
   * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100%; }
+  html, body { margin: 0; height: 100%; }
   body {
-    background:
-      radial-gradient(130% 60% at 50% 0%, #1d140e 0%, var(--felt) 62%) fixed,
-      var(--felt);
-    color: var(--ivory);
-    font: 400 17px/1.45 var(--body);
-    padding: env(safe-area-inset-top, 0px) 16px calc(24px + env(safe-area-inset-bottom, 0px));
-    -webkit-tap-highlight-color: transparent;
+    background: radial-gradient(130% 60% at 50% 0%, #1d140e 0%, var(--felt) 62%) fixed, var(--felt);
+    color: var(--ivory); font: 400 17px/1.45 var(--body);
+    padding: 0 16px; overflow: hidden; -webkit-tap-highlight-color: transparent;
   }
   [hidden] { display: none !important; }
   ::selection { background: rgba(207, 167, 90, .38); color: #fff8e8; }
   input { caret-color: var(--gold-hi); }
   html { scrollbar-color: #4a3a26 var(--felt); }
-  .wrap { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding-block: 16px; }
-  h1, h2 { font-family: var(--display); font-weight: 400; letter-spacing: .04em; margin: 0; text-wrap: balance; }
-  h1 { font-size: 34px; line-height: 1.1; }
-  h2 { font-size: 15px; letter-spacing: .16em; color: var(--muted); }
-  .lead { color: var(--muted); margin: 6px 0 0; }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
   :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  h2 { font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .16em; color: var(--muted); margin: 0; text-transform: uppercase; }
+
+  /* каркас экранов: ровно одна высота окна, прокручиваются только внутренние списки */
+  .screen { height: var(--app-h); max-width: 520px; margin: 0 auto; display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
 
   /* поля и кнопки */
-  label { display: grid; gap: 6px; font-weight: 500; }
-  label small { color: var(--muted); font-weight: 400; }
-  input[type=text] {
-    width: 100%; padding: 12px 14px; border-radius: 3px;
-    background: #110c09; border: 1px solid var(--line); color: var(--ivory);
-  }
+  input[type=text] { width: 100%; padding: 12px 14px; border-radius: 3px; background: #110c09; border: 1px solid var(--line); color: var(--ivory); transition: border-color .2s, box-shadow .2s; }
   input[type=text]::placeholder { color: #8a7d66; }
   input[type=text]:focus { border-color: var(--brass); outline: none; box-shadow: 0 0 0 3px rgba(207, 167, 90, .14); }
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 18px; border-radius: 3px; border: 1px solid rgba(207, 167, 90, .38);
-    background: linear-gradient(180deg, #221a13, #17110d); font-weight: 700; transition: border-color .2s, box-shadow .2s, filter .2s;
-  }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: 3px;
+    border: 1px solid rgba(207, 167, 90, .38); background: linear-gradient(180deg, #221a13, #17110d); font-weight: 700;
+    transition: border-color .2s, box-shadow .25s, filter .2s, transform .12s, opacity .2s; }
   .btn:hover { border-color: rgba(236, 208, 143, .7); }
-  .btn.primary { background: linear-gradient(180deg, #e7c98a 0%, #c99d51 55%, #b08442 100%); color: var(--brass-ink); border-color: #e7c98a; box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55), 0 6px 16px rgba(0, 0, 0, .35); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: linear-gradient(180deg, #e7c98a 0%, #c99d51 55%, #b08442 100%); color: var(--brass-ink); border-color: #e7c98a;
+    box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55), 0 6px 16px rgba(0, 0, 0, .35); }
   .btn.primary:hover { filter: brightness(1.06); }
   .btn.ghost { background: transparent; }
   .btn.small { padding: 7px 12px; font-size: 15px; }
-  .btn:disabled { opacity: .5; cursor: default; }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .grow { flex: 1 1 auto; min-width: 0; }
-  .row input.grow { flex: 1 1 0; width: 1%; }
-  .row > .btn { flex: none; }
-
-  /* экран входа */
-  .card { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; }
-  .invite-note { background: rgba(214,164,70,.12); border: 1px solid rgba(214,164,70,.4); color: var(--ivory); border-radius: 4px; padding: 10px 12px; }
-
-  /* шапка стола */
-  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
-  .topbar .room-chip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .topbar > .btn, .topbar > .conn { flex: none; }
-  @media (max-width: 420px) { .topbar .conn { font-size: 0; gap: 0; } .topbar .room-chip > span:first-child { display: none; } }
-  .room-chip { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; }
-  .room-chip span { color: var(--muted); font-family: var(--body); font-weight: 500; font-size: 14px; letter-spacing: 0; margin-right: 6px; }
-  .conn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
-  .conn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--blood); }
-  .conn.on::before { background: var(--ok); }
-
-  .players { display: flex; gap: 8px; flex-wrap: wrap; }
-  .player { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 999px; background: var(--felt-2); border: 1px solid var(--line); font-size: 15px; max-width: 100%; }
-  .player b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .player em { font-style: normal; color: var(--muted); font-size: 13px; }
-  .player .last { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
-  .ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #f3e9d2; flex: none; box-shadow: 0 0 0 1px rgba(207, 167, 90, .6), inset 0 1px 0 rgba(255, 255, 255, .12); }
-
-  /* кость */
-  .stage { display: grid; justify-items: center; gap: 6px; padding: 8px 0 0; }
-  .die-btn { background: none; border: 0; padding: 0; width: min(64vw, 250px); aspect-ratio: 1; max-width: 100%; position: relative; touch-action: manipulation; }
-  .die-btn svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .die-face { fill: #1c150f; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
-  .die-edge { stroke: var(--brass); stroke-width: 2; opacity: .55; fill: none; }
-  .die-tri { fill: #2b2017; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
-  .die-num { font-family: var(--display); font-weight: 800; font-size: 50px; fill: var(--ivory); text-anchor: middle; dominant-baseline: central; font-variant-numeric: lining-nums; }
-  .die-btn.win .die-tri { fill: var(--brass); }
-  .die-btn.win .die-num { fill: var(--brass-ink); }
-  .die-btn.win svg { filter: drop-shadow(0 0 18px rgba(214,164,70,.75)); }
-  .die-btn.fail .die-tri { fill: var(--blood); }
-  .die-btn.fail svg { filter: drop-shadow(0 0 16px rgba(224,87,74,.6)); }
-  .die-btn.rolling svg { animation: tumble .75s cubic-bezier(.3,.7,.4,1); }
-  .die-btn.landed svg { animation: land .35s ease-out; }
-  @keyframes tumble { 0%{transform:rotate(0) scale(1)} 30%{transform:rotate(200deg) scale(.86)} 70%{transform:rotate(330deg) scale(1.06)} 100%{transform:rotate(360deg) scale(1)} }
-  @keyframes land { 0%{transform:scale(1.12)} 100%{transform:scale(1)} }
-  .verdict { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .04em; min-height: 1.5em; text-align: center; }
-  .verdict.win { color: var(--brass); }
-  .verdict.fail { color: var(--blood); }
-  .who { color: var(--muted); text-align: center; min-height: 1.4em; overflow-wrap: anywhere; }
-  .who b { color: var(--ivory); font-weight: 700; }
-
-  /* управление */
-  .controls { display: grid; gap: 12px; }
-  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 4px; gap: 4px; }
-  .seg button { border: 0; background: transparent; padding: 9px 4px; border-radius: 7px; font-weight: 500; font-size: 15px; color: var(--muted); }
-  .seg button[aria-pressed=true] { background: var(--felt-3); color: var(--ivory); box-shadow: inset 0 0 0 1px var(--brass); }
-  .roll-btn { width: 100%; padding: 15px; font-size: 19px; font-family: var(--display); letter-spacing: .05em; }
-
-  /* история */
-  .feed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .roll { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; }
-  .roll.new { animation: slidein .45s ease-out; }
-  @keyframes slidein { from { transform: translateY(-8px); opacity: .2; } to { transform: none; opacity: 1; } }
-  .roll .meta { min-width: 0; }
-  .roll .name { font-weight: 700; overflow-wrap: anywhere; }
-  .roll .note { color: var(--ivory); opacity: .85; overflow-wrap: anywhere; }
-  .roll .sub { color: var(--muted); font-size: 14px; }
-  .val { font-family: var(--display); font-weight: 800; font-size: 30px; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 4px; background: var(--felt-3); font-variant-numeric: lining-nums tabular-nums; }
-  .roll.win { border-color: var(--brass); }
-  .roll.win .val { background: var(--brass); color: var(--brass-ink); }
-  .roll.fail { border-color: var(--blood); }
-  .roll.fail .val { background: var(--blood); color: #1b0805; }
-  .empty { color: var(--muted); text-align: center; padding: 18px 10px; border: 1px dashed var(--line); border-radius: 4px; }
-  .danger-zone { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .danger-zone .q { color: var(--muted); }
   .btn.danger { border-color: var(--blood); color: var(--blood); background: transparent; }
+  .btn:disabled { opacity: .5; cursor: default; transform: none; filter: saturate(.6); }
+  .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .icon-btn { width: 42px; height: 42px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid rgba(207, 167, 90, .35); border-radius: 3px; background: #110c09; color: var(--brass); transition: color .2s, border-color .2s, transform .12s; }
+  .icon-btn.bare { border-color: transparent; background: transparent; width: 38px; height: 38px; }
+  .icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn:hover { color: var(--gold-hi); border-color: rgba(236, 208, 143, .6); }
+  .icon-btn:active { transform: scale(.95); }
+  .icon-btn.spin svg { animation: spin .5s var(--ease); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .row input { flex: 1 1 0; width: 1%; }
+  .err { color: #f09484; font-size: 15px; margin: 0; }
+  .ava { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #f3e9d2; flex: none;
+    box-shadow: 0 0 0 1px rgba(207, 167, 90, .6), inset 0 1px 0 rgba(255, 255, 255, .12); }
 
-  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.35); max-width: calc(100% - 32px); }
-  .err { color: var(--blood); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .die-btn.rolling svg, .die-btn.landed svg, .roll.new { animation: none; }
-  }
-
-  /* лобби */
-  .lobby { gap: 0; }
   .gilded { position: relative; border: 1px solid rgba(207, 167, 90, .3); border-radius: 3px;
     background: linear-gradient(180deg, #1d1611 0%, #130e0b 100%);
     box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .12), 0 10px 24px rgba(0, 0, 0, .42); }
@@ -178,52 +101,60 @@
       linear-gradient(var(--c), var(--c)) bottom left / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom left / 2px 16px no-repeat,
       linear-gradient(var(--c), var(--c)) bottom right / 16px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom right / 2px 16px no-repeat; }
 
-  .lobby-top { position: relative; z-index: 4; height: 0; }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes fadein { from { opacity: 0; } }
+  @keyframes pop { 0% { transform: scale(.4); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+  /* ===== лобби ===== */
+  .lobby-top { position: relative; z-index: 4; height: 0; flex: none; }
   .sigil { position: absolute; top: 10px; left: 0; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; color: var(--brass);
     background: radial-gradient(circle, rgba(11, 8, 7, .88) 62%, rgba(11, 8, 7, .5) 100%); box-shadow: 0 6px 18px rgba(0, 0, 0, .55); transition: color .2s, transform .2s; }
   .sigil svg { width: 100%; height: 100%; display: block; }
   .sigil .ring { fill: none; stroke: currentColor; stroke-width: 1.2; }
   .sigil .studs { fill: currentColor; }
-  .sigil .cross { stroke: var(--gold-hi); stroke-width: 2.2; stroke-linecap: round; transform-origin: 24px 24px; transition: transform .35s cubic-bezier(.2, .9, .25, 1); }
+  .sigil .cross { stroke: var(--gold-hi); stroke-width: 2.2; stroke-linecap: round; transform-origin: 24px 24px; transition: transform .35s var(--ease); }
   .sigil:hover { color: var(--gold-hi); }
-  .sigil[aria-expanded=true] .cross { transform: rotate(45deg); }
+  .sigil:active { transform: scale(.94); }
+  .sigil[aria-expanded=true] .cross { transform: rotate(135deg); }
 
-  .hero { position: relative; z-index: 1; margin: -16px -16px 0; height: min(108vw, 450px); overflow: hidden; background: var(--felt);
+  .hero { position: relative; z-index: 1; flex: 0 0 auto; height: 46%; min-height: 170px; max-height: 460px; margin: calc(-1 * env(safe-area-inset-top, 0px)) -16px 0; overflow: hidden; background: var(--felt);
     --fade: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, .86) 56%, rgba(0, 0, 0, .5) 74%, rgba(0, 0, 0, .16) 89%, transparent 100%);
     -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-  .hero img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 63% 50%;
-    filter: saturate(.86) contrast(1.07) brightness(.9) sepia(.08); }
+  .hero img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 63% 46%;
+    filter: saturate(.86) contrast(1.07) brightness(.9) sepia(.08); animation: herofade 1.2s ease-out both; }
+  @keyframes herofade { from { opacity: 0; transform: scale(1.04); } }
   .hero::before { content: ""; position: absolute; inset: 0; z-index: 1;
-    background: radial-gradient(150px 150px at 34px 36px, rgba(11, 8, 7, .78), transparent 72%),
-                radial-gradient(140% 95% at 62% 62%, transparent 52%, rgba(11, 8, 7, .78) 100%); }
-  .flame { position: absolute; z-index: 1; left: var(--fx, 73%); top: var(--fy, 67%); width: 52%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 196, 104, .34) 0%, rgba(255, 150, 60, .12) 34%, transparent 64%); mix-blend-mode: screen;
-    animation: flicker 3.4s ease-in-out infinite; }
+    background: radial-gradient(150px 150px at 34px 46px, rgba(11, 8, 7, .78), transparent 72%), radial-gradient(140% 95% at 62% 62%, transparent 52%, rgba(11, 8, 7, .78) 100%); }
+  .flame { position: absolute; z-index: 1; left: var(--fx, 73%); top: var(--fy, 66%); width: 52%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 196, 104, .34) 0%, rgba(255, 150, 60, .12) 34%, transparent 64%); mix-blend-mode: screen; animation: flicker 3.4s ease-in-out infinite; }
   @keyframes flicker { 0%, 100% { opacity: .72; transform: scale(1); } 18% { opacity: 1; transform: scale(1.05); } 37% { opacity: .8; } 55% { opacity: .96; transform: scale(.97); } 74% { opacity: .68; } 88% { opacity: .9; } }
 
-  .nameplate { position: relative; z-index: 2; margin-top: -92px; display: grid; justify-items: center; gap: 0; }
+  .nameplate { position: relative; z-index: 2; flex: none; margin-top: -84px; display: grid; justify-items: center; }
   .nameplate input { width: 100%; max-width: 440px; background: transparent; border: 0; border-radius: 0; text-align: center; padding: 6px 8px 0;
-    font-family: var(--display); font-size: clamp(32px, 9vw, 42px); letter-spacing: .05em; color: var(--ivory);
-    text-shadow: 0 2px 14px rgba(0, 0, 0, .95), 0 0 3px rgba(0, 0, 0, .9); }
-  .nameplate input::placeholder { color: rgba(236, 226, 204, .5); }
+    font-family: var(--display); font-size: clamp(30px, 8.6vw, 42px); letter-spacing: .05em; color: var(--ivory); text-shadow: 0 2px 14px rgba(0, 0, 0, .95), 0 0 3px rgba(0, 0, 0, .9); }
+  .nameplate input::placeholder { color: rgba(236, 226, 204, .55); }
   .nameplate input:focus { outline: none; box-shadow: none; border: 0; }
-  .flourish { width: min(300px, 82%); height: 20px; color: var(--brass); transition: color .2s; overflow: visible; }
-  .flourish path, .flourish line { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; }
+  .flourish { width: min(300px, 82%); height: 20px; color: var(--brass); transition: color .2s, transform .3s var(--ease); overflow: visible; }
+  .flourish path { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-linecap: round; }
   .flourish .gem { fill: currentColor; stroke: none; }
-  .nameplate:focus-within .flourish { color: var(--gold-hi); }
-  .nameplate .err { color: #f09484; font-size: 15px; margin-top: 4px; }
+  .nameplate:focus-within .flourish { color: var(--gold-hi); transform: scaleX(1.06); }
+  .nameplate .err { margin-top: 2px; }
   .nameplate.shake { animation: shake .42s cubic-bezier(.36, .07, .19, .97); }
   @keyframes shake { 20%, 80% { transform: translateX(-2px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-4px); } }
 
-  .plaques { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 12px; }
-  .plaque { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 16px 14px 16px 18px; text-align: left; color: var(--ivory);
-    transition: border-color .2s, box-shadow .2s, transform .15s; }
+  .lobby-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; margin: 0 -8px; padding: 16px 8px 10px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 22px), transparent 100%); }
+  .lobby-scroll::-webkit-scrollbar { display: none; }
+  .plaques { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .plaque { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 15px 14px 15px 18px; text-align: left; color: var(--ivory);
+    transition: border-color .2s, box-shadow .25s, transform .15s; }
+  .plaque.enter { animation: rise .5s var(--ease) both; animation-delay: var(--d, 0ms); }
   .plaque:hover, .plaque:focus-visible { outline: none; border-color: rgba(236, 208, 143, .62);
     box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .24), 0 12px 28px rgba(0, 0, 0, .5), 0 0 26px rgba(207, 167, 90, .12); }
-  .plaque:active { transform: translateY(1px); }
+  .plaque:active { transform: scale(.985); }
   .plaque.invited { border-color: rgba(236, 208, 143, .75); }
   .plaque.invited::before { --c: var(--gold-hi); }
-  .plaque-info { min-width: 0; display: grid; gap: 10px; }
+  .plaque-info { min-width: 0; display: grid; gap: 9px; }
   .plaque-code { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 23px; letter-spacing: .07em; text-transform: uppercase; line-height: 1.05; overflow-wrap: anywhere; }
   .live-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--tadpole); box-shadow: 0 0 0 3px rgba(165, 125, 226, .18), 0 0 12px rgba(165, 125, 226, .75); animation: pulse 2.6s ease-in-out infinite; }
   @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(165, 125, 226, .08), 0 0 18px rgba(165, 125, 226, .9); } }
@@ -232,127 +163,236 @@
   .mini { display: inline-flex; align-items: center; gap: 7px; font-size: 16px; min-width: 0; color: #d9cdb4; }
   .mini .ava { width: 24px; height: 24px; font-size: 12px; }
   .more { color: var(--muted); font-size: 15px; }
-  .plaque-go { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(207, 167, 90, .5); color: var(--brass); transition: background .2s, color .2s; }
+  .plaque-go { display: grid; justify-items: center; gap: 3px; color: var(--brass); }
+  .plaque-go i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(207, 167, 90, .5); transition: background .2s, color .2s, transform .25s var(--ease); }
   .plaque-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .plaque:hover .plaque-go, .plaque:focus-visible .plaque-go { background: var(--brass); color: var(--brass-ink); }
+  .plaque-go small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .plaque:hover .plaque-go i, .plaque:focus-visible .plaque-go i { background: var(--brass); color: var(--brass-ink); transform: translateX(2px); }
   .loading-plaque { height: 86px; border: 1px solid rgba(207, 167, 90, .14); border-radius: 3px; background: linear-gradient(100deg, #130e0b 30%, #1d1611 50%, #130e0b 70%); background-size: 220% 100%; animation: sheen 1.5s linear infinite; }
   @keyframes sheen { to { background-position: -220% 0; } }
-
-  .lair { position: relative; display: grid; justify-items: center; gap: 16px; margin-top: 8px; padding: 168px 16px 8px; text-align: center; }
-  .leviathan { position: absolute; inset: 0 -16px auto; height: 240px; background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/122.The_Destruction_of_Leviathan.jpg/500px-122.The_Destruction_of_Leviathan.jpg") center 60% / 128% auto no-repeat;
+  .lair { position: relative; min-height: 100%; display: grid; align-content: end; justify-items: center; gap: 14px; padding: 140px 8px 6px; text-align: center; animation: fadein .6s ease-out; }
+  .leviathan { position: absolute; inset: 0 -16px auto; height: 220px; background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/122.The_Destruction_of_Leviathan.jpg/500px-122.The_Destruction_of_Leviathan.jpg") center 60% / 128% auto no-repeat;
     filter: grayscale(1) sepia(1) saturate(1.5) hue-rotate(-6deg) brightness(.72) contrast(1.25); opacity: .62;
     -webkit-mask-image: radial-gradient(ellipse 56% 44% at 50% 50%, #000 26%, transparent 100%); mask-image: radial-gradient(ellipse 56% 44% at 50% 50%, #000 26%, transparent 100%); }
-  .lair-title { position: relative; margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: .1em; text-transform: uppercase; color: var(--ivory); text-shadow: 0 2px 10px #000; }
+  .lair-title { position: relative; margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: .1em; text-transform: uppercase; text-shadow: 0 2px 10px #000; }
   .lair .btn { position: relative; min-width: 220px; font-family: var(--display); font-size: 18px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
 
   /* меню «+» */
   .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(6, 4, 3, .62); animation: fadein .25s ease-out; }
-  @keyframes fadein { from { opacity: 0; } }
-  .menu { position: fixed; z-index: 21; top: calc(env(safe-area-inset-top, 0px) + 68px); left: max(16px, calc(50% - 260px)); width: min(344px, calc(100% - 32px));
-    padding: 10px; transform-origin: top left; animation: unfurl .34s cubic-bezier(.2, .9, .25, 1);
+  .scrim.closing { animation: fadeout .22s ease-in forwards; }
+  @keyframes fadeout { to { opacity: 0; } }
+  .menu { position: fixed; z-index: 21; top: calc(env(safe-area-inset-top, 0px) + 66px); left: max(16px, calc(50% - 260px)); width: min(344px, calc(100% - 32px));
+    padding: 10px; transform-origin: top left; animation: unfurl .34s var(--ease); overflow: hidden;
     box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .14), 0 26px 50px rgba(0, 0, 0, .65); }
+  .menu.closing { animation: fold .2s ease-in forwards; }
   @keyframes unfurl { from { opacity: 0; clip-path: inset(0 100% 100% 0); transform: translateY(-6px); } to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
+  @keyframes fold { to { opacity: 0; clip-path: inset(0 100% 100% 0); transform: translateY(-6px); } }
+  .pane-in-r { animation: slide-r .28s var(--ease); }
+  .pane-in-l { animation: slide-l .28s var(--ease); }
+  @keyframes slide-r { from { opacity: 0; transform: translateX(18px); } }
+  @keyframes slide-l { from { opacity: 0; transform: translateX(-18px); } }
   .menu-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 15px 12px; border: 0; border-radius: 2px; background: transparent; color: var(--ivory);
-    font-family: var(--display); font-size: 20px; letter-spacing: .06em; text-transform: uppercase; text-align: left; }
+    font-family: var(--display); font-size: 20px; letter-spacing: .06em; text-transform: uppercase; text-align: left; transition: background .2s, color .2s, padding .2s; }
   .menu-item + .menu-item { border-top: 1px solid rgba(207, 167, 90, .14); }
   .menu-item svg { width: 24px; height: 24px; flex: none; color: var(--brass); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  .menu-item:hover, .menu-item:focus-visible { outline: none; background: rgba(207, 167, 90, .09); color: var(--gold-hi); }
-  .menu-form { display: grid; gap: 12px; padding: 4px 4px 4px; }
+  .menu-item small { display: block; font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .menu-item:hover, .menu-item:focus-visible { outline: none; background: rgba(207, 167, 90, .09); color: var(--gold-hi); padding-left: 16px; }
+  .menu-form { display: grid; gap: 12px; padding: 4px; }
   .form-head { display: flex; align-items: center; gap: 6px; }
   .form-title { font-family: var(--display); font-size: 20px; letter-spacing: .06em; text-transform: uppercase; }
-  .icon-btn { width: 46px; height: 46px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid rgba(207, 167, 90, .35); border-radius: 3px; background: #110c09; color: var(--brass); transition: color .2s, border-color .2s; }
-  .icon-btn.bare { border-color: transparent; background: transparent; width: 38px; height: 38px; }
-  .icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-  .icon-btn:hover { color: var(--gold-hi); border-color: rgba(236, 208, 143, .6); }
-  .icon-btn.spin svg { animation: spin .5s cubic-bezier(.2, .9, .25, 1); }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .menu-form .err { color: #f09484; font-size: 15px; margin: 0; }
   .menu-form .btn { font-family: var(--display); font-size: 18px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
   .menu-sub { margin: 6px 0 0; padding: 12px 8px 8px; border-top: 1px solid rgba(207, 167, 90, .14); font-family: var(--display); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
   .recent { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 6px 6px; }
   .recent .btn { font-family: var(--display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; font-size: 16px; }
-  .back-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ===== стол ===== */
+  .topbar { flex: none; display: flex; align-items: center; gap: 8px; height: 58px; }
+  .back-btn { padding: 8px 10px 8px 6px; }
+  .tb-title { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; }
+  .tb-title b { font-family: var(--display); font-weight: 400; font-size: 21px; letter-spacing: .07em; text-transform: uppercase; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--blood); transition: background .3s; }
+  .conn-dot.on { background: var(--ok); box-shadow: 0 0 8px rgba(143, 207, 159, .6); }
+
+  .strip { flex: none; display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .players { flex: 1 1 auto; min-width: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px;
+    -webkit-mask-image: linear-gradient(to right, #000 86%, transparent); mask-image: linear-gradient(to right, #000 86%, transparent); }
+  .players::-webkit-scrollbar { display: none; }
+  .player { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 4px; border-radius: 999px; background: var(--felt-2); border: 1px solid var(--line); font-size: 15px; transition: box-shadow .3s, border-color .3s; }
+  .player em { font-style: normal; color: var(--muted); font-size: 12px; }
+  .player .last { font-family: var(--display); color: var(--brass); }
+  .player.turn { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(207, 167, 90, .5), 0 0 14px rgba(207, 167, 90, .35); }
+  .player.enter { animation: pop .45s var(--ease); }
+  .round-btn { flex: none; font-family: var(--display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
+
+  .duel { flex: none; margin-top: 8px; padding: 12px 14px; display: grid; gap: 10px; animation: rise .45s var(--ease); }
+  .duel.done { border-color: rgba(236, 208, 143, .7); }
+  .duel-head { display: flex; align-items: center; gap: 10px; min-height: 30px; }
+  .duel-title { font-family: var(--display); font-size: 20px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .duel-sub { flex: 1 1 auto; min-width: 0; color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .confirm { display: flex; gap: 8px; align-items: center; }
+  .confirm .q { color: var(--muted); font-size: 14px; }
+  .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: stretch; }
+  .fighter { display: grid; justify-items: center; align-content: center; gap: 6px; padding: 8px 6px; border: 1px solid var(--line); border-radius: 3px; background: #110c09; text-align: center; min-width: 0; transition: border-color .3s, box-shadow .3s, background .4s, color .4s; }
+  .fighter .fname { font-weight: 700; overflow-wrap: anywhere; line-height: 1.15; }
+  .fighter .tag { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); min-height: 1.3em; }
+  .fighter.turn { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(207, 167, 90, .5), 0 0 18px rgba(207, 167, 90, .2); }
+  .fighter.turn .tag { color: var(--gold-hi); }
+  .fighter.won { background: linear-gradient(180deg, #e7c98a, #b08442); border-color: #e7c98a; color: var(--brass-ink); }
+  .fighter.won .tag { color: var(--brass-ink); }
+  .fighter.won .pip { border-color: var(--brass-ink); }
+  .fighter.won .pip.on { background: var(--brass-ink); box-shadow: none; }
+  .vs { align-self: center; font-family: var(--display); color: var(--muted); font-size: 16px; letter-spacing: .1em; }
+  .pips { display: flex; gap: 6px; }
+  .pip { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--brass); transition: background .3s, box-shadow .3s; }
+  .pip.on { background: var(--brass); box-shadow: 0 0 8px rgba(207, 167, 90, .6); }
+  .pip.pop { animation: pop .55s var(--ease); }
+  .exlog { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .exlog:empty { display: none; }
+  .ex { font-family: var(--display); font-size: 15px; letter-spacing: .04em; padding: 1px 8px; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); }
+  .ex .pt { color: var(--gold-hi); }
+  .ex.new { animation: rise .4s var(--ease); }
+
+  .stage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .arena { position: relative; flex: 1 1 auto; min-height: 110px; container-type: size; cursor: pointer; border-radius: 6px; }
+  .arena.locked { cursor: default; }
+  .arena:focus-visible { outline-offset: -2px; }
+  .dz { position: absolute; left: 50%; top: 50%; width: min(56vw, 240px); width: min(64cqw, 70cqh, 250px); z-index: 2; pointer-events: none;
+    --x: 0px; --y: 0px; --s: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(var(--s));
+    transition: transform .55s var(--ease), opacity .45s ease, filter .45s ease; }
+  .dz[data-pos=front] { --y: -3cqh; }
+  .dz[data-pos=back-a] { --x: -34cqw; --y: -22cqh; --s: .48; z-index: 1; filter: brightness(.82) saturate(.85); }
+  .dz[data-pos=back-b] { --x: 34cqw; --y: -22cqh; --s: .48; z-index: 1; filter: brightness(.82) saturate(.85); }
+  .dz[data-pos=enter] { --y: -16cqh; --s: .6; opacity: 0; }
+  .dz[data-pos=out] { --y: 16cqh; --s: .45; opacity: 0; }
+  .die-body svg { width: 100%; display: block; overflow: visible; }
+  .die-face { fill: #1c150f; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; }
+  .die-edge { stroke: var(--brass); stroke-width: 2; opacity: .55; fill: none; }
+  .die-tri { fill: #2b2017; stroke: var(--brass); stroke-width: 3; stroke-linejoin: round; transition: fill .3s; }
+  .die-num { font-family: var(--display); font-size: 52px; fill: var(--ivory); text-anchor: middle; dominant-baseline: central; font-variant-numeric: lining-nums; }
+  .dz.idle .die-num { fill: var(--muted); }
+  .dz.crit-win .die-tri { fill: var(--brass); }
+  .dz.crit-win .die-num { fill: var(--brass-ink); }
+  .dz.crit-fail .die-tri { fill: var(--blood); }
+  .dz-cap { margin-top: 4px; text-align: center; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--ivory); text-shadow: 0 1px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .3s; }
+  .dz[data-pos^=back] .dz-cap { font-size: 28px; color: var(--muted); }
+  .dz[data-pos^=back] .die-num { font-size: 66px; }
+  .arena.swap .dz { transition-duration: .38s, .3s, .3s; }
+  .arena.swap .dz.lost .die-body { animation: shove .38s ease-out; }
+  @keyframes shove { 30% { transform: translateX(var(--shove, 10%)) rotate(14deg); } }
+  .dz[data-side=a] { --shove: -12%; }
+  .dz[data-side=b] { --shove: 12%; }
+  .dz.won svg { filter: drop-shadow(0 0 16px rgba(236, 208, 143, .6)); }
+  .dz.won .die-body { animation: winflash .7s var(--ease); }
+  @keyframes winflash { 35% { transform: scale(1.14); filter: brightness(1.45); } }
+  .dz.lost { filter: brightness(.6) saturate(.55); }
+  .dz.tie .die-body { animation: tieshake .5s ease-in-out; }
+  @keyframes tieshake { 20%, 60% { transform: rotate(-6deg); } 40%, 80% { transform: rotate(6deg); } }
+  .plus { position: absolute; top: 2%; right: 0; font-family: var(--display); font-size: 30px; color: var(--gold-hi); opacity: 0; text-shadow: 0 2px 10px #000; pointer-events: none; }
+  .dz.won .plus { animation: plusup 1.2s ease-out forwards; }
+  @keyframes plusup { 0% { opacity: 0; transform: translateY(10px) scale(.7); } 25% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-20px); } }
+
+  .verdict { flex: none; min-height: 1.45em; text-align: center; font-family: var(--display); font-size: 21px; letter-spacing: .05em; }
+  .verdict.win { color: var(--gold-hi); }
+  .verdict.fail { color: var(--blood); }
+  .verdict.show, .who.show { animation: rise .35s var(--ease); }
+  .who { flex: none; min-height: 1.4em; text-align: center; color: var(--muted); font-size: 16px; overflow-wrap: anywhere; }
+  .who b { color: var(--ivory); }
+  .hint { flex: none; min-height: 1.35em; margin-top: 2px; text-align: center; color: var(--gold-hi); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .controls { flex: none; display: grid; gap: 10px; padding-top: 10px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--felt-2); border: 1px solid var(--line); border-radius: 3px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; padding: 8px 4px; border-radius: 2px; font-weight: 500; font-size: 15px; color: var(--muted); transition: background .2s, color .2s, box-shadow .2s; }
+  .seg button[aria-pressed=true] { background: var(--felt-3); color: var(--ivory); box-shadow: inset 0 0 0 1px var(--brass); }
+  .roll-btn { width: 100%; padding: 15px; font-family: var(--display); font-size: 20px; letter-spacing: .08em; text-transform: uppercase; font-weight: 400; }
+  .roll-btn.your-turn { animation: breathe 2.2s ease-in-out infinite; }
+  @keyframes breathe { 50% { box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55), 0 0 0 4px rgba(207, 167, 90, .2), 0 0 28px rgba(236, 208, 143, .45); } }
+
+  /* выдвижные панели снизу */
+  .sheet { position: fixed; z-index: 31; left: 50%; bottom: 0; width: min(520px, 100%); max-height: 82%; translate: -50% 0; display: flex; flex-direction: column;
+    padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius: 8px 8px 0 0; animation: sheetup .38s var(--ease); }
+  .sheet.closing { animation: sheetdown .24s ease-in forwards; }
+  @keyframes sheetup { from { transform: translateY(100%); } }
+  @keyframes sheetdown { to { transform: translateY(100%); } }
+  .grabber { width: 42px; height: 4px; border-radius: 2px; background: rgba(207, 167, 90, .35); margin: 2px auto 10px; flex: none; }
+  .sheet-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .sheet-title { font-family: var(--display); font-size: 22px; letter-spacing: .07em; text-transform: uppercase; }
+  .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 18px; align-content: start; padding-bottom: 4px; }
+  .hint-text { color: var(--muted); font-size: 15px; margin: 0; }
+  .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--felt); font-weight: 500; transition: border-color .2s, box-shadow .2s, background .2s; }
+  .pick[aria-pressed=true] { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: var(--felt-3); }
+  .feed, .results { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+  .roll { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--felt-2); border: 1px solid var(--line); border-radius: 3px; padding: 9px 12px; }
+  .roll .meta { min-width: 0; }
+  .roll .name { font-weight: 700; overflow-wrap: anywhere; }
+  .roll .note { opacity: .85; overflow-wrap: anywhere; }
+  .roll .sub { color: var(--muted); font-size: 14px; }
+  .val { font-family: var(--display); font-size: 28px; min-width: 50px; text-align: center; padding: 0 8px; border-radius: 3px; background: var(--felt-3); }
+  .roll.win { border-color: var(--brass); }
+  .roll.win .val { background: var(--brass); color: var(--brass-ink); }
+  .roll.fail { border-color: var(--blood); }
+  .roll.fail .val { background: var(--blood); color: #1b0805; }
+  .results li { background: var(--felt-2); border: 1px solid var(--line); border-radius: 3px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .results .sc { font-family: var(--display); color: var(--brass); }
+  .tally:empty, .results:empty, .feed:empty { display: none; }
+  .tally { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tally span { padding: 4px 10px; border-radius: 999px; background: var(--felt-3); border: 1px solid var(--line); font-size: 15px; }
+  .tally b { color: var(--brass); font-family: var(--display); font-weight: 400; margin-left: 4px; }
+  .empty-note { color: var(--muted); font-size: 15px; margin: 8px 0 0; }
+  .danger-zone { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .danger-zone .q { color: var(--muted); }
+
+  .banner { position: fixed; z-index: 40; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(480px, calc(100% - 32px));
+    background: linear-gradient(180deg, #e7c98a, #b08442); color: var(--brass-ink); border-radius: 4px; padding: 12px 16px; text-align: center; box-shadow: 0 12px 30px rgba(0, 0, 0, .5); animation: drop .45s cubic-bezier(.2, .9, .3, 1.2); }
+  .banner strong { display: block; font-family: var(--display); font-weight: 400; font-size: 23px; letter-spacing: .06em; text-transform: uppercase; }
+  .banner.closing { animation: lift .3s ease-in forwards; }
+  @keyframes drop { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+  @keyframes lift { to { transform: translate(-50%, -24px); opacity: 0; } }
+  .toast { position: fixed; z-index: 41; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); max-width: calc(100% - 32px); animation: rise .3s var(--ease); }
+
+  /* переходы между экранами */
+  ::view-transition-old(root) { animation: vt-out .26s ease-in both; }
+  ::view-transition-new(root) { animation: vt-in .4s var(--ease) both; }
+  @keyframes vt-out { to { opacity: 0; transform: scale(.985); } }
+  @keyframes vt-in { from { opacity: 0; transform: scale(1.015); } }
 
   @media (min-width: 600px) {
-    .hero { width: min(820px, 100vw); margin: -16px 0 0; left: 50%; translate: -50% 0; height: 470px;
+    .hero { width: min(820px, 100vw); margin: calc(-1 * env(safe-area-inset-top, 0px)) 0 0; left: 50%; translate: -50% 0; height: 50%;
       --fade: radial-gradient(ellipse 50% 62% at 50% 40%, #000 38%, rgba(0, 0, 0, .7) 62%, rgba(0, 0, 0, .25) 84%, transparent 100%); }
     .hero img { object-position: 58% 44%; }
     .flame { --fx: 69%; --fy: 76%; }
-    .nameplate { margin-top: -110px; }
+    .nameplate { margin-top: -104px; }
     .sigil { top: 14px; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .flame, .live-dot, .loading-plaque, .menu, .scrim, .nameplate.shake { animation: none; }
+  @media (max-height: 640px) {
+    .nameplate { margin-top: -70px; } .plaque { padding-block: 12px; } .roll-btn { padding: 12px; } .topbar { height: 50px; }
+    .duel { padding: 9px 12px; gap: 7px; margin-top: 6px; } .fighter { padding: 5px 6px; gap: 3px; } .fighter .tag { font-size: 10px; }
+    .verdict { font-size: 19px; } .who { font-size: 15px; } .controls { gap: 8px; padding-top: 8px; } .seg button { padding: 6px 4px; } #noteInput { padding-block: 9px; }
   }
-
-  /* раунд */
-  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .duel { background: var(--felt-2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 12px; }
-  .duel.live { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(214,164,70,.25), 0 10px 30px rgba(0,0,0,.25); }
-  .duel-title { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .06em; }
-  .fighters { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
-  .fighter { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 10px 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--felt); text-align: center; min-width: 0; transition: border-color .2s, box-shadow .2s; }
-  .fighter .fname { font-weight: 700; overflow-wrap: anywhere; line-height: 1.2; }
-  .fighter .tag { font-size: 13px; color: var(--muted); min-height: 1.3em; }
-  .fighter.turn { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
-  .fighter.turn .tag { color: var(--brass); font-weight: 700; }
-  .fighter.won { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
-  .fighter.won .tag { color: var(--brass-ink); font-weight: 700; }
-  .fighter.won .pip.on { background: var(--brass-ink); border-color: var(--brass-ink); }
-  .fighter.won .pip { border-color: var(--brass-ink); }
-  .vs { align-self: center; font-family: var(--display); font-weight: 800; color: var(--muted); font-size: 18px; }
-  .pips { display: flex; gap: 6px; }
-  .pip { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--brass); }
-  .pip.on { background: var(--brass); }
-  .pip.pop { animation: pop .5s ease-out; }
-  @keyframes pop { 0%{transform:scale(.4)} 60%{transform:scale(1.35)} 100%{transform:scale(1)} }
-  .exlog { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 15px; }
-  .exlog li { display: grid; grid-template-columns: 2.2em 1fr; gap: 8px; color: var(--muted); }
-  .exlog li b { color: var(--ivory); font-family: var(--display); font-weight: 800; font-variant-numeric: lining-nums tabular-nums; }
-  .exlog .n { color: var(--muted); font-variant-numeric: tabular-nums; }
-  .duel-end { display: grid; gap: 10px; justify-items: center; text-align: center; }
-  .duel-end .big { font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--brass); }
-  .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-  .confirm .q { color: var(--muted); font-size: 15px; }
-
-  .picker { display: grid; gap: 12px; }
-  .pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pick { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--felt); font-weight: 500; }
-  .pick[aria-pressed=true] { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: var(--felt-3); }
-  .hint { color: var(--muted); font-size: 15px; margin: 0; }
-
-  .banner { position: fixed; z-index: 10; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(480px, calc(100% - 32px)); background: var(--brass); color: var(--brass-ink); border-radius: 14px; padding: 12px 16px; text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.4); animation: drop .45s cubic-bezier(.2,.9,.3,1.2); }
-  .banner strong { display: block; font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .04em; }
-  @keyframes drop { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
-
-  .results { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .results li { background: var(--felt-2); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .results li b { font-weight: 700; }
-  .results .sc { font-family: var(--display); font-weight: 800; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
-  .tally { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tally span { padding: 4px 10px; border-radius: 999px; background: var(--felt-3); border: 1px solid var(--line); font-size: 15px; }
-  .tally b { color: var(--brass); font-family: var(--display); font-weight: 800; margin-left: 4px; }
-
   @media (prefers-reduced-motion: reduce) {
-    .pip.pop, .banner { animation: none; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
   }
 </style>
 </head>
 <body>
 <!--
-THESIS: Лобби как стол с костями при свече, выступающий из темноты; отказ от стопки форм-карточек.
-OWN-WORLD: умбра почти чёрная, картина Латура «Игроки в кости» растворяется в черноте, золотая филигрань и угловые скобы в грамматике интерфейса BG3, надписи Forum капителью; фиолетовый «головастик» только для живых столов.
-STORY: открыл — видишь своё имя на гравированной табличке и кто за каким столом; одно касание — сел; всё прочее за «+».
-FIRST VIEWPORT: верхние ~45% — картина (свеча и кости в нижней трети, пламя мерцает), «+» сигил слева сверху; имя крупно по центру на краю затухания; ниже золочёные плашки столов на всю ширину.
+THESIS: Стол с костями при свече, выступающий из темноты; всё на одном экране, без прокрутки страницы.
+OWN-WORLD: умбра почти чёрная, картина Латура «Игроки в кости», золотая филигрань и угловые скобы как в интерфейсе BG3, надписи Forum капителью, фиолетовый «головастик» только для живых столов.
+STORY: лобби — имя и столы, одно касание чтобы сесть; на столе — две кости в дуэли, понятно чей ход и кто взял очко.
+FIRST VIEWPORT: лобби — картина ~46% высоты с «+» слева сверху, имя на краю затухания, плашки столов в своей прокрутке; стол — шапка, игроки, панель раунда, арена с костями, кнопка броска.
 FORM: интерфейс партии BG3; семя: нет (скрипт concept-seed недоступен в этой среде).
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
-<main class="wrap">
+<main id="app">
 
-  <!-- Лобби -->
-  <section id="join" class="wrap lobby" style="padding:0" hidden>
+  <!-- ЛОББИ -->
+  <section id="join" class="screen lobby" hidden>
     <div class="lobby-top">
-      <button id="menuBtn" class="sigil" type="button" aria-label="Меню: создать стол или войти по коду" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ring" cx="24" cy="24" r="21.5"/><circle class="ring" cx="24" cy="24" r="17.5" opacity=".45"/><path class="studs" d="M24 0.8l2.2 2.2-2.2 2.2-2.2-2.2zM24 42.8l2.2 2.2-2.2 2.2-2.2-2.2zM0.8 24l2.2-2.2 2.2 2.2-2.2 2.2zM42.8 24l2.2-2.2 2.2 2.2-2.2 2.2z"/><path class="cross" d="M24 15v18M15 24h18"/></svg></button>
+      <button id="menuBtn" class="sigil" type="button" aria-label="Меню: создать стол или войти по коду" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ring" cx="24" cy="24" r="21.5"/><circle class="ring" cx="24" cy="24" r="17.5" opacity=".45"/><path class="studs" d="M24 .8l2.2 2.2-2.2 2.2-2.2-2.2zM24 42.8l2.2 2.2-2.2 2.2-2.2-2.2zM.8 24l2.2-2.2 2.2 2.2-2.2 2.2zM42.8 24l2.2-2.2 2.2 2.2-2.2 2.2z"/><path class="cross" d="M24 15v18M15 24h18"/></svg>
+      </button>
     </div>
     <figure class="hero" aria-hidden="true">
       <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Georges_de_La_Tour_035.jpg/1280px-Georges_de_La_Tour_035.jpg"
@@ -361,112 +401,76 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <span class="flame"></span>
     </figure>
     <div id="nameplate" class="nameplate">
-      <input id="nameInput" type="text" maxlength="24" placeholder="Ваше имя" aria-label="Ваше имя" autocomplete="nickname" enterkeyhint="done">
+      <input id="nameInput" type="text" maxlength="24" placeholder="Введите имя" aria-label="Ваше имя" autocomplete="nickname" enterkeyhint="done">
       <svg class="flourish" viewBox="0 0 300 20" aria-hidden="true"><path d="M8 10h112M180 10h112"/><path d="M120 10c8 0 10-6 16-6M180 10c-8 0-10-6-16-6M120 10c8 0 10 6 16 6M180 10c-8 0-10 6-16 6"/><path class="gem" d="M150 3l7 7-7 7-7-7z"/><path class="gem" d="M136 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM164 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM8 8.6l1.4 1.4-1.4 1.4-1.4-1.4zM292 8.6l1.4 1.4-1.4 1.4-1.4-1.4z"/></svg>
       <span id="joinErr" class="err" role="alert" hidden></span>
     </div>
-    <ol id="lobbyList" class="plaques" aria-label="Столы"></ol>
-    <div id="lobbyLoading" class="plaques" aria-hidden="true"><div class="loading-plaque"></div></div>
-    <div id="lobbyEmpty" class="lair" hidden>
-      <div class="leviathan" aria-hidden="true"></div>
-      <p class="lair-title">Пока никто не играет</p>
-      <button id="emptyCreate" class="btn primary" type="button">Создать стол</button>
+    <div class="lobby-scroll">
+      <ol id="lobbyList" class="plaques" aria-label="Столы"></ol>
+      <div id="lobbyLoading" class="plaques" aria-hidden="true"><div class="loading-plaque"></div></div>
+      <div id="lobbyEmpty" class="lair" hidden>
+        <div class="leviathan" aria-hidden="true"></div>
+        <p class="lair-title">Пока никто не играет</p>
+        <button id="emptyCreate" class="btn primary" type="button">Создать стол</button>
+      </div>
     </div>
   </section>
 
-  <!-- Стол -->
-  <section id="table" class="wrap" style="padding:0" hidden>
+  <!-- СТОЛ -->
+  <section id="table" class="screen table" hidden>
     <header class="topbar">
       <button id="backBtn" class="btn small ghost back-btn" type="button" aria-label="К списку столов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Столы</button>
-      <div class="room-chip grow"><span>Стол</span><span id="roomName" style="all:unset"></span></div>
-      <span id="conn" class="conn">нет связи</span>
-      <button id="inviteBtn" class="btn small" type="button">Пригласить</button>
+      <div class="tb-title"><span id="connDot" class="conn-dot" title="нет связи"></span><b id="roomName"></b></div>
+      <button id="historyBtn" class="icon-btn" type="button" aria-label="История бросков и итоги раундов" title="История"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7"/><path d="M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2"/><path d="M9.5 9h7M9.5 12.5h7M9.5 16h4.5"/></svg></button>
+      <button id="inviteBtn" class="icon-btn" type="button" aria-label="Пригласить друзей за стол" title="Пригласить"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><path d="M18 8v6M15 11h6"/></svg></button>
     </header>
 
-    <div>
-      <div class="section-head">
-        <h2 id="playersTitle">ЗА СТОЛОМ</h2>
-        <button id="roundBtn" class="btn small" type="button">Объявить раунд</button>
-      </div>
-      <div id="players" class="players" style="margin-top:8px"></div>
+    <div class="strip">
+      <div id="players" class="players" aria-label="За столом"></div>
+      <button id="roundBtn" class="btn small round-btn" type="button" aria-label="Объявить раунд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l10 10M4 4h4M4 4v4M20 4L10 14M20 4h-4M20 4v4"/><path d="M8 16l-3 3M16 16l3 3M7 13l4 4M17 13l-4 4"/></svg>Раунд</button>
     </div>
 
-    <!-- выбор участников раунда -->
-    <div id="picker" class="card picker" hidden>
-      <div class="duel-title">Новый раунд</div>
-      <p class="hint">Приложение выбрало двоих случайно. Нажмите на имя, чтобы поменять участника.</p>
-      <div id="pickList" class="pick-list"></div>
-      <div class="row">
-        <button id="pickRandom" class="btn small ghost" type="button">Выбрать случайно</button>
-        <span class="grow"></span>
-        <button id="pickCancel" class="btn small ghost" type="button">Отмена</button>
-        <button id="pickStart" class="btn small primary" type="button">Начать раунд</button>
-      </div>
-    </div>
-
-    <!-- текущий раунд -->
-    <div id="duel" class="duel" hidden>
-      <div class="section-head">
-        <div id="duelTitle" class="duel-title">РАУНД</div>
-        <div id="abortZone" class="confirm"></div>
+    <div id="duel" class="duel gilded" hidden>
+      <div class="duel-head">
+        <span id="duelTitle" class="duel-title">Раунд</span>
+        <span id="duelSub" class="duel-sub"></span>
+        <span id="abortZone" class="confirm"></span>
       </div>
       <div class="fighters">
-        <div id="fa" class="fighter"><div class="fname"></div><div class="pips"></div><div class="tag"></div></div>
-        <div class="vs">vs</div>
-        <div id="fb" class="fighter"><div class="fname"></div><div class="pips"></div><div class="tag"></div></div>
+        <div id="fa" class="fighter"><span class="fname"></span><span class="pips"></span><span class="tag"></span></div>
+        <div class="vs">VS</div>
+        <div id="fb" class="fighter"><span class="fname"></span><span class="pips"></span><span class="tag"></span></div>
       </div>
-      <ol id="exlog" class="exlog"></ol>
-      <div id="duelEnd" class="duel-end" hidden>
-        <div id="duelEndText" class="big"></div>
-        <button id="nextRoundBtn" class="btn primary" type="button">Новый раунд</button>
-      </div>
+      <div id="exlog" class="exlog"></div>
     </div>
 
     <div class="stage">
-      <button id="die" class="die-btn" type="button" aria-label="Бросить d20">
-        <svg viewBox="0 0 200 200" aria-hidden="true">
-          <polygon class="die-face" points="100,8 179.7,54 179.7,146 100,192 20.3,146 20.3,54"/>
-          <path class="die-edge" d="M100,52 L20.3,54 M100,52 L100,8 M100,52 L179.7,54 M146,132 L179.7,54 M146,132 L179.7,146 M146,132 L100,192 M54,132 L100,192 M54,132 L20.3,146 M54,132 L20.3,54"/>
-          <polygon class="die-tri" points="100,52 146,132 54,132"/>
-          <text id="dieNum" class="die-num" x="100" y="106">20</text>
-        </svg>
-      </button>
+      <div id="arena" class="arena" role="button" tabindex="0" aria-label="Бросить d20"></div>
       <div id="verdict" class="verdict" aria-live="polite"></div>
-      <div id="who" class="who">Нажмите на кость, чтобы бросить</div>
+      <div id="who" class="who"></div>
+      <div id="hint" class="hint" aria-live="polite"></div>
     </div>
 
     <div class="controls">
-      <div id="modeSeg" class="seg" role="group" aria-label="Режим броска">
-        <button type="button" data-mode="" aria-pressed="true">Обычный</button>
-        <button type="button" data-mode="adv" aria-pressed="false">Преимущество</button>
-        <button type="button" data-mode="dis" aria-pressed="false">Помеха</button>
+      <div id="freeOpts" class="controls" style="padding:0">
+        <div id="modeSeg" class="seg" role="group" aria-label="Режим броска">
+          <button type="button" data-mode="" aria-pressed="true">Обычный</button>
+          <button type="button" data-mode="adv" aria-pressed="false">Преимущество</button>
+          <button type="button" data-mode="dis" aria-pressed="false">Помеха</button>
+        </div>
+        <input id="noteInput" type="text" maxlength="80" placeholder="Что решает бросок? Необязательно" aria-label="Что решает бросок">
       </div>
-      <input id="noteInput" type="text" maxlength="80" placeholder="Что решаем? Необязательно" aria-label="Что решает бросок">
       <button id="rollBtn" class="btn primary roll-btn" type="button">Бросить d20</button>
     </div>
-
-    <div id="resultsBox" hidden>
-      <h2>ИТОГИ РАУНДОВ</h2>
-      <div id="tally" class="tally" style="margin:8px 0"></div>
-      <ol id="results" class="results"></ol>
-    </div>
-
-    <div class="feed-head">
-      <h2>СВОБОДНЫЕ БРОСКИ</h2>
-    </div>
-    <ol id="feed" class="feed"></ol>
-    <p id="empty" class="empty">Здесь появятся броски вне раундов.</p>
-
-    <div class="danger-zone" id="clearZone"></div>
   </section>
 </main>
 
-<!-- Меню «+» -->
+<!-- меню «+» -->
 <div id="scrim" class="scrim" hidden></div>
 <div id="menu" class="menu gilded" role="dialog" aria-label="Меню" hidden>
   <div id="menuList">
-    <button class="menu-item" type="button" data-act="create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18M5 9.5v9M19 9.5v9M8 9.5V6.5a4 4 0 0 1 8 0v3"/><path d="M12 13v5M9.5 15.5h5"/></svg><span>Создать стол</span></button>
-    <button class="menu-item" type="button" data-act="code"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3.5M21 12v2.5"/></svg><span>Войти по коду</span></button>
+    <button class="menu-item" type="button" data-act="create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18M5 9.5v9M19 9.5v9M8 9.5V6.5a4 4 0 0 1 8 0v3"/><path d="M12 13v5M9.5 15.5h5"/></svg><span>Создать стол<small>Новый стол со случайным кодом</small></span></button>
+    <button class="menu-item" type="button" data-act="code"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3.5M21 12v2.5"/></svg><span>Войти по коду<small>Если друг прислал код стола</small></span></button>
   </div>
   <form id="joinForm" class="menu-form" autocomplete="off" novalidate hidden>
     <div class="form-head">
@@ -474,8 +478,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <span id="formTitle" class="form-title">Новый стол</span>
     </div>
     <div class="row">
-      <input id="roomInput" class="grow" type="text" maxlength="24" placeholder="код стола" aria-label="Код стола" autocapitalize="none" spellcheck="false">
-      <button id="newRoomBtn" class="icon-btn" type="button" aria-label="Другой код"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.9v9.2L12 21.5l-8.5-4.9V7.4z"/><path d="M12 7.5l4.2 7.3H7.8z"/><path d="M12 2.5v5M20.5 7.4l-4.3 7.4M3.5 7.4l4.3 7.4M12 21.5l-4.2-6.7M12 21.5l4.2-6.7"/></svg></button>
+      <input id="roomInput" type="text" maxlength="24" placeholder="код стола" aria-label="Код стола" autocapitalize="none" spellcheck="false">
+      <button id="newRoomBtn" class="icon-btn" type="button" aria-label="Другой случайный код"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.9v9.2L12 21.5l-8.5-4.9V7.4z"/><path d="M12 7.5l4.2 7.3H7.8z"/><path d="M12 2.5v5M20.5 7.4l-4.3 7.4M3.5 7.4l4.3 7.4M12 21.5l-4.2-6.7M12 21.5l4.2-6.7"/></svg></button>
     </div>
     <p id="formErr" class="err" role="alert" hidden></p>
     <button id="formSubmit" class="btn primary" type="submit">Создать и сесть</button>
@@ -483,6 +487,40 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <div id="recentBlock" hidden>
     <div class="menu-sub">Недавние столы</div>
     <div id="recentList" class="recent"></div>
+  </div>
+</div>
+
+<!-- панели снизу -->
+<div id="sheetScrim" class="scrim" style="z-index:30" hidden></div>
+<div id="picker" class="sheet gilded" role="dialog" aria-label="Новый раунд" hidden>
+  <div class="grabber"></div>
+  <div class="sheet-head"><span class="sheet-title">Новый раунд</span><button class="icon-btn bare" type="button" data-close="picker" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <p class="hint-text">Двое бросают d20 по очереди. В каждом обмене очко получает тот, у кого выпало больше. Кто первым наберёт 3 очка, выигрывает раунд.</p>
+    <p class="hint-text" style="color:var(--ivory)">Участники выбраны случайно. Нажмите на имя, чтобы заменить.</p>
+    <div id="pickList" class="pick-list"></div>
+    <div class="row" style="justify-content:space-between">
+      <button id="pickRandom" class="btn small ghost" type="button">Выбрать случайно</button>
+      <button id="pickStart" class="btn primary" type="button">Начать раунд</button>
+    </div>
+  </div>
+</div>
+<div id="history" class="sheet gilded" role="dialog" aria-label="История" hidden>
+  <div class="grabber"></div>
+  <div class="sheet-head"><span class="sheet-title">История</span><button class="icon-btn bare" type="button" data-close="history" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <section>
+      <h2>Итоги раундов</h2>
+      <div id="tally" class="tally"></div>
+      <ol id="results" class="results"></ol>
+      <p id="resultsEmpty" class="empty-note">Раундов ещё не было.</p>
+    </section>
+    <section>
+      <h2>Свободные броски</h2>
+      <ol id="feed" class="feed"></ol>
+      <p id="feedEmpty" class="empty-note">Свободных бросков пока нет.</p>
+    </section>
+    <div id="clearZone" class="danger-zone"></div>
   </div>
 </div>
 <div id="banner" class="banner" role="status" hidden></div>
@@ -506,38 +544,34 @@ const firebaseConfig = {
 };
 const db = getDatabase(initializeApp(firebaseConfig));
 
+// ---------- утилиты ----------
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
 const PALETTE = ["#8c3b2f", "#2f6b5a", "#3e528c", "#6b4a9c", "#8a6a2c", "#7a4a2e", "#4f6b2a", "#8c3f62"];
-const TUMBLE_MS = 900;
+const TUMBLE_MS = 1150;
 const WIN_POINTS = 3;
-
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch {} }
 };
-
 function randInt(n) { // честный бросок без перекоса
   const buf = new Uint32Array(1), limit = Math.floor(0x100000000 / n) * n;
   let x; do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
   return 1 + (x % n);
 }
 function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randInt(i + 1) - 1; [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function newRoomCode() {
-  const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = "";
-  for (let i = 0; i < 4; i++) s += a[randInt(a.length) - 1];
-  return "stol-" + s;
-}
+function newRoomCode() { const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; for (let i = 0; i < 4; i++) s += a[randInt(a.length) - 1]; return "stol-" + s; }
 function colorFor(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }
 function initials(name) { return (name || "?").trim().slice(0, 1).toUpperCase(); }
 function ava(id, name) { const a = el("span", "ava", initials(name)); a.style.background = colorFor(id); return a; }
 function fmtTime(ts) { return typeof ts === "number" ? new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : ""; }
-function toast(msg, ms = 2200) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms); }
-function banner(title, text, ms = 3800) {
-  const b = $("banner"); b.replaceChildren(el("strong", "", title), document.createTextNode(text || ""));
+function toast(msg, ms = 2200) { const t = $("toast"); t.textContent = msg; t.hidden = false; t.style.animation = "none"; void t.offsetWidth; t.style.animation = ""; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms); }
+function banner(title, text, ms = 3600) {
+  const b = $("banner"); b.classList.remove("closing"); b.replaceChildren(el("strong", "", title), document.createTextNode(text || ""));
   b.hidden = false; b.style.animation = "none"; void b.offsetWidth; b.style.animation = "";
-  clearTimeout(banner._t); banner._t = setTimeout(() => (b.hidden = true), ms);
+  clearTimeout(banner._t); banner._t = setTimeout(() => { b.classList.add("closing"); setTimeout(() => { b.hidden = true; b.classList.remove("closing"); }, 300); }, ms);
 }
 function cls(value) { return value === 20 ? "win" : value === 1 ? "fail" : ""; }
 function critText(value) { return value === 20 ? "Критический успех" : value === 1 ? "Критический провал" : ""; }
@@ -545,6 +579,8 @@ function modeLabel(r) { return r.mode === "adv" ? "преимущество" : r
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const byTs = (x, y) => ((x.ts || 0) - (y.ts || 0)) || (x.key < y.key ? -1 : x.key > y.key ? 1 : 0);
 const buzz = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };
+function transition(fn) { if (document.startViewTransition && !reduceMotion()) document.startViewTransition(fn); else fn(); }
+function animateIn(node, cls) { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls); }
 
 // ---------- состояние ----------
 let pid = store.get("dndroll.pid");
@@ -556,19 +592,18 @@ let players = {}, freeRolls = [], round = null, results = [];
 let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound = true;
 const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
 const animQueue = []; let animating = false, cooldown = false;
-let picked = [];
-
+let dismissedRound = null, picked = [], shownPlayers = new Set(), arenaStale = false;
 const params = new URLSearchParams(location.search);
 let invitedRoom = (params.get("room") || "").toLowerCase();
 
 // ---------- Telegram ----------
 const BOT = "best_dnd_roll_bot";
 const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
-let tgName = "";
 if (tg) {
-  try { tg.ready(); tg.expand(); tg.setHeaderColor("#0f2a24"); tg.setBackgroundColor("#0f2a24"); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch {}
+  document.documentElement.classList.add("tg");
+  try { tg.ready(); tg.expand(); tg.setHeaderColor("#0b0807"); tg.setBackgroundColor("#0b0807"); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch {}
   const u = (tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
-  tgName = [u.first_name, u.last_name ? u.last_name.slice(0, 1) + "." : ""].filter(Boolean).join(" ").trim().slice(0, 24);
+  const tgName = [u.first_name, u.last_name ? u.last_name.slice(0, 1) + "." : ""].filter(Boolean).join(" ").trim().slice(0, 24);
   const sp = ((tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").toLowerCase();
   const ci = tg.initDataUnsafe && tg.initDataUnsafe.chat_instance;
   if (ROOM_RE.test(sp)) invitedRoom = sp;
@@ -576,9 +611,7 @@ if (tg) {
   if (!myName && tgName) { myName = tgName; store.set("dndroll.name", myName); }
 }
 function haptic(kind) {
-  try {
-    if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred("medium"); }
-  } catch {}
+  try { if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred(kind === "light" ? "light" : "medium"); } } catch {}
 }
 const R = (p) => ref(db, `rooms/${room}/${p}`);
 
@@ -589,39 +622,45 @@ function deriveRound(rd, onlyVisible) {
   const order = rd.first === "b" ? ["b", "a"] : ["a", "b"];
   const rolls = Object.entries(rd.rolls || {}).map(([key, v]) => ({ key, ...v }))
     .filter((x) => !onlyVisible || !hiddenKeys.has(x.key)).sort(byTs);
-  const score = { a: 0, b: 0 }, exchanges = []; let pending = null, winner = null, count = 0;
+  const score = { a: 0, b: 0 }, exchanges = []; let pending = null, winner = null, count = 0, last = null;
   for (const r of rolls) {
     if (winner) break;
     const expected = order[count % 2];
     if (r.side !== expected || r.pid !== rd[expected].pid) continue; // чужой или внеочередной бросок не засчитывается
-    count++;
+    count++; last = r;
     if (!pending) { pending = r; continue; }
     const first = pending, second = r; pending = null;
-    const ex = { [first.side]: first, [second.side]: second, point: null };
+    const ex = { [first.side]: first, [second.side]: second, second: second.side, point: null };
     if (first.value > second.value) ex.point = first.side; else if (second.value > first.value) ex.point = second.side;
     if (ex.point) score[ex.point]++;
     exchanges.push(ex);
     if (score.a >= WIN_POINTS) winner = "a"; else if (score.b >= WIN_POINTS) winner = "b";
   }
-  return { order, score, exchanges, pending, winner, nextSide: winner ? null : order[count % 2], lastKey: rolls.length ? rolls[rolls.length - 1].key : null };
+  return { order, score, exchanges, pending, winner, last, nextSide: winner ? null : order[count % 2] };
 }
 const roundState = () => deriveRound(round, false);
 const visibleState = () => deriveRound(round, true);
+const other = (side) => (side === "a" ? "b" : "a");
+function roundShown() { return !!(round && round.a && round.id !== dismissedRound); }
 function roundLive() { const s = roundState(); return !!(s && !s.winner); }
+function uiLive() { if (!roundShown()) return false; const s = visibleState(); return !!(s && !s.winner); }
+function uiFinished() { if (!roundShown()) return false; const s = visibleState(); return !!(s && s.winner); }
 function myTurn() {
   if (!roundLive() || animating || cooldown) return false;
   const full = roundState(), vis = visibleState();
   return round[full.nextSide].pid === pid && vis.nextSide === full.nextSide;
 }
+function rollerName(r) { return r.name || (round && r.side && round[r.side] && round[r.side].name) || "Игрок"; }
 
-// ---------- лобби: список столов ----------
-let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false, formMode = "create";
-const ICON_GO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+// ---------- лобби ----------
+let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false, shownCodes = new Set(), firstLobbyPaint = true;
+const ICON_GO = '<i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></i><small>Сесть</small>';
 const ICON_SEAL = '<svg class="seal" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1l7 7-7 7-7-7z"/></svg>';
 function recentRooms() { try { const a = JSON.parse(store.get("dndroll.recent") || "[]"); return Array.isArray(a) ? a.filter((x) => ROOM_RE.test(x)) : []; } catch { return []; } }
-function addRecent(r) { const a = [r, ...recentRooms().filter((x) => x !== r)].slice(0, 6); store.set("dndroll.recent", JSON.stringify(a)); }
+function addRecent(r) { store.set("dndroll.recent", JSON.stringify([r, ...recentRooms().filter((x) => x !== r)].slice(0, 6))); }
 
 function showLobby() {
+  document.body.dataset.screen = "lobby";
   $("table").hidden = true; $("join").hidden = false;
   if (tg && tg.BackButton) { try { tg.BackButton.hide(); } catch {} }
   if (!$("nameInput").value) $("nameInput").value = myName;
@@ -629,6 +668,7 @@ function showLobby() {
     lobbyUnsub = onValue(ref(db, "lobby"), (snap) => { lobbyData = snap.val() || {}; lobbyLoaded = true; renderLobby(); },
       () => { lobbyLoaded = true; renderLobby(); toast("Не удалось загрузить столы. Проверьте интернет."); });
   }
+  firstLobbyPaint = true; shownCodes = new Set();
   renderLobby();
 }
 function liveTables() {
@@ -640,21 +680,20 @@ function liveTables() {
 }
 function renderLobby() {
   const list = liveTables();
-  // стол из приглашения показываем первым, даже если за ним пока никого нет
-  if (ROOM_RE.test(invitedRoom)) {
+  if (ROOM_RE.test(invitedRoom)) { // стол из приглашения первым, даже если за ним пока никого нет
     const i = list.findIndex((t) => t.code === invitedRoom);
     const t = i >= 0 ? list.splice(i, 1)[0] : { code: invitedRoom, people: [] };
     t.invited = true; list.unshift(t);
   }
   const ol = $("lobbyList"); ol.replaceChildren();
-  for (const t of list) {
+  list.forEach((t, idx) => {
     const li = el("li");
     const b = el("button", "plaque gilded" + (t.invited ? " invited" : "")); b.type = "button";
+    if (!shownCodes.has(t.code) && lobbyLoaded) { b.classList.add("enter"); b.style.setProperty("--d", (firstLobbyPaint ? idx * 70 : 0) + "ms"); }
     b.setAttribute("aria-label", "Сесть за стол " + t.code + (t.people.length ? ". За столом: " + t.people.map((p) => p.name).join(", ") : ""));
     const info = el("span", "plaque-info");
     const head = el("span", "plaque-code");
-    if (t.people.length) head.append(el("span", "live-dot"));
-    else if (t.invited) head.insertAdjacentHTML("beforeend", ICON_SEAL);
+    if (t.people.length) head.append(el("span", "live-dot")); else if (t.invited) head.insertAdjacentHTML("beforeend", ICON_SEAL);
     head.append(document.createTextNode(t.code));
     info.append(head);
     if (t.people.length) {
@@ -667,7 +706,8 @@ function renderLobby() {
     b.append(info, go);
     b.addEventListener("click", () => joinRoom(t.code));
     li.append(b); ol.append(li);
-  }
+  });
+  if (lobbyLoaded) { shownCodes = new Set(list.map((t) => t.code)); firstLobbyPaint = false; }
   $("lobbyLoading").hidden = lobbyLoaded;
   $("lobbyEmpty").hidden = !lobbyLoaded || list.length > 0;
   renderRecent(new Set(list.map((t) => t.code)));
@@ -681,7 +721,7 @@ function renderRecent(live) {
 function saveName(n) { myName = n; store.set("dndroll.name", n); }
 function nameError(msg) {
   const e = $("joinErr"); e.textContent = msg; e.hidden = false;
-  const np = $("nameplate"); np.classList.remove("shake"); void np.offsetWidth; np.classList.add("shake");
+  animateIn($("nameplate"), "shake");
   closeMenu(); $("nameInput").focus();
 }
 $("nameInput").addEventListener("input", () => { $("joinErr").hidden = true; });
@@ -689,119 +729,126 @@ $("nameInput").addEventListener("change", () => { const n = $("nameInput").value
 $("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 function joinRoom(code) {
   const name = $("nameInput").value.trim().slice(0, 24);
-  if (!name) { nameError("Введите имя, чтобы друзья видели, кто бросает"); return; }
-  if (!ROOM_RE.test(code)) { const fe = $("formErr"); fe.textContent = "Код: от 3 до 24 символов, латиница, цифры и дефис"; fe.hidden = false; return; }
-  saveName(name); closeMenu(); enterRoom(code);
+  if (!name) { nameError("Сначала введите имя — его увидят друзья"); return; }
+  if (!ROOM_RE.test(code)) { const fe = $("formErr"); fe.textContent = "Код: от 3 до 24 символов — латиница, цифры и дефис"; fe.hidden = false; return; }
+  saveName(name); closeMenu(true); transition(() => enterRoom(code));
 }
 
 // --- меню «+» ---
 function openMenu() {
-  $("menu").hidden = false; $("scrim").hidden = false; $("menuBtn").setAttribute("aria-expanded", "true");
-  showMenuList(); renderRecent(new Set(liveTables().map((t) => t.code)));
-  const first = $("menu").querySelector(".menu-item"); if (first) first.focus({ preventScroll: true });
+  const m = $("menu"); m.classList.remove("closing"); m.hidden = false;
+  $("scrim").classList.remove("closing"); $("scrim").hidden = false; $("menuBtn").setAttribute("aria-expanded", "true");
+  showMenuList(true); renderRecent(new Set(liveTables().map((t) => t.code)));
+  const first = m.querySelector(".menu-item"); if (first) first.focus({ preventScroll: true });
 }
-function closeMenu() {
-  if ($("menu").hidden) return;
-  $("menu").hidden = true; $("scrim").hidden = true; $("menuBtn").setAttribute("aria-expanded", "false");
+function closeMenu(instant) {
+  const m = $("menu"); if (m.hidden) return;
+  $("menuBtn").setAttribute("aria-expanded", "false");
+  if (instant || reduceMotion()) { m.hidden = true; $("scrim").hidden = true; return; }
+  m.classList.add("closing"); $("scrim").classList.add("closing");
+  setTimeout(() => { m.hidden = true; $("scrim").hidden = true; m.classList.remove("closing"); $("scrim").classList.remove("closing"); }, 210);
 }
-function showMenuList() { $("menuList").hidden = false; $("joinForm").hidden = true; $("formErr").hidden = true; }
-function showForm(mode) {
-  formMode = mode;
-  $("menuList").hidden = true; $("joinForm").hidden = false; $("formErr").hidden = true;
-  const create = mode === "create";
+function showMenuList(initial) {
+  $("joinForm").hidden = true; $("formErr").hidden = true; $("menuList").hidden = false;
+  $("recentBlock").hidden = recentRooms().length === 0 || $("recentList").children.length === 0;
+  if (!initial) animateIn($("menuList"), "pane-in-l");
+}
+function showForm(kind) {
+  $("menuList").hidden = true; $("recentBlock").hidden = true; $("joinForm").hidden = false; $("formErr").hidden = true;
+  const create = kind === "create";
   $("formTitle").textContent = create ? "Новый стол" : "Войти по коду";
-  $("formSubmit").textContent = create ? "Создать и сесть" : "Сесть";
+  $("formSubmit").textContent = create ? "Создать и сесть" : "Сесть за стол";
   $("newRoomBtn").hidden = !create;
   $("roomInput").value = create ? newRoomCode() : "";
+  animateIn($("joinForm"), "pane-in-r");
   $("roomInput").focus();
 }
-$("menuBtn").addEventListener("click", () => ($("menu").hidden ? openMenu() : closeMenu()));
-$("scrim").addEventListener("click", closeMenu);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+$("menuBtn").addEventListener("click", () => ($("menu").hidden || $("menu").classList.contains("closing") ? openMenu() : closeMenu()));
+$("scrim").addEventListener("click", () => closeMenu());
 document.querySelectorAll("#menuList .menu-item").forEach((b) => b.addEventListener("click", () => showForm(b.dataset.act)));
-$("formBack").addEventListener("click", () => { showMenuList(); const f = $("menu").querySelector(".menu-item"); if (f) f.focus(); });
-$("newRoomBtn").addEventListener("click", () => {
-  $("roomInput").value = newRoomCode();
-  const b = $("newRoomBtn"); b.classList.remove("spin"); void b.offsetWidth; b.classList.add("spin");
-});
+$("formBack").addEventListener("click", () => { showMenuList(false); const f = $("menu").querySelector(".menu-item"); if (f) f.focus(); });
+$("newRoomBtn").addEventListener("click", () => { $("roomInput").value = newRoomCode(); animateIn($("newRoomBtn"), "spin"); });
 $("roomInput").addEventListener("input", () => { $("formErr").hidden = true; });
 $("joinForm").addEventListener("submit", (e) => { e.preventDefault(); joinRoom($("roomInput").value.trim().toLowerCase()); });
 $("emptyCreate").addEventListener("click", () => { openMenu(); showForm("create"); });
 
-function goLobby() {
-  leaveRoom(); room = null; invitedRoom = "";
-  const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
-  showLobby();
+// ---------- панели снизу ----------
+function openSheet(id) {
+  const s = $(id); s.classList.remove("closing"); s.hidden = false;
+  const sc = $("sheetScrim"); sc.classList.remove("closing"); sc.hidden = false; sc.dataset.for = id;
 }
-$("backBtn").addEventListener("click", goLobby);
-if (tg && tg.BackButton) { try { tg.BackButton.onClick(goLobby); } catch {} }
+function closeSheet(id) {
+  const s = $(id); if (!s || s.hidden) return;
+  const sc = $("sheetScrim");
+  if (reduceMotion()) { s.hidden = true; sc.hidden = true; return; }
+  s.classList.add("closing"); sc.classList.add("closing");
+  setTimeout(() => { s.hidden = true; s.classList.remove("closing"); sc.hidden = true; sc.classList.remove("closing"); }, 240);
+}
+$("sheetScrim").addEventListener("click", () => closeSheet($("sheetScrim").dataset.for));
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeSheet(b.dataset.close)));
+document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; closeMenu(); ["picker", "history"].forEach(closeSheet); });
 
-// ---------- стол ----------
+// ---------- стол: вход и выход ----------
 function enterRoom(r) {
   leaveRoom();
-  room = r;
-  addRecent(r);
+  room = r; addRecent(r);
   if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
   if (tg && tg.BackButton) { try { tg.BackButton.show(); } catch {} }
   const url = new URL(location.href); url.searchParams.set("room", r); history.replaceState(null, "", url);
+  document.body.dataset.screen = "table";
   $("roomName").textContent = r;
   $("join").hidden = true; $("table").hidden = false;
-  knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true;
-  hiddenKeys.clear(); animQueue.length = 0; round = null; results = []; freeRolls = [];
+  knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true; shownPlayers = new Set();
+  hiddenKeys.clear(); animQueue.length = 0; animating = false; round = null; results = []; freeRolls = []; players = {}; dismissedRound = null;
+  $("arena").replaceChildren(); front = back = null; setLines("", "", "");
+  placeholder("");
 
   const meRef = R(`players/${pid}`), lobbyRef = ref(db, `lobby/${r}/${pid}`);
   unsubs.push(onValue(ref(db, ".info/connected"), (snap) => {
     const on = snap.val() === true;
-    $("conn").textContent = on ? "онлайн" : "нет связи"; $("conn").classList.toggle("on", on);
+    $("connDot").classList.toggle("on", on); $("connDot").title = on ? "онлайн" : "нет связи";
     if (!on || room !== r) return;
     // при обрыве связи сервер сам уберёт игрока со стола и из списка столов
-    onDisconnect(meRef).remove()
-      .then(() => onDisconnect(lobbyRef).remove())
+    onDisconnect(meRef).remove().then(() => onDisconnect(lobbyRef).remove())
       .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp() }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
       .catch(() => {});
   }));
   unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); }));
-
   unsubs.push(onValue(query(R("rolls"), orderByChild("ts"), limitToLast(50)), (snap) => {
     const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
     list.reverse();
     const fresh = firstFree ? [] : list.filter((x) => !knownFree.has(x.key));
     list.forEach((x) => knownFree.add(x.key));
     freeRolls = list;
-    if (firstFree) { firstFree = false; if (!roundLive() && list[0]) showFreeResult(list[0]); }
+    if (firstFree) { firstFree = false; if (!animating) syncArena(true); }
     fresh.sort(byTs).forEach((x) => enqueue({ kind: "free", roll: x }));
     renderAll();
   }, () => toast("Нет доступа к столу. Проверьте код.")));
-
   unsubs.push(onValue(R("round"), (snap) => {
     const v = snap.val();
     const prevId = round && round.id;
     round = v || null;
     if (round) {
       const rolls = Object.entries(round.rolls || {}).map(([key, x]) => ({ key, ...x })).sort(byTs);
-      if (firstRound || round.id !== prevId) {
-        // новый раунд или первая загрузка: старые броски не анимируем
-        if (!firstRound) rolls.forEach((x) => { if (!knownDuel.has(x.key)) enqueue({ kind: "duel", roll: x }); knownDuel.add(x.key); });
-        else rolls.forEach((x) => knownDuel.add(x.key));
-        if (!firstRound && round.id !== prevId) announceRound(round);
-      } else {
-        rolls.filter((x) => !knownDuel.has(x.key)).forEach((x) => { knownDuel.add(x.key); enqueue({ kind: "duel", roll: x }); });
-      }
-      if (firstRound && roundLive()) idleDuelDie();
+      const isNew = !firstRound && round.id !== prevId;
+      if (firstRound) rolls.forEach((x) => knownDuel.add(x.key));
+      if (isNew) announceRound(round);
+      rolls.filter((x) => !knownDuel.has(x.key)).forEach((x) => { knownDuel.add(x.key); enqueue({ kind: "duel", roll: x, roundId: round.id }); });
+      if (firstRound && !animating) syncArena(true);
     } else if (prevId && !firstRound) {
       toast("Раунд отменён");
-      resetDie();
+      if (!animating) syncArena(false); else arenaStale = true;
     }
     firstRound = false;
     renderAll();
     saveResultIfFinished();
   }));
-
   unsubs.push(onValue(R("results"), (snap) => {
     const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
     results = list.sort(byTs).reverse();
     renderAll();
   }));
+  renderAll();
 }
 function leaveRoom() {
   unsubs.forEach((u) => { try { u(); } catch {} });
@@ -812,42 +859,360 @@ function leaveRoom() {
     remove(meRef).catch(() => {}); remove(lobbyRef).catch(() => {});
   }
 }
+function goLobby() {
+  ["picker", "history"].forEach(closeSheet);
+  transition(() => {
+    leaveRoom(); room = null; invitedRoom = "";
+    const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
+    showLobby();
+  });
+}
+$("backBtn").addEventListener("click", goLobby);
+if (tg && tg.BackButton) { try { tg.BackButton.onClick(goLobby); } catch {} }
 
-// ---------- отрисовка ----------
-function renderAll() { renderPlayers(); renderPicker(); renderDuel(); renderControls(); renderResults(); renderFeed(); }
+// ---------- арена с костями ----------
+const arena = $("arena");
+let front = null, back = null;
+const DIE_SVG = '<svg viewBox="0 0 200 200" aria-hidden="true"><polygon class="die-face" points="100,8 179.7,54 179.7,146 100,192 20.3,146 20.3,54"/><path class="die-edge" d="M100,52 L20.3,54 M100,52 L100,8 M100,52 L179.7,54 M146,132 L179.7,54 M146,132 L179.7,146 M146,132 L100,192 M54,132 L100,192 M54,132 L20.3,146 M54,132 L20.3,54"/><polygon class="die-tri" points="100,52 146,132 54,132"/><text class="die-num" x="100" y="106"></text></svg>';
+function makeDie(caption, side, pos) {
+  const d = el("div", "dz"); d.innerHTML = '<div class="die-body">' + DIE_SVG + '</div><div class="dz-cap"></div><span class="plus" aria-hidden="true">+1</span>';
+  d.querySelector(".dz-cap").textContent = caption || "";
+  if (side) d.dataset.side = side;
+  d.dataset.pos = pos || "enter";
+  arena.append(d);
+  return d;
+}
+function setNum(d, v) { d.querySelector(".die-num").textContent = v; d.classList.toggle("crit-win", v === 20); d.classList.toggle("crit-fail", v === 1); d.classList.toggle("idle", v === "?"); }
+function place(d, pos) { if (d) { void d.offsetWidth; d.dataset.pos = pos; } }
+function dropDie(d, instant) { if (!d) return; if (instant) { d.remove(); return; } d.classList.remove("won", "lost", "tie"); d.dataset.pos = "out"; setTimeout(() => d.remove(), 520); }
+function clearArena(instant) { dropDie(front, instant); dropDie(back, instant); front = back = null; }
+function placeholder(caption, instant) { clearArena(instant); front = makeDie(caption, null, instant ? "front" : "enter"); setNum(front, "?"); place(front, "front"); }
+function dieOf(r, pos) { const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), r.side, pos); setNum(d, r.value); return d; }
 
+// Бросок: кость кувыркается и подпрыгивает, цифры мелькают и замедляются; финальное число появляется ровно в момент остановки.
+async function throwDie(d, final) {
+  const num = d.querySelector(".die-num"), body = d.querySelector(".die-body");
+  d.classList.remove("crit-win", "crit-fail", "idle", "won", "lost", "tie");
+  if (reduceMotion()) { setNum(d, final); return; }
+  const anim = body.animate([
+    { transform: "translateY(-34%) rotate(-300deg) scale(.62)", offset: 0 },
+    { transform: "translateY(5%) rotate(-70deg) scale(1.05)", offset: .5 },
+    { transform: "translateY(-7%) rotate(-18deg) scale(.98)", offset: .7 },
+    { transform: "translateY(1%) rotate(-3deg) scale(1.01)", offset: .86 },
+    { transform: "translateY(0) rotate(0deg) scale(1)", offset: 1 }
+  ], { duration: TUMBLE_MS, easing: "cubic-bezier(.25,.75,.3,1)" });
+  let done = false;
+  const t0 = performance.now();
+  (function tick() {
+    const p = (performance.now() - t0) / TUMBLE_MS;
+    if (done || p >= .97) return;
+    num.textContent = randInt(20);
+    setTimeout(tick, 45 + p * p * 190);
+  })();
+  try { await anim.finished; } catch {}
+  done = true;
+  setNum(d, final);
+  body.animate([{ transform: "scale(1.12)" }, { transform: "scale(1)" }], { duration: 300, easing: "cubic-bezier(.2,.9,.25,1)" });
+}
+
+// Статическая картина без анимации: последний бросок свободный или текущее положение раунда.
+function syncArena(instant) {
+  const st = roundShown() ? visibleState() : null;
+  const lastFree = freeRolls.find((x) => !hiddenKeys.has(x.key));
+  const useRound = st && (roundLive() || !lastFree || !st.last || st.last.ts >= lastFree.ts);
+  if (useRound) {
+    clearArena(instant);
+    if (st.pending) { front = dieOf(st.pending, instant ? "front" : "enter"); place(front, "front"); }
+    else if (st.exchanges.length) {
+      const ex = st.exchanges[st.exchanges.length - 1];
+      const fs = ex.point || ex.second, bs = other(fs);
+      back = dieOf(ex[bs], instant ? "back-" + bs : "enter"); front = dieOf(ex[fs], instant ? "front" : "enter");
+      place(back, "back-" + bs); place(front, "front");
+      if (ex.point) { front.classList.add("won"); back.classList.add("lost"); } else { front.classList.add("tie"); back.classList.add("tie"); }
+    } else placeholder(st.nextSide ? round[st.nextSide].name : "", instant);
+    describeRoundState(st);
+  } else if (lastFree) {
+    clearArena(instant); front = makeDie(lastFree.pid === pid ? "Вы" : lastFree.name, null, instant ? "front" : "enter"); setNum(front, lastFree.value); place(front, "front");
+    describeFree(lastFree);
+  } else { placeholder("", instant); setLines("", "", ""); }
+}
+
+function setLines(verdict, who, vcls) {
+  const v = $("verdict"), w = $("who");
+  if (verdict != null) { v.className = "verdict " + (vcls || ""); v.textContent = verdict; if (verdict) animateIn(v, "show"); }
+  if (who != null) { if (typeof who === "string") w.textContent = who; else w.replaceChildren(...who); if (w.textContent) animateIn(w, "show"); }
+}
+function nameNode(r) { return el("b", "", r.pid === pid ? "Вы" : rollerName(r)); }
+function describeFree(r) {
+  let tail = ": выпало " + r.value;
+  if (r.mode) tail += " (" + modeLabel(r) + ", второй кубик " + r.alt + ")";
+  if (r.note) tail += " · " + r.note;
+  setLines(critText(r.value), [nameNode(r), document.createTextNode(tail)], cls(r.value));
+}
+function describeRoundState(st) {
+  if (st.winner) { const w = st.winner; setLines(round[w].name + " выигрывает раунд!", "Счёт " + st.score[w] + ":" + st.score[other(w)], "win"); return; }
+  if (st.exchanges.length && !st.pending) {
+    const ex = st.exchanges[st.exchanges.length - 1];
+    setLines(ex.point ? "Очко получает " + round[ex.point].name : "Ничья — очко никому", round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, ex.point ? "win" : "");
+  } else if (st.pending) setLines("", [nameNode(st.pending), document.createTextNode(": выпало " + st.pending.value)]);
+  else setLines("", "");
+}
+
+// Очередь анимаций: броски проигрываются по одному, у всех игроков одинаково.
+function enqueue(evt) { hiddenKeys.add(evt.roll.key); animQueue.push(evt); if (!animating) runNext(); }
+async function runNext() {
+  const evt = animQueue.shift();
+  if (!evt) { animating = false; if (arenaStale) { arenaStale = false; syncArena(false); } renderAll(); return; }
+  animating = true; renderControls();
+  try {
+    if (evt.kind === "free") await playFree(evt.roll);
+    else if (round && evt.roundId === round.id) await playDuel(evt.roll);
+    else hiddenKeys.delete(evt.roll.key);
+  }
+  catch (e) { console.error(e); hiddenKeys.delete(evt.roll.key); }
+  renderAll();
+  await wait(animQueue.length ? 350 : 0);
+  runNext();
+}
+function rollingLine(r, extra) {
+  let t = r.pid === pid ? " бросаете" : " бросает";
+  if (r.mode) t += " с " + (r.mode === "adv" ? "преимуществом" : "помехой");
+  setLines("", [nameNode(r), document.createTextNode(t + (extra || "") + "…" + (r.note ? " " + r.note : ""))]);
+}
+async function playFree(r) {
+  rollingLine(r);
+  if (back) { dropDie(back); back = null; }
+  if (front && front.dataset.side) { dropDie(front); front = null; }
+  if (!front) front = makeDie("", null, "enter");
+  front.querySelector(".dz-cap").textContent = r.pid === pid ? "Вы" : r.name;
+  place(front, "front");
+  haptic("light");
+  await throwDie(front, r.value);
+  hiddenKeys.delete(r.key);
+  describeFree(r);
+  if (r.value === 20 || r.value === 1) { haptic(r.value === 20 ? "win" : "fail"); if (r.pid === pid) buzz(r.value === 20 ? [60, 40, 120] : 200); }
+}
+async function playDuel(r) {
+  const before = visibleState();
+  if (!before) { hiddenKeys.delete(r.key); return; }
+  rollingLine(r, " в раунде " + round.num);
+  haptic("light");
+  const caption = r.pid === pid ? "Вы" : rollerName(r);
+  if (!before.pending) {
+    // первый бросок обмена: прошлые кости уходят, новая выкатывается в центр
+    if (front && !front.dataset.side && !back) { front.dataset.side = r.side; front.querySelector(".dz-cap").textContent = caption; }
+    else { clearArena(); front = makeDie(caption, r.side, "enter"); place(front, "front"); }
+  } else {
+    // второй бросок: первая кость отходит на задний план к своему игроку, новая — в центр
+    if (front) { place(front, "back-" + (front.dataset.side || other(r.side))); back = front; }
+    front = makeDie(caption, r.side, "enter"); place(front, "front");
+  }
+  await throwDie(front, r.value);
+  hiddenKeys.delete(r.key);
+  renderDuel();
+  const st = visibleState();
+  const ex = st.exchanges[st.exchanges.length - 1];
+  const closed = ex && (ex.a.key === r.key || ex.b.key === r.key);
+  if (!closed) {
+    setLines(critText(r.value), [nameNode(r), document.createTextNode(": выпало " + r.value)], cls(r.value));
+    return;
+  }
+  await wait(250);
+  if (ex.point) {
+    const winDie = front.dataset.side === ex.point ? front : back, loseDie = winDie === front ? back : front;
+    winDie.classList.add("won"); if (loseDie) loseDie.classList.add("lost");
+    haptic(round[ex.point].pid === pid ? "win" : "tap");
+    if (winDie === back) { // победила кость с заднего плана: быстро выходит вперёд и отталкивает соперника
+      await wait(420);
+      arena.classList.add("swap");
+      place(back, "front"); place(front, "back-" + other(ex.point));
+      [front, back] = [back, front];
+      setTimeout(() => arena.classList.remove("swap"), 500);
+    }
+    setLines("Очко получает " + round[ex.point].name, round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, "win");
+  } else {
+    front.classList.add("tie"); if (back) back.classList.add("tie");
+    setLines("Ничья — очко никому", round.a.name + " " + ex.a.value + " : " + ex.b.value + " " + round.b.name, "");
+  }
+  if (st.winner) {
+    await wait(500);
+    const w = st.winner;
+    setLines(round[w].name + " выигрывает раунд!", "Счёт " + st.score[w] + ":" + st.score[other(w)], "win");
+    banner(round[w].name + " побеждает", "Раунд " + round.num + " — " + st.score[w] + ":" + st.score[other(w)]);
+    if (round[w].pid === pid) { buzz([60, 40, 60, 40, 160]); haptic("win"); }
+  }
+  await wait(600);
+}
+function announceRound(rd) {
+  dismissedRound = null;
+  banner("Раунд " + rd.num, "Сражаются " + rd.a.name + " и " + rd.b.name + ". Первым бросает " + rd[rd.first].name + ".");
+  if (rd.a.pid === pid || rd.b.pid === pid) { buzz([80, 60, 80]); haptic("win"); }
+  if (!animating) { placeholder(rd[rd.first].name); setLines("", ""); } else arenaStale = true;
+}
+
+// ---------- отрисовка стола ----------
+function renderAll() { if (!room) return; renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); }
 function onlinePlayers() {
   const list = Object.entries(players).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" }));
   if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
   return list.sort((x, y) => (x.pid === pid ? -1 : y.pid === pid ? 1 : x.name.localeCompare(y.name, "ru")));
 }
-
 function renderPlayers() {
   const box = $("players"); box.replaceChildren();
   const list = onlinePlayers();
-  $("playersTitle").textContent = "ЗА СТОЛОМ · " + list.length;
   const visFree = freeRolls.filter((x) => !hiddenKeys.has(x.key));
+  const full = uiLive() ? visibleState() : null;
+  const turnPid = full && full.nextSide ? round[full.nextSide].pid : null;
   for (const p of list) {
-    const chip = el("span", "player");
-    chip.append(ava(p.pid, p.name), el("b", "", p.name));
+    const chip = el("span", "player" + (p.pid === turnPid ? " turn" : ""));
+    if (!shownPlayers.has(p.pid) && shownPlayers.size) chip.classList.add("enter");
+    chip.append(ava(p.pid, p.name), el("span", "", p.name));
     if (p.pid === pid) chip.append(el("em", "", "вы"));
     const lr = visFree.find((x) => x.pid === p.pid);
-    if (lr) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
+    if (lr && !full) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
     box.append(chip);
   }
-  $("roundBtn").hidden = roundLive() || !$("picker").hidden;
+  shownPlayers = new Set(list.map((p) => p.pid));
+  $("roundBtn").hidden = uiLive();
 }
 
-// --- выбор участников ---
+function renderDuel() {
+  const box = $("duel");
+  if (!roundShown()) { box.hidden = true; return; }
+  const st = visibleState(); if (!st) { box.hidden = true; return; }
+  const wasHidden = box.hidden; box.hidden = false; if (wasHidden) animateIn(box, "duel");
+  box.classList.toggle("done", !!st.winner);
+  $("duelTitle").textContent = "Раунд " + round.num;
+  $("duelSub").textContent = st.winner ? "завершён" : "обмен " + (st.exchanges.length + 1);
+  $("duelSub").title = "До " + WIN_POINTS + " очков";
+  for (const side of ["a", "b"]) {
+    const f = $(side === "a" ? "fa" : "fb"), p = round[side];
+    f.className = "fighter" + (st.winner === side ? " won" : "") + (!st.winner && st.nextSide === side ? " turn" : "");
+    f.querySelector(".fname").textContent = p.name + (p.pid === pid ? " (вы)" : "");
+    const pips = f.querySelector(".pips"); const before = pips.dataset.round === round.id ? Number(pips.dataset.n || 0) : st.score[side];
+    pips.replaceChildren();
+    for (let i = 0; i < WIN_POINTS; i++) { const d = el("span", "pip" + (i < st.score[side] ? " on" : "")); if (i < st.score[side] && i >= before) d.classList.add("pop"); pips.append(d); }
+    pips.dataset.round = round.id; pips.dataset.n = st.score[side];
+    f.querySelector(".tag").textContent = st.winner === side ? "победитель" : (!st.winner && st.nextSide === side ? (p.pid === pid ? "ваш ход" : "бросает") : "");
+  }
+  const log = $("exlog"); const prevN = log.dataset.round === round.id ? Number(log.dataset.n || 0) : st.exchanges.length;
+  log.replaceChildren();
+  st.exchanges.forEach((ex, i) => {
+    const c = el("span", "ex" + (i >= prevN ? " new" : ""));
+    const a = el("span", ex.point === "a" ? "pt" : "", String(ex.a.value)), b = el("span", ex.point === "b" ? "pt" : "", String(ex.b.value));
+    c.append(a, document.createTextNode(":"), b); c.title = ex.point ? "Очко: " + round[ex.point].name : "Ничья";
+    log.append(c);
+  });
+  log.dataset.round = round.id; log.dataset.n = st.exchanges.length;
+  renderAbort(st);
+}
+function renderAbort(st) {
+  const zone = $("abortZone");
+  if (zone.dataset.asking === "1" && !st.winner) return;
+  zone.dataset.asking = "";
+  if (st.winner) {
+    const x = el("button", "icon-btn bare", null); x.type = "button"; x.setAttribute("aria-label", "Закрыть итог раунда");
+    x.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    x.addEventListener("click", () => { dismissedRound = round.id; syncArena(false); renderAll(); });
+    zone.replaceChildren(x); return;
+  }
+  const b = el("button", "btn small ghost", "Отменить"); b.type = "button";
+  b.addEventListener("click", () => {
+    zone.dataset.asking = "1"; zone.replaceChildren();
+    const yes = el("button", "btn small danger", "Да"); yes.type = "button";
+    const no = el("button", "btn small ghost", "Нет"); no.type = "button";
+    yes.addEventListener("click", async () => { zone.dataset.asking = ""; try { await remove(R("round")); } catch { toast("Не получилось отменить раунд"); } });
+    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
+    zone.append(el("span", "q", "Отменить раунд?"), yes, no);
+  });
+  zone.replaceChildren(b);
+}
+
+function renderControls() {
+  if (!room) return;
+  const live = uiLive();
+  const finished = uiFinished();
+  $("freeOpts").hidden = live || finished;
+  const btn = $("rollBtn"), hint = $("hint");
+  btn.classList.remove("your-turn");
+  let canRoll = false;
+  if (live) {
+    const full = animating ? visibleState() : roundState(); const next = round[full.nextSide];
+    const participant = round.a.pid === pid || round.b.pid === pid;
+    if (animating) { btn.textContent = "Кость катится…"; btn.disabled = true; hint.textContent = ""; }
+    else if (myTurn()) { btn.textContent = "Ваш ход — бросить d20"; btn.disabled = false; btn.classList.add("your-turn"); hint.textContent = "Ваш ход: нажмите на кость или на кнопку"; canRoll = true; }
+    else { btn.textContent = participant ? "Ход соперника: " + next.name : "Сейчас бросает " + next.name; btn.disabled = true; hint.textContent = participant ? "Ждём бросок " + next.name : "Вы смотрите раунд — бросают " + round.a.name + " и " + round.b.name; }
+  } else if (finished) {
+    btn.textContent = "Новый раунд"; btn.disabled = animating; hint.textContent = animating ? "" : "× закрывает итог раунда";
+  } else {
+    btn.textContent = animating ? "Кость катится…" : "Бросить d20"; btn.disabled = animating || cooldown; canRoll = !animating && !cooldown;
+    hint.textContent = !animating && !freeRolls.length ? "Нажмите на кость, чтобы бросить" : "";
+  }
+  $("arena").classList.toggle("locked", !canRoll);
+  $("arena").setAttribute("aria-disabled", String(!canRoll));
+}
+
+// --- история ---
+function renderHistory() {
+  const st = visibleState();
+  const vis = results.filter((x) => !(round && x.key === round.id && !(st && st.winner)));
+  const tally = {};
+  vis.forEach((x) => { const k = x.winner.pid; tally[k] = tally[k] || { name: x.winner.name, n: 0 }; tally[k].n++; });
+  const tb = $("tally"); tb.replaceChildren();
+  Object.values(tally).sort((x, y) => y.n - x.n).forEach((t) => { const s = el("span", "", t.name); s.append(el("b", "", String(t.n))); tb.append(s); });
+  const ol = $("results"); ol.replaceChildren();
+  vis.slice(0, 20).forEach((x) => {
+    const li = el("li"); const left = el("span");
+    left.append(document.createTextNode("Раунд " + x.num + ": "), el("b", "", x.winner.name), document.createTextNode(" — " + x.loser.name));
+    li.append(left, el("span", "sc", x.score)); ol.append(li);
+  });
+  $("resultsEmpty").hidden = vis.length > 0;
+  const ul = $("feed"); ul.replaceChildren();
+  const fr = freeRolls.filter((x) => !hiddenKeys.has(x.key));
+  for (const r of fr) {
+    const li = el("li", "roll " + cls(r.value));
+    const meta = el("div", "meta");
+    meta.append(el("div", "name", r.name + (r.pid === pid ? " (вы)" : "")));
+    if (r.note) meta.append(el("div", "note", r.note));
+    const parts = [fmtTime(r.ts)];
+    if (r.mode) parts.push(modeLabel(r) + ", второй кубик " + r.alt);
+    const ct = critText(r.value); if (ct) parts.push(ct.toLowerCase());
+    meta.append(el("div", "sub", parts.filter(Boolean).join(" · ")));
+    li.append(ava(r.pid, r.name), meta, el("span", "val", String(r.value)));
+    ul.append(li);
+  }
+  $("feedEmpty").hidden = fr.length > 0;
+  renderClear(fr.length > 0 || results.length > 0);
+}
+function renderClear(show) {
+  const zone = $("clearZone");
+  if (!show) { zone.replaceChildren(); return; }
+  if (zone.dataset.asking === "1") return;
+  const b = el("button", "btn small danger", "Очистить историю"); b.type = "button";
+  b.addEventListener("click", () => {
+    zone.dataset.asking = "1"; zone.replaceChildren();
+    const yes = el("button", "btn small danger", "Да, очистить"); yes.type = "button";
+    const no = el("button", "btn small ghost", "Отмена"); no.type = "button";
+    yes.addEventListener("click", async () => {
+      zone.dataset.asking = "";
+      try { await Promise.all([remove(R("rolls")), remove(R("results"))]); toast("История очищена"); } catch { toast("Не получилось очистить историю"); }
+      renderAll();
+    });
+    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
+    zone.append(el("span", "q", "Удалить у всех?"), yes, no);
+  });
+  zone.replaceChildren(b);
+}
+$("historyBtn").addEventListener("click", () => { renderHistory(); openSheet("history"); });
+
+// --- выбор участников раунда ---
 function randomPair() { return shuffle(onlinePlayers()).slice(0, 2).map((p) => p.pid); }
 function openPicker() {
-  if (onlinePlayers().length < 2) { toast("Для раунда нужно минимум двое за столом"); return; }
-  picked = randomPair();
-  $("picker").hidden = false; renderAll();
+  if (onlinePlayers().length < 2) { toast("Для раунда нужно минимум двое за столом. Пригласите друга."); return; }
+  picked = randomPair(); renderPicker(true); openSheet("picker");
 }
-function closePicker() { $("picker").hidden = true; renderAll(); }
-function renderPicker() {
-  if ($("picker").hidden) return;
+function renderPicker(force) {
+  if ($("picker").hidden && !force) return;
   const list = onlinePlayers();
   picked = picked.filter((id) => list.some((p) => p.pid === id));
   const box = $("pickList"); box.replaceChildren();
@@ -865,9 +1230,7 @@ function renderPicker() {
   $("pickStart").disabled = picked.length !== 2;
 }
 $("roundBtn").addEventListener("click", openPicker);
-$("nextRoundBtn").addEventListener("click", openPicker);
 $("pickRandom").addEventListener("click", () => { picked = randomPair(); renderPicker(); });
-$("pickCancel").addEventListener("click", closePicker);
 $("pickStart").addEventListener("click", async () => {
   const list = onlinePlayers();
   const [a, b] = shuffle(picked).map((id) => list.find((p) => p.pid === id));
@@ -875,258 +1238,32 @@ $("pickStart").addEventListener("click", async () => {
   const lastNum = Math.max(round ? round.num || 0 : 0, ...results.map((x) => x.num || 0), 0);
   const data = { id: push(R("results")).key, num: lastNum + 1, a: { pid: a.pid, name: a.name }, b: { pid: b.pid, name: b.name }, first: randInt(2) === 1 ? "a" : "b", by: pid, ts: serverTimestamp() };
   $("pickStart").disabled = true;
-  try { await set(R("round"), data); closePicker(); }
+  try { await set(R("round"), data); closeSheet("picker"); }
   catch { toast("Не получилось начать раунд. Проверьте интернет."); $("pickStart").disabled = false; }
 });
-
-// --- панель раунда ---
-function renderDuel() {
-  const box = $("duel");
-  if (!round) { box.hidden = true; return; }
-  const st = visibleState(); if (!st) { box.hidden = true; return; }
-  box.hidden = false;
-  box.classList.toggle("live", !st.winner);
-  $("duelTitle").textContent = "РАУНД " + round.num;
-  for (const side of ["a", "b"]) {
-    const f = $(side === "a" ? "fa" : "fb"); const p = round[side];
-    f.className = "fighter" + (st.winner === side ? " won" : "") + (!st.winner && st.nextSide === side ? " turn" : "");
-    f.querySelector(".fname").textContent = p.name + (p.pid === pid ? " (вы)" : "");
-    const pips = f.querySelector(".pips"); const before = pips.querySelectorAll(".pip.on").length;
-    pips.replaceChildren();
-    for (let i = 0; i < WIN_POINTS; i++) { const d = el("span", "pip" + (i < st.score[side] ? " on" : "")); if (i < st.score[side] && i >= before && pips.dataset.round === round.id) d.classList.add("pop"); pips.append(d); }
-    pips.dataset.round = round.id;
-    let tag = "";
-    if (st.winner === side) tag = "победитель";
-    else if (!st.winner && st.nextSide === side) tag = p.pid === pid ? "ваш ход" : "бросает";
-    f.querySelector(".tag").textContent = tag;
-  }
-  const log = $("exlog"); log.replaceChildren();
-  st.exchanges.forEach((ex, i) => {
-    const li = el("li"); li.append(el("span", "n", (i + 1) + "."));
-    const t = el("span");
-    t.append(el("b", "", String(ex.a.value)), document.createTextNode(" : "), el("b", "", String(ex.b.value)));
-    t.append(document.createTextNode(ex.point ? " · очко получает " + round[ex.point].name : " · ничья, очко никому"));
-    li.append(t); log.append(li);
-  });
-  if (st.pending && !st.winner) {
-    const li = el("li"); li.append(el("span", "n", (st.exchanges.length + 1) + "."));
-    const t = el("span"); const side = st.pending.side;
-    t.append(document.createTextNode(round[side].name + " выбросил(а) "), el("b", "", String(st.pending.value)), document.createTextNode(", ждём ответ"));
-    li.append(t); log.append(li);
-  }
-  if (!st.exchanges.length && !st.pending && !st.winner) {
-    const li = el("li"); li.append(el("span", "n", "—"), el("span", "", "Первым бросает " + round[st.nextSide].name));
-    log.append(li);
-  }
-  $("duelEnd").hidden = !st.winner;
-  if (st.winner) {
-    const w = st.winner, l = w === "a" ? "b" : "a";
-    $("duelEndText").textContent = round[w].name + " побеждает " + st.score[w] + ":" + st.score[l];
-  }
-  renderAbort(st);
-}
-function renderAbort(st) {
-  const zone = $("abortZone");
-  if (st.winner) { zone.replaceChildren(); return; }
-  if (zone.dataset.asking === "1") return;
-  const b = el("button", "btn small ghost", "Отменить"); b.type = "button";
-  b.addEventListener("click", () => {
-    zone.dataset.asking = "1"; zone.replaceChildren();
-    const yes = el("button", "btn small danger", "Да"); yes.type = "button";
-    const no = el("button", "btn small ghost", "Нет"); no.type = "button";
-    yes.addEventListener("click", async () => { zone.dataset.asking = ""; try { await remove(R("round")); } catch { toast("Не получилось отменить раунд"); } });
-    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
-    zone.append(el("span", "q", "Отменить раунд?"), yes, no);
-  });
-  zone.replaceChildren(b);
-}
-
-function announceRound(rd) {
-  const first = rd[rd.first];
-  banner("Раунд " + rd.num, "Сражаются " + rd.a.name + " и " + rd.b.name + ". Первым бросает " + first.name + ".");
-  if (rd.a.pid === pid || rd.b.pid === pid) { buzz([80, 60, 80]); haptic("win"); }
-  idleDuelDie();
-}
-function idleDuelDie() {
-  const st = roundState(); if (!st || st.winner) return;
-  $("dieNum").textContent = "20"; die.classList.remove("win", "fail");
-  $("verdict").className = "verdict"; $("verdict").textContent = "";
-  const p = round[st.nextSide];
-  $("who").replaceChildren(el("b", "", p.pid === pid ? "Ваш ход" : p.name), document.createTextNode(p.pid === pid ? ": нажмите на кость" : " бросает следующим"));
-}
-
-// --- итоги ---
-function renderResults() {
-  const st = visibleState();
-  // результат текущего раунда показываем только после того, как кость остановилась
-  const vis = results.filter((x) => !(round && x.key === round.id && !(st && st.winner)));
-  $("resultsBox").hidden = vis.length === 0;
-  const tally = {};
-  vis.forEach((x) => { const k = x.winner.pid; tally[k] = tally[k] || { name: x.winner.name, n: 0 }; tally[k].n++; });
-  const tb = $("tally"); tb.replaceChildren();
-  Object.values(tally).sort((x, y) => y.n - x.n).forEach((t) => { const s = el("span", "", t.name); s.append(el("b", "", String(t.n))); tb.append(s); });
-  const ol = $("results"); ol.replaceChildren();
-  vis.slice(0, 10).forEach((x) => {
-    const li = el("li");
-    const left = el("span"); left.append(document.createTextNode("Раунд " + x.num + ": "), el("b", "", x.winner.name), document.createTextNode(" — " + x.loser.name));
-    li.append(left, el("span", "sc", x.score));
-    ol.append(li);
-  });
-}
 function saveResultIfFinished() {
   const st = roundState();
   if (!st || !st.winner || results.some((x) => x.key === round.id)) return;
-  const w = st.winner, l = w === "a" ? "b" : "a";
+  const w = st.winner, l = other(w);
   // любой игрок может записать итог; правила базы пропустят только первую запись
   set(R("results/" + round.id), { num: round.num, winner: round[w], loser: round[l], score: st.score[w] + ":" + st.score[l], ts: serverTimestamp() }).catch(() => {});
 }
 
-// --- свободные броски ---
-function renderFeed() {
-  const ul = $("feed"); ul.replaceChildren();
-  const vis = freeRolls.filter((x) => !hiddenKeys.has(x.key));
-  $("empty").hidden = vis.length > 0;
-  for (const r of vis) {
-    const li = el("li", "roll " + cls(r.value) + (r.key === renderFeed.newKey ? " new" : ""));
-    const meta = el("div", "meta");
-    meta.append(el("div", "name", r.name + (r.pid === pid ? " (вы)" : "")));
-    if (r.note) meta.append(el("div", "note", r.note));
-    const parts = [fmtTime(r.ts)];
-    if (r.mode) parts.push(modeLabel(r) + ", второй кубик " + r.alt);
-    const ct = critText(r.value); if (ct) parts.push(ct.toLowerCase());
-    meta.append(el("div", "sub", parts.filter(Boolean).join(" · ")));
-    li.append(ava(r.pid, r.name), meta, el("span", "val", String(r.value)));
-    ul.append(li);
-  }
-  renderClear(vis.length > 0 || results.length > 0);
-}
-function renderClear(show) {
-  const zone = $("clearZone");
-  if (!show) { zone.replaceChildren(); return; }
-  if (zone.dataset.asking === "1") return;
-  const b = el("button", "btn small danger", "Очистить историю"); b.type = "button";
-  b.addEventListener("click", () => {
-    zone.dataset.asking = "1"; zone.replaceChildren();
-    const yes = el("button", "btn small danger", "Да, очистить"); yes.type = "button";
-    const no = el("button", "btn small ghost", "Отмена"); no.type = "button";
-    yes.addEventListener("click", async () => {
-      zone.dataset.asking = "";
-      try { await Promise.all([remove(R("rolls")), remove(R("results"))]); toast("История очищена"); } catch { toast("Не получилось очистить историю"); }
-      renderAll();
-    });
-    no.addEventListener("click", () => { zone.dataset.asking = ""; renderAll(); });
-    zone.append(el("span", "q", "Удалить свободные броски и итоги раундов у всех?"), yes, no);
-  });
-  zone.replaceChildren(b);
-}
-
-// --- управление ---
-function renderControls() {
-  const live = roundLive();
-  $("modeSeg").hidden = live; $("noteInput").hidden = live;
-  const btn = $("rollBtn");
-  if (live) {
-    const full = roundState(); const next = round[full.nextSide];
-    const participant = round.a.pid === pid || round.b.pid === pid;
-    if (myTurn()) { btn.textContent = "Ваш ход: бросить d20"; btn.disabled = false; }
-    else { btn.textContent = animating ? "Кость катится…" : (next.pid === pid ? "Ваш ход: бросить d20" : "Бросает " + next.name); btn.disabled = true; }
-    die.disabled = !myTurn();
-    die.setAttribute("aria-label", participant ? "Бросить d20 в раунде" : "Кость раунда");
-  } else {
-    btn.textContent = "Бросить d20"; btn.disabled = animating || cooldown;
-    die.disabled = false; die.setAttribute("aria-label", "Бросить d20");
-  }
-}
-
-// ---------- кость и анимация ----------
-const die = $("die");
-function paintDie(value) {
-  $("dieNum").textContent = value;
-  die.classList.remove("win", "fail"); const c = cls(value); if (c) die.classList.add(c);
-}
-function setVerdict(text, kind) { const v = $("verdict"); v.className = "verdict " + (kind || ""); v.textContent = text || ""; }
-function resetDie() { $("dieNum").textContent = "20"; die.classList.remove("win", "fail"); setVerdict(""); $("who").textContent = "Нажмите на кость, чтобы бросить"; }
-function showFreeResult(r) {
-  paintDie(r.value); setVerdict(critText(r.value), cls(r.value));
-  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : r.name));
-  let tail = (r.pid === pid ? " выбросили " : " выбросил(а) ") + r.value;
-  if (r.mode) tail += " (" + modeLabel(r) + ", второй кубик " + r.alt + ")";
-  if (r.note) tail += " · " + r.note;
-  who.append(document.createTextNode(tail));
-}
-
-function rollerName(r) { return r.name || (round && r.side && round[r.side] && round[r.side].name) || "Игрок"; }
-function enqueue(evt) { hiddenKeys.add(evt.roll.key); animQueue.push(evt); if (!animating) runNext(); }
-function runNext() {
-  const evt = animQueue.shift();
-  if (!evt) { animating = false; renderAll(); if (roundLive()) idleDuelDieSoon(); return; }
-  animating = true; renderControls();
-  const r = evt.roll;
-  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : rollerName(r)));
-  let t = r.pid === pid ? " бросаете" : " бросает";
-  if (r.mode) t += " с " + (r.mode === "adv" ? "преимуществом" : "помехой");
-  if (evt.kind === "duel" && round) t += " в раунде " + round.num;
-  who.append(document.createTextNode(t + "…" + (r.note ? " " + r.note : "")));
-  die.classList.remove("win", "fail", "landed"); setVerdict("");
-  const finish = () => {
-    die.classList.remove("rolling");
-    hiddenKeys.delete(r.key);
-    reveal(evt);
-    die.classList.remove("landed"); void die.offsetWidth; die.classList.add("landed");
-    if (evt.kind === "free") { renderFeed.newKey = r.key; }
-    renderAll();
-    setTimeout(runNext, animQueue.length ? 450 : 0);
-  };
-  if (reduceMotion()) { setTimeout(finish, 250); return; }
-  die.classList.remove("rolling"); void die.offsetWidth; die.classList.add("rolling");
-  const t0 = performance.now();
-  (function tick() {
-    const left = TUMBLE_MS - (performance.now() - t0);
-    if (left <= 0) { finish(); return; }
-    $("dieNum").textContent = randInt(20);
-    setTimeout(tick, left < 250 ? 110 : 55);
-  })();
-}
-let idleTimer = null;
-function idleDuelDieSoon() { clearTimeout(idleTimer); idleTimer = setTimeout(() => { if (!animating && roundLive()) { const keep = $("verdict").textContent; idleDuelDie(); setVerdict(keep, $("verdict").className.replace("verdict", "").trim()); } }, 2200); }
-
-function reveal(evt) {
-  const r = evt.roll;
-  haptic(r.value === 20 ? "win" : r.value === 1 ? "fail" : "tap");
-  if (evt.kind === "free") { showFreeResult(r); if (r.pid === pid && (r.value === 20 || r.value === 1)) buzz(r.value === 20 ? [60, 40, 120] : 200); return; }
-  paintDie(r.value);
-  const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : rollerName(r)));
-  who.append(document.createTextNode((r.pid === pid ? " выбросили " : " выбросил(а) ") + r.value));
-  const st = visibleState(); if (!st) return;
-  const last = st.exchanges[st.exchanges.length - 1];
-  const closedExchange = last && (last.a.key === r.key || last.b.key === r.key);
-  if (st.winner && closedExchange) {
-    const w = st.winner, l = w === "a" ? "b" : "a";
-    setVerdict(round[w].name + " выигрывает раунд!", "win");
-    banner(round[w].name + " побеждает", "Раунд " + round.num + " закончился со счётом " + st.score[w] + ":" + st.score[l] + ".");
-    if (round[w].pid === pid) buzz([60, 40, 60, 40, 160]);
-    haptic(round[w].pid === pid ? "win" : "tap");
-  } else if (closedExchange) {
-    setVerdict(last.point ? "Очко получает " + round[last.point].name : "Ничья, очко никому", last.point ? "win" : "");
-  } else {
-    setVerdict(critText(r.value), cls(r.value));
-  }
-}
-
+// ---------- бросок ----------
 function setMode(m) { mode = m; document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m))); }
 document.querySelectorAll("#modeSeg button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
-
 async function doRoll() {
   if (!room || animating || cooldown) return;
-  if (roundLive()) {
+  if (roundShown() && !roundLive()) { openPicker(); return; }
+  if (roundLive() && roundShown()) {
     if (!myTurn()) { const st = roundState(); toast("Сейчас ход: " + round[st.nextSide].name); return; }
     const st = roundState();
-    cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 300);
+    cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 400);
     try { await set(push(R("round/rolls")), { pid, side: st.nextSide, value: randInt(20), ts: serverTimestamp() }); }
     catch { toast("Бросок не сохранился. Проверьте интернет."); }
     return;
   }
-  cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 200);
+  cooldown = true; renderControls(); setTimeout(() => { cooldown = false; renderControls(); }, TUMBLE_MS + 300);
   const a = randInt(20), b = randInt(20);
   let value = a, alt = null;
   if (mode === "adv") { value = Math.max(a, b); alt = Math.min(a, b); }
@@ -1138,10 +1275,11 @@ async function doRoll() {
   try { await set(push(R("rolls")), data); $("noteInput").value = ""; }
   catch { toast("Бросок не сохранился. Проверьте интернет."); }
 }
-die.addEventListener("click", doRoll);
 $("rollBtn").addEventListener("click", doRoll);
+arena.addEventListener("click", () => { if (!arena.classList.contains("locked")) doRoll(); });
+arena.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !arena.classList.contains("locked")) { e.preventDefault(); doRoll(); } });
 
-// ---------- приглашение, имя ----------
+// ---------- приглашение ----------
 $("inviteBtn").addEventListener("click", async () => {
   if (tg) {
     const tlink = "https://t.me/" + BOT + "?startapp=" + room;
@@ -1153,7 +1291,7 @@ $("inviteBtn").addEventListener("click", async () => {
     try { await navigator.share({ title: "DnD Roll", text: "Садись за стол " + room, url: link }); return; }
     catch (e) { if (e && e.name === "AbortError") return; }
   }
-  try { await navigator.clipboard.writeText(link); toast("Ссылка скопирована"); }
+  try { await navigator.clipboard.writeText(link); toast("Ссылка скопирована — отправьте её друзьям"); }
   catch { toast(link, 6000); }
 });
 window.addEventListener("pagehide", () => { if (room) { remove(R(`players/${pid}`)).catch(() => {}); remove(ref(db, `lobby/${room}/${pid}`)).catch(() => {}); } });
