@@ -208,6 +208,12 @@
   /* ===== стол ===== */
   .topbar { flex: none; display: flex; align-items: center; gap: 8px; height: 58px; }
   .back-btn { padding: 8px 10px 8px 6px; }
+  .topbar .icon-btn { width: 40px; height: 40px; }
+  #closeTableBtn:hover { color: var(--blood); border-color: rgba(210, 87, 74, .6); }
+  @media (max-width: 420px) { .topbar { gap: 6px; } .back-btn { padding: 8px 6px; } .back-btn span { display: none; } .tb-title b { font-size: 19px; } }
+  .owner-seal { width: 12px; height: 12px; flex: none; color: var(--gold-hi); margin-left: -2px; }
+  .btn.danger.solid { background: var(--blood); color: #1b0805; border-color: var(--blood); }
+  .btn.danger.solid:hover { filter: brightness(1.08); }
   .tb-title { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; }
   .tb-title b { font-family: var(--display); font-weight: 400; font-size: 21px; letter-spacing: .07em; text-transform: uppercase; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--blood); transition: background .3s; }
@@ -349,7 +355,7 @@
   .banner.closing { animation: lift .3s ease-in forwards; }
   @keyframes drop { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
   @keyframes lift { to { transform: translate(-50%, -24px); opacity: 0; } }
-  .toast { position: fixed; z-index: 41; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); max-width: calc(100% - 32px); animation: rise .3s var(--ease); }
+  .toast { position: fixed; z-index: 41; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; text-align: center; background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); max-width: calc(100% - 32px); animation: rise .3s var(--ease); }
 
   /* переходы между экранами */
   ::view-transition-old(root) { animation: vt-out .26s ease-in both; }
@@ -419,9 +425,10 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <!-- СТОЛ -->
   <section id="table" class="screen table" hidden>
     <header class="topbar">
-      <button id="backBtn" class="btn small ghost back-btn" type="button" aria-label="К списку столов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Столы</button>
+      <button id="backBtn" class="btn small ghost back-btn" type="button" aria-label="К списку столов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Столы</span></button>
       <div class="tb-title"><span id="connDot" class="conn-dot" title="нет связи"></span><b id="roomName"></b></div>
       <button id="historyBtn" class="icon-btn" type="button" aria-label="История бросков и итоги раундов" title="История"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7"/><path d="M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2"/><path d="M9.5 9h7M9.5 12.5h7M9.5 16h4.5"/></svg></button>
+      <button id="closeTableBtn" class="icon-btn" type="button" aria-label="Закрыть стол" title="Закрыть стол" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/><path d="M12 14.5v2.5"/></svg></button>
       <button id="inviteBtn" class="icon-btn" type="button" aria-label="Пригласить друзей за стол" title="Пригласить"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><path d="M18 8v6M15 11h6"/></svg></button>
     </header>
 
@@ -523,6 +530,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <div id="clearZone" class="danger-zone"></div>
   </div>
 </div>
+<div id="closeSheet" class="sheet gilded" role="dialog" aria-label="Закрыть стол" hidden>
+  <div class="grabber"></div>
+  <div class="sheet-head"><span class="sheet-title">Закрыть стол?</span><button class="icon-btn bare" type="button" data-close="closeSheet" aria-label="Не закрывать"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <p class="hint-text" style="color:var(--ivory)">Все игроки вернутся к списку столов, а стол исчезнет из списка.</p>
+    <p class="hint-text">История бросков и итоги раундов этого стола удалятся. Вернуть их будет нельзя.</p>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn ghost" type="button" data-close="closeSheet">Отмена</button>
+      <button id="closeTableYes" class="btn danger solid" type="button">Закрыть стол</button>
+    </div>
+  </div>
+</div>
 <div id="banner" class="banner" role="status" hidden></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
@@ -588,7 +607,7 @@ if (!pid || pid.length > 40) { pid = crypto.randomUUID ? crypto.randomUUID() : S
 let myName = store.get("dndroll.name") || "";
 let room = null, mode = "";
 let unsubs = [];
-let players = {}, freeRolls = [], round = null, results = [];
+let players = {}, freeRolls = [], round = null, results = [], meta = null, closing = false;
 let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound = true;
 const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
 const animQueue = []; let animating = false, cooldown = false;
@@ -614,6 +633,8 @@ function haptic(kind) {
   try { if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred(kind === "light" ? "light" : "medium"); } } catch {}
 }
 const R = (p) => ref(db, `rooms/${room}/${p}`);
+let serverOffset = 0;
+onValue(ref(db, ".info/serverTimeOffset"), (snap) => { serverOffset = Number(snap.val()) || 0; });
 
 // ---------- логика раунда ----------
 // Состояние раунда целиком выводится из списка бросков, поэтому у всех игроков оно одинаковое.
@@ -655,6 +676,7 @@ function rollerName(r) { return r.name || (round && r.side && round[r.side] && r
 // ---------- лобби ----------
 let lobbyData = {}, lobbyUnsub = null, lobbyLoaded = false, shownCodes = new Set(), firstLobbyPaint = true;
 const ICON_GO = '<i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></i><small>Сесть</small>';
+const OWNER_SEAL = '<svg class="owner-seal" viewBox="0 0 16 16" aria-label="создатель стола" role="img"><path fill="currentColor" d="M2 12.5h12l-1-7-3 3-2-5-2 5-3-3z"/></svg>';
 const ICON_SEAL = '<svg class="seal" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1l7 7-7 7-7-7z"/></svg>';
 function recentRooms() { try { const a = JSON.parse(store.get("dndroll.recent") || "[]"); return Array.isArray(a) ? a.filter((x) => ROOM_RE.test(x)) : []; } catch { return []; } }
 function addRecent(r) { store.set("dndroll.recent", JSON.stringify([r, ...recentRooms().filter((x) => x !== r)].slice(0, 6))); }
@@ -786,7 +808,7 @@ function closeSheet(id) {
 }
 $("sheetScrim").addEventListener("click", () => closeSheet($("sheetScrim").dataset.for));
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeSheet(b.dataset.close)));
-document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; closeMenu(); ["picker", "history"].forEach(closeSheet); });
+document.addEventListener("keydown", (e) => { if (e.key !== "Escape") return; closeMenu(); ["picker", "history", "closeSheet"].forEach(closeSheet); });
 
 // ---------- стол: вход и выход ----------
 function enterRoom(r) {
@@ -814,6 +836,24 @@ function enterRoom(r) {
       .catch(() => {});
   }));
   unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); }));
+  // создатель стола: кто первым сел за пустой стол, тот и хозяин
+  let firstMeta = true;
+  meta = null; closing = false;
+  unsubs.push(onValue(R("meta"), (snap) => {
+    meta = snap.val() || null;
+    if (firstMeta && !meta && room === r) set(R("meta"), { owner: pid, name: myName, ts: serverTimestamp() }).catch(() => {});
+    firstMeta = false;
+    renderAll();
+  }));
+  // хозяин закрыл стол: всех возвращает к списку столов (старая отметка о закрытии, до нашего входа, не в счёт)
+  const joinedAt = Date.now() + serverOffset;
+  unsubs.push(onValue(R("closed"), (snap) => {
+    const v = snap.val();
+    if (!v || v.by === pid || closing || room !== r || !(typeof v.ts === "number" && v.ts > joinedAt - 1500)) return;
+    haptic("fail"); buzz(120);
+    goLobby();
+    toast("Стол " + r + " закрыт создателем", 3200);
+  }));
   unsubs.push(onValue(query(R("rolls"), orderByChild("ts"), limitToLast(50)), (snap) => {
     const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
     list.reverse();
@@ -860,7 +900,7 @@ function leaveRoom() {
   }
 }
 function goLobby() {
-  ["picker", "history"].forEach(closeSheet);
+  ["picker", "history", "closeSheet"].forEach(closeSheet);
   transition(() => {
     leaveRoom(); room = null; invitedRoom = "";
     const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
@@ -1053,7 +1093,7 @@ function announceRound(rd) {
 }
 
 // ---------- отрисовка стола ----------
-function renderAll() { if (!room) return; renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); }
+function renderAll() { if (!room) return; $("closeTableBtn").hidden = !isOwner(); renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); }
 function onlinePlayers() {
   const list = Object.entries(players).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" }));
   if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
@@ -1069,6 +1109,7 @@ function renderPlayers() {
     const chip = el("span", "player" + (p.pid === turnPid ? " turn" : ""));
     if (!shownPlayers.has(p.pid) && shownPlayers.size) chip.classList.add("enter");
     chip.append(ava(p.pid, p.name), el("span", "", p.name));
+    if (meta && meta.owner === p.pid) { chip.insertAdjacentHTML("beforeend", OWNER_SEAL); chip.title = "Создатель стола"; }
     if (p.pid === pid) chip.append(el("em", "", "вы"));
     const lr = visFree.find((x) => x.pid === p.pid);
     if (lr && !full) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
@@ -1206,6 +1247,30 @@ function renderClear(show) {
   zone.replaceChildren(b);
 }
 $("historyBtn").addEventListener("click", () => { renderHistory(); openSheet("history"); });
+function isOwner() { return !!(meta && meta.owner === pid); }
+$("closeTableBtn").addEventListener("click", () => { if (isOwner()) openSheet("closeSheet"); });
+$("closeTableYes").addEventListener("click", async () => {
+  if (!room || !isOwner()) return;
+  const code = room, ids = new Set([...Object.keys(players), pid]);
+  closing = true; $("closeTableYes").disabled = true;
+  unsubs.forEach((u) => { try { u(); } catch {} }); unsubs = [];
+  try {
+    await set(R("closed"), { by: pid, ts: serverTimestamp() });
+    await Promise.all([
+      remove(R("rolls")), remove(R("results")), remove(R("round")),
+      ...[...ids].map((id) => remove(R("players/" + id))),
+      ...[...ids].map((id) => remove(ref(db, "lobby/" + code + "/" + id)))
+    ]);
+    await remove(R("meta"));
+    closeSheet("closeSheet");
+    goLobby();
+    toast("Стол " + code + " закрыт");
+  } catch {
+    toast("Не получилось закрыть стол. Проверьте интернет.");
+    closing = false; closeSheet("closeSheet");
+    const r = room; room = null; enterRoom(r);
+  } finally { $("closeTableYes").disabled = false; }
+});
 
 // --- выбор участников раунда ---
 function randomPair() { return shuffle(onlinePlayers()).slice(0, 2).map((p) => p.pid); }
