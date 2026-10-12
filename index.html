@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:wght@400;500;700&display=swap">
@@ -389,7 +390,27 @@ const animQueue = []; let animating = false, cooldown = false;
 let picked = [];
 
 const params = new URLSearchParams(location.search);
-const invitedRoom = (params.get("room") || "").toLowerCase();
+let invitedRoom = (params.get("room") || "").toLowerCase();
+
+// ---------- Telegram ----------
+const BOT = "best_dnd_roll_bot";
+const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+let tgName = "";
+if (tg) {
+  try { tg.ready(); tg.expand(); tg.setHeaderColor("#0f2a24"); tg.setBackgroundColor("#0f2a24"); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch {}
+  const u = (tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+  tgName = [u.first_name, u.last_name ? u.last_name.slice(0, 1) + "." : ""].filter(Boolean).join(" ").trim().slice(0, 24);
+  const sp = ((tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").toLowerCase();
+  const ci = tg.initDataUnsafe && tg.initDataUnsafe.chat_instance;
+  if (ROOM_RE.test(sp)) invitedRoom = sp;
+  else if (ci) { try { invitedRoom = "tg-" + BigInt(String(ci).replace("-", "")).toString(36).slice(0, 21); } catch {} }
+  if (!myName && tgName) { myName = tgName; store.set("dndroll.name", myName); }
+}
+function haptic(kind) {
+  try {
+    if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred("medium"); }
+  } catch {}
+}
 const R = (p) => ref(db, `rooms/${room}/${p}`);
 
 // ---------- логика раунда ----------
@@ -641,7 +662,7 @@ function renderAbort(st) {
 function announceRound(rd) {
   const first = rd[rd.first];
   banner("Раунд " + rd.num, "Сражаются " + rd.a.name + " и " + rd.b.name + ". Первым бросает " + first.name + ".");
-  if (rd.a.pid === pid || rd.b.pid === pid) buzz([80, 60, 80]);
+  if (rd.a.pid === pid || rd.b.pid === pid) { buzz([80, 60, 80]); haptic("win"); }
   idleDuelDie();
 }
 function idleDuelDie() {
@@ -789,6 +810,7 @@ function idleDuelDieSoon() { clearTimeout(idleTimer); idleTimer = setTimeout(() 
 
 function reveal(evt) {
   const r = evt.roll;
+  haptic(r.value === 20 ? "win" : r.value === 1 ? "fail" : "tap");
   if (evt.kind === "free") { showFreeResult(r); if (r.pid === pid && (r.value === 20 || r.value === 1)) buzz(r.value === 20 ? [60, 40, 120] : 200); return; }
   paintDie(r.value);
   const who = $("who"); who.replaceChildren(el("b", "", r.pid === pid ? "Вы" : rollerName(r)));
@@ -801,6 +823,7 @@ function reveal(evt) {
     setVerdict(round[w].name + " выигрывает раунд!", "win");
     banner(round[w].name + " побеждает", "Раунд " + round.num + " закончился со счётом " + st.score[w] + ":" + st.score[l] + ".");
     if (round[w].pid === pid) buzz([60, 40, 60, 40, 160]);
+    haptic(round[w].pid === pid ? "win" : "tap");
   } else if (closedExchange) {
     setVerdict(last.point ? "Очко получает " + round[last.point].name : "Ничья, очко никому", last.point ? "win" : "");
   } else {
@@ -838,6 +861,10 @@ $("rollBtn").addEventListener("click", doRoll);
 
 // ---------- приглашение, имя ----------
 $("inviteBtn").addEventListener("click", async () => {
+  if (tg) {
+    const tlink = "https://t.me/" + BOT + "?startapp=" + room;
+    try { tg.openTelegramLink("https://t.me/share/url?url=" + encodeURIComponent(tlink) + "&text=" + encodeURIComponent("Садись за стол " + room + " в DnD Roll")); return; } catch {}
+  }
   const url = new URL(location.origin + location.pathname); url.searchParams.set("room", room);
   const link = url.toString();
   if (navigator.share) {
