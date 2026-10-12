@@ -209,8 +209,13 @@
   .topbar { flex: none; display: flex; align-items: center; gap: 8px; height: 58px; }
   .back-btn { padding: 8px 10px 8px 6px; }
   .topbar .icon-btn { width: 40px; height: 40px; }
-  #closeTableBtn:hover { color: var(--blood); border-color: rgba(210, 87, 74, .6); }
-  @media (max-width: 420px) { .topbar { gap: 6px; } .back-btn { padding: 8px 6px; } .back-btn span { display: none; } .tb-title b { font-size: 19px; } }
+  .btn.close-table { flex: none; height: 40px; padding: 0 12px; gap: 6px; color: #eea597; border-color: rgba(210, 87, 74, .55); background: rgba(210, 87, 74, .08); white-space: nowrap; }
+  .btn.close-table:hover { color: #ffb4a6; border-color: var(--blood); background: rgba(210, 87, 74, .16); }
+  .close-table .lbl-short { display: none; }
+  @media (max-width: 420px) {
+    .topbar { gap: 4px; } .back-btn { padding: 8px 4px; } .back-btn span { display: none; } .tb-title { gap: 6px; } .tb-title b { font-size: 20px; letter-spacing: .03em; text-transform: none; }
+    .btn.close-table { padding: 0 7px; font-size: 13.5px; } .close-table svg { display: none; } .close-table .lbl-long { display: none; } .close-table .lbl-short { display: inline; }
+  }
   .owner-seal { width: 12px; height: 12px; flex: none; color: var(--gold-hi); margin-left: -2px; }
   .btn.danger.solid { background: var(--blood); color: #1b0805; border-color: var(--blood); }
   .btn.danger.solid:hover { filter: brightness(1.08); }
@@ -428,8 +433,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <button id="backBtn" class="btn small ghost back-btn" type="button" aria-label="К списку столов"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Столы</span></button>
       <div class="tb-title"><span id="connDot" class="conn-dot" title="нет связи"></span><b id="roomName"></b></div>
       <button id="historyBtn" class="icon-btn" type="button" aria-label="История бросков и итоги раундов" title="История"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7"/><path d="M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2"/><path d="M9.5 9h7M9.5 12.5h7M9.5 16h4.5"/></svg></button>
-      <button id="closeTableBtn" class="icon-btn" type="button" aria-label="Закрыть стол" title="Закрыть стол" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/><path d="M12 14.5v2.5"/></svg></button>
       <button id="inviteBtn" class="icon-btn" type="button" aria-label="Пригласить друзей за стол" title="Пригласить"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><path d="M18 8v6M15 11h6"/></svg></button>
+      <button id="closeTableBtn" class="btn small close-table" type="button" aria-label="Удалить стол" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9L17.5 7M10.5 10.5v6M13.5 10.5v6"/></svg><span class="lbl-long">Удалить стол</span><span class="lbl-short">Удалить</span></button>
     </header>
 
     <div class="strip">
@@ -530,15 +535,15 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <div id="clearZone" class="danger-zone"></div>
   </div>
 </div>
-<div id="closeSheet" class="sheet gilded" role="dialog" aria-label="Закрыть стол" hidden>
+<div id="closeSheet" class="sheet gilded" role="dialog" aria-label="Удалить стол" hidden>
   <div class="grabber"></div>
-  <div class="sheet-head"><span class="sheet-title">Закрыть стол?</span><button class="icon-btn bare" type="button" data-close="closeSheet" aria-label="Не закрывать"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-head"><span class="sheet-title">Удалить стол?</span><button class="icon-btn bare" type="button" data-close="closeSheet" aria-label="Не удалять"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="sheet-body">
-    <p class="hint-text" style="color:var(--ivory)">Все игроки вернутся к списку столов, а стол исчезнет из списка.</p>
+    <p class="hint-text" style="color:var(--ivory)">Стол перестанет работать: все игроки вернутся к списку столов, а сам стол исчезнет из списка.</p>
     <p class="hint-text">История бросков и итоги раундов этого стола удалятся. Вернуть их будет нельзя.</p>
     <div class="row" style="justify-content:flex-end">
       <button class="btn ghost" type="button" data-close="closeSheet">Отмена</button>
-      <button id="closeTableYes" class="btn danger solid" type="button">Закрыть стол</button>
+      <button id="closeTableYes" class="btn danger solid" type="button">Удалить стол</button>
     </div>
   </div>
 </div>
@@ -852,7 +857,7 @@ function enterRoom(r) {
     if (!v || v.by === pid || closing || room !== r || !(typeof v.ts === "number" && v.ts > joinedAt - 1500)) return;
     haptic("fail"); buzz(120);
     goLobby();
-    toast("Стол " + r + " закрыт создателем", 3200);
+    toast("Создатель удалил стол " + r, 3200);
   }));
   unsubs.push(onValue(query(R("rolls"), orderByChild("ts"), limitToLast(50)), (snap) => {
     const list = []; snap.forEach((c) => { list.push({ key: c.key, ...c.val() }); });
@@ -1264,9 +1269,9 @@ $("closeTableYes").addEventListener("click", async () => {
     await remove(R("meta"));
     closeSheet("closeSheet");
     goLobby();
-    toast("Стол " + code + " закрыт");
+    toast("Стол " + code + " удалён");
   } catch {
-    toast("Не получилось закрыть стол. Проверьте интернет.");
+    toast("Не получилось удалить стол. Проверьте интернет.");
     closing = false; closeSheet("closeSheet");
     const r = room; room = null; enterRoom(r);
   } finally { $("closeTableYes").disabled = false; }
