@@ -130,6 +130,11 @@
   @keyframes flicker { 0%, 100% { opacity: .72; transform: scale(1); } 18% { opacity: 1; transform: scale(1.05); } 37% { opacity: .8; } 55% { opacity: .96; transform: scale(.97); } 74% { opacity: .68; } 88% { opacity: .9; } }
 
   .nameplate { position: relative; z-index: 2; flex: none; margin-top: -84px; display: grid; justify-items: center; }
+  /* тёмная «лужа» за именем, чтобы оно читалось поверх светлой части картины */
+  .nameplate::before { content: ""; position: absolute; z-index: -1; left: 50%; top: -22px; translate: -50% 0; width: min(560px, 125%); height: calc(100% + 34px); pointer-events: none;
+    background: radial-gradient(ellipse 50% 50% at 50% 48%, rgba(11, 8, 7, .9) 0%, rgba(11, 8, 7, .78) 38%, rgba(11, 8, 7, .42) 66%, rgba(11, 8, 7, 0) 100%); }
+  .nameplate.locked input { cursor: default; caret-color: transparent; -webkit-user-select: none; user-select: none; }
+  .nameplate.locked:focus-within .flourish { color: var(--brass); transform: none; }
   .nameplate input { width: 100%; max-width: 440px; background: transparent; border: 0; border-radius: 0; text-align: center; padding: 6px 8px 0;
     font-family: var(--display); font-size: clamp(30px, 8.6vw, 42px); letter-spacing: .05em; color: var(--ivory); text-shadow: 0 2px 14px rgba(0, 0, 0, .95), 0 0 3px rgba(0, 0, 0, .9); }
   .nameplate input::placeholder { color: rgba(236, 226, 204, .55); }
@@ -225,14 +230,40 @@
   .conn-dot.on { background: var(--ok); box-shadow: 0 0 8px rgba(143, 207, 159, .6); }
 
   .strip { flex: none; display: flex; align-items: center; gap: 10px; min-height: 44px; }
-  .players { flex: 1 1 auto; min-width: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px;
+  .players { flex: 1 1 auto; min-width: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 10px 6px; margin: -6px -4px;
     -webkit-mask-image: linear-gradient(to right, #000 86%, transparent); mask-image: linear-gradient(to right, #000 86%, transparent); }
   .players::-webkit-scrollbar { display: none; }
   .player { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 4px; border-radius: 999px; background: var(--felt-2); border: 1px solid var(--line); font-size: 15px; transition: box-shadow .3s, border-color .3s; }
   .player em { font-style: normal; color: var(--muted); font-size: 12px; }
   .player .last { font-family: var(--display); color: var(--brass); }
   .player.turn { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(207, 167, 90, .5), 0 0 14px rgba(207, 167, 90, .35); }
-  .player.enter { animation: pop .45s var(--ease); }
+  /* игрок садится за стол: фишка раздвигает соседей, падает на место и вспыхивает золотом */
+  .player.join { animation: seat .75s var(--ease) both, seatglow 1.6s ease-out .2s both; }
+  @keyframes seat { 0% { max-width: 0; opacity: 0; padding-inline: 0; border-width: 0; transform: translateY(-16px) scale(.5); }
+    45% { max-width: 260px; opacity: 1; padding-inline: 4px 11px; border-width: 1px; transform: translateY(3px) scale(1.08); }
+    70% { transform: translateY(-1px) scale(.98); } 100% { max-width: 260px; transform: none; } }
+  @keyframes seatglow { 0% { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 24px rgba(236, 208, 143, .7); border-color: var(--gold-hi); } 100% { box-shadow: 0 0 0 0 rgba(236, 208, 143, 0); } }
+  .player.join .ava { animation: avadrop .6s var(--ease) .12s both; }
+  @keyframes avadrop { from { transform: translateY(-12px) rotate(-90deg); opacity: 0; } }
+  .player.leave { animation: unseat .42s ease-in forwards; pointer-events: none; }
+  @keyframes unseat { 0% { max-width: 260px; } 40% { opacity: .5; transform: translateY(4px) scale(.85); } 100% { max-width: 0; opacity: 0; padding-inline: 0; border-width: 0; margin-left: -8px; transform: translateY(8px) scale(.5); } }
+  .player { max-width: 260px; overflow: hidden; white-space: nowrap; }
+
+  /* глашатай: «Оля садится за стол» сверху арены */
+  .herald { position: absolute; z-index: 5; left: 50%; top: 4px; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; max-width: calc(100% - 16px);
+    padding: 5px 14px 5px 5px; border-radius: 999px; border: 1px solid rgba(236, 208, 143, .6); background: linear-gradient(180deg, #2a1f15, #1a130e);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .5), 0 0 18px rgba(207, 167, 90, .18); font-size: 15px; white-space: nowrap; pointer-events: none;
+    animation: heraldin .5s var(--ease) both, heraldout .4s ease-in 2.4s forwards; }
+  .herald b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+  .herald span { color: var(--muted); }
+  @keyframes heraldin { from { opacity: 0; transform: translateY(-14px) scale(.9); } }
+  @keyframes heraldout { to { opacity: 0; transform: translateY(-10px); } }
+
+  /* свой вход за стол: стол собирается сверху вниз */
+  .table.entering .topbar, .table.entering .strip, .table.entering .stage, .table.entering .controls { animation: rise .6s var(--ease) both; }
+  .table.entering .strip { animation-delay: .08s; }
+  .table.entering .stage { animation-delay: .16s; }
+  .table.entering .controls { animation-delay: .26s; }
   .round-btn { flex: none; font-family: var(--display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
 
   .duel { flex: none; margin-top: 8px; padding: 12px 14px; display: grid; gap: 10px; animation: rise .45s var(--ease); }
@@ -616,7 +647,7 @@ let players = {}, freeRolls = [], round = null, results = [], meta = null, closi
 let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound = true;
 const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
 const animQueue = []; let animating = false, cooldown = false;
-let dismissedRound = null, picked = [], shownPlayers = new Set(), arenaStale = false;
+let dismissedRound = null, picked = [], arenaStale = false;
 const params = new URLSearchParams(location.search);
 let invitedRoom = (params.get("room") || "").toLowerCase();
 
@@ -627,13 +658,18 @@ if (tg) {
   document.documentElement.classList.add("tg");
   try { tg.ready(); tg.expand(); tg.setHeaderColor("#0b0807"); tg.setBackgroundColor("#0b0807"); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch {}
   const u = (tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
-  const tgName = [u.first_name, u.last_name ? u.last_name.slice(0, 1) + "." : ""].filter(Boolean).join(" ").trim().slice(0, 24);
+  // имя в Telegram: юзернейм, а если его нет — имя и первая буква фамилии
+  const fullName = [u.first_name, u.last_name ? u.last_name.slice(0, 1) + "." : ""].filter(Boolean).join(" ").trim();
+  const tgName = String(u.username || fullName || "").slice(0, 24);
+  // один и тот же аккаунт Telegram на телефоне и компьютере — один и тот же игрок
+  if (u.id) { pid = "tg" + String(u.id).replace(/\D/g, "").slice(0, 30); store.set("dndroll.pid", pid); }
   const sp = ((tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").toLowerCase();
   const ci = tg.initDataUnsafe && tg.initDataUnsafe.chat_instance;
   if (ROOM_RE.test(sp)) invitedRoom = sp;
   else if (ci) { try { invitedRoom = "tg-" + BigInt(String(ci).replace("-", "")).toString(36).slice(0, 21); } catch {} }
-  if (!myName && tgName) { myName = tgName; store.set("dndroll.name", myName); }
+  if (tgName) { myName = tgName; store.set("dndroll.name", myName); }
 }
+const tgLocked = !!(tg && myName);
 function haptic(kind) {
   try { if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred(kind === "light" ? "light" : "medium"); } } catch {}
 }
@@ -688,6 +724,7 @@ function addRecent(r) { store.set("dndroll.recent", JSON.stringify([r, ...recent
 
 function showLobby() {
   document.body.dataset.screen = "lobby";
+  if (tgLocked) { const ni = $("nameInput"); ni.value = myName; ni.readOnly = true; ni.tabIndex = -1; ni.setAttribute("aria-label", "Ваше имя из Telegram"); $("nameplate").classList.add("locked"); }
   $("table").hidden = true; $("join").hidden = false;
   if (tg && tg.BackButton) { try { tg.BackButton.hide(); } catch {} }
   if (!$("nameInput").value) $("nameInput").value = myName;
@@ -752,10 +789,10 @@ function nameError(msg) {
   closeMenu(); $("nameInput").focus();
 }
 $("nameInput").addEventListener("input", () => { $("joinErr").hidden = true; });
-$("nameInput").addEventListener("change", () => { const n = $("nameInput").value.trim().slice(0, 24); if (n) saveName(n); });
+$("nameInput").addEventListener("change", () => { if (tgLocked) return; const n = $("nameInput").value.trim().slice(0, 24); if (n) saveName(n); });
 $("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 function joinRoom(code) {
-  const name = $("nameInput").value.trim().slice(0, 24);
+  const name = tgLocked ? myName : $("nameInput").value.trim().slice(0, 24);
   if (!name) { nameError("Сначала введите имя — его увидят друзья"); return; }
   if (!ROOM_RE.test(code)) { const fe = $("formErr"); fe.textContent = "Код: от 3 до 24 символов — латиница, цифры и дефис"; fe.hidden = false; return; }
   saveName(name); closeMenu(true); transition(() => enterRoom(code));
@@ -825,7 +862,9 @@ function enterRoom(r) {
   document.body.dataset.screen = "table";
   $("roomName").textContent = r;
   $("join").hidden = true; $("table").hidden = false;
-  knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true; shownPlayers = new Set();
+  knownFree = new Set(); knownDuel = new Set(); firstFree = true; firstRound = true;
+  chipEls.clear(); $("players").replaceChildren(); playersReady = false;
+  if (!reduceMotion()) { const t = $("table"); t.classList.remove("entering"); void t.offsetWidth; t.classList.add("entering"); setTimeout(() => t.classList.remove("entering"), 1000); }
   hiddenKeys.clear(); animQueue.length = 0; animating = false; round = null; results = []; freeRolls = []; players = {}; dismissedRound = null;
   $("arena").replaceChildren(); front = back = null; setLines("", "", "");
   placeholder("");
@@ -840,7 +879,7 @@ function enterRoom(r) {
       .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp() }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
       .catch(() => {});
   }));
-  unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); }));
+  unsubs.push(onValue(R("players"), (snap) => { players = snap.val() || {}; renderAll(); playersReady = true; }));
   // создатель стола: кто первым сел за пустой стол, тот и хозяин
   let firstMeta = true;
   meta = null; closing = false;
@@ -1104,24 +1143,55 @@ function onlinePlayers() {
   if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
   return list.sort((x, y) => (x.pid === pid ? -1 : y.pid === pid ? 1 : x.name.localeCompare(y.name, "ru")));
 }
+// Лента игроков обновляется точечно: новые фишки въезжают, ушедшие уезжают, остальные не дёргаются.
+const chipEls = new Map();
+let playersReady = false;
 function renderPlayers() {
-  const box = $("players"); box.replaceChildren();
+  const box = $("players");
   const list = onlinePlayers();
+  const ids = new Set(list.map((p) => p.pid));
   const visFree = freeRolls.filter((x) => !hiddenKeys.has(x.key));
   const full = uiLive() ? visibleState() : null;
   const turnPid = full && full.nextSide ? round[full.nextSide].pid : null;
+  const animate = playersReady && !reduceMotion();
+  for (const [id, chip] of chipEls) {
+    if (ids.has(id)) continue;
+    chipEls.delete(id);
+    if (!animate) { chip.remove(); continue; }
+    chip.classList.remove("join", "turn"); chip.classList.add("leave");
+    setTimeout(() => chip.remove(), 450);
+  }
+  let cursor = box.firstElementChild;
   for (const p of list) {
-    const chip = el("span", "player" + (p.pid === turnPid ? " turn" : ""));
-    if (!shownPlayers.has(p.pid) && shownPlayers.size) chip.classList.add("enter");
-    chip.append(ava(p.pid, p.name), el("span", "", p.name));
+    while (cursor && cursor.classList.contains("leave")) cursor = cursor.nextElementSibling;
+    let chip = chipEls.get(p.pid);
+    if (!chip) {
+      chip = el("span", "player"); chipEls.set(p.pid, chip);
+      if (animate && p.pid !== pid) {
+        chip.classList.add("join");
+        chip.addEventListener("animationend", (e) => { if (e.animationName === "seatglow") chip.classList.remove("join"); });
+        herald(p);
+      }
+    }
+    chip.classList.toggle("turn", p.pid === turnPid);
+    const parts = [ava(p.pid, p.name), el("span", "", p.name)];
+    chip.replaceChildren(...parts);
+    chip.title = "";
     if (meta && meta.owner === p.pid) { chip.insertAdjacentHTML("beforeend", OWNER_SEAL); chip.title = "Создатель стола"; }
     if (p.pid === pid) chip.append(el("em", "", "вы"));
     const lr = visFree.find((x) => x.pid === p.pid);
     if (lr && !full) { const l = el("span", "last", String(lr.value)); l.title = "Последний свободный бросок"; chip.append(l); }
-    box.append(chip);
+    if (chip !== cursor) box.insertBefore(chip, cursor); else cursor = cursor.nextElementSibling;
   }
-  shownPlayers = new Set(list.map((p) => p.pid));
   $("roundBtn").hidden = uiLive();
+}
+function herald(p) {
+  const old = arena.querySelector(".herald"); if (old) old.remove();
+  const h = el("div", "herald"); h.setAttribute("role", "status");
+  h.append(ava(p.pid, p.name), el("b", "", p.name), el("span", "", "садится за стол"));
+  arena.append(h);
+  haptic("light");
+  setTimeout(() => h.remove(), 2900);
 }
 
 function renderDuel() {
