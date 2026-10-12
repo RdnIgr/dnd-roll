@@ -337,7 +337,34 @@
     background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, .75) 0%, rgba(0, 0, 0, .42) 45%, rgba(0, 0, 0, 0) 72%); }
   .dz.crit-win canvas { filter: drop-shadow(0 0 14px rgba(236, 208, 143, .8)); }
   .dz.crit-fail canvas { filter: drop-shadow(0 0 14px rgba(210, 87, 74, .85)); }
-  .dz.rolling .dz-cap { opacity: 0; }
+  .dz.rolling .dz-cap, .dz.rolling .dz-val { opacity: 0; }
+  .dz { text-align: center; }
+  .dz-val { display: inline-block; margin-top: 3px; min-width: 2.1em; padding: 0 9px; border-radius: 999px; font-family: var(--display); font-size: 21px; line-height: 1.3;
+    background: rgba(11, 8, 7, .8); border: 1px solid rgba(207, 167, 90, .4); color: var(--ivory); transition: opacity .35s, background .35s, color .35s, border-color .35s, transform .35s var(--ease); }
+  .dz-val:empty { display: none; }
+  .dz.won .dz-val { background: linear-gradient(180deg, #e7c98a, #b08442); color: var(--brass-ink); border-color: #e7c98a; transform: scale(1.12); }
+  .dz.crit-fail .dz-val { background: rgba(120, 30, 24, .9); border-color: var(--blood); color: #ffd9d2; }
+  .dz[data-pos^=back] .dz-val { font-size: 34px; }
+  .dz[data-pos=slot] .dz-val { font-size: calc(19px / var(--s, 1)); }
+  .shard-wrap { position: absolute; inset: 0; pointer-events: none; }
+  .shard-wrap .half { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); }
+  .shard-wrap .crack { position: absolute; inset: 14%; width: 72%; height: 72%; overflow: visible; }
+  .shard-wrap .crack polyline { fill: none; stroke: #ffb59f; stroke-width: 2.2; vector-effect: non-scaling-stroke; stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px #d2574a) drop-shadow(0 0 10px #d2574a); stroke-dasharray: 160; stroke-dashoffset: 160; animation: crackdraw .3s ease-out forwards; }
+  @keyframes crackdraw { to { stroke-dashoffset: 0; } }
+  .shard { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; background: #e1a08f; clip-path: polygon(50% 0, 100% 100%, 0 80%); opacity: 0; animation: shardfly .8s ease-out both; }
+  @keyframes shardfly { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--r)); } }
+  .dz.broken canvas { filter: none; }
+  .crit-banner { position: absolute; z-index: 6; left: 50%; top: 8%; translate: -50% 0; pointer-events: none; white-space: nowrap;
+    font-family: var(--display); font-size: clamp(22px, 7cqw, 34px); letter-spacing: .12em; text-transform: uppercase; animation: critin .6s cubic-bezier(.2,1.5,.4,1) both, critout .5s ease-in 2s forwards; }
+  .crit-banner.fail span { color: #ff9a8a; text-shadow: 0 0 18px rgba(210, 87, 74, .9), 0 2px 0 #3a0d08; display: inline-block; animation: critshake .45s ease-in-out .55s 2; }
+  .crit-banner.win span { color: var(--gold-hi); text-shadow: 0 0 22px rgba(236, 208, 143, .95), 0 2px 0 #3a2a0c; }
+  .crit-banner.win::before { content: ""; position: absolute; left: 50%; top: 50%; width: 160%; aspect-ratio: 1; translate: -50% -50%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(circle, rgba(236, 208, 143, .35), transparent 62%); animation: burst 1s ease-out both; }
+  @keyframes critin { from { opacity: 0; transform: scale(1.8); letter-spacing: .5em; filter: blur(6px); } }
+  @keyframes critout { to { opacity: 0; transform: translateY(-14px) scale(.96); } }
+  @keyframes critshake { 25% { transform: translateX(-5px) rotate(-1.5deg); } 75% { transform: translateX(5px) rotate(1.5deg); } }
+  @keyframes burst { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .dz-cap { margin-top: 2px; text-align: center; font-weight: 700; font-size: 16px; line-height: 1.2; color: var(--ivory); text-shadow: 0 1px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .3s, opacity .35s; }
   .dz[data-pos^=back] .dz-cap { font-size: 28px; color: var(--muted); }
@@ -417,7 +444,71 @@
   @keyframes lift { to { transform: translate(-50%, -24px); opacity: 0; } }
   .toast { position: fixed; z-index: 41; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; text-align: center; background: var(--ivory); color: var(--felt); padding: 10px 16px; border-radius: 4px; font-weight: 700; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); max-width: calc(100% - 32px); animation: rise .3s var(--ease); }
 
-  /* переходы между экранами */
+  /* окно готовности */
+  .modal { position: fixed; z-index: 35; left: 50%; top: 50%; width: min(400px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; translate: -50% -50%;
+    padding: 22px 20px 16px; display: grid; justify-items: center; gap: 12px; text-align: center;
+    box-shadow: inset 0 0 0 3px #100b08, inset 0 0 0 4px rgba(207, 167, 90, .16), 0 30px 70px rgba(0, 0, 0, .7), 0 0 60px rgba(207, 167, 90, .08); }
+  .modal.opening { animation: modalin .55s var(--ease) both; }
+  .modal.closing { animation: modalout .3s ease-in forwards; }
+  @keyframes modalin { from { opacity: 0; transform: translateY(18px) scale(.92); filter: blur(4px); } }
+  @keyframes modalout { to { opacity: 0; transform: translateY(10px) scale(.96); filter: blur(3px); } }
+  .modal-crest { width: 44px; height: 44px; fill: none; stroke: var(--brass); stroke-width: 1.8; stroke-linecap: round; animation: crestin .8s var(--ease) both; }
+  @keyframes crestin { from { opacity: 0; transform: rotate(-90deg) scale(.4); } }
+  .modal-title { margin: 0; font-family: var(--display); font-weight: 400; font-size: 30px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-hi); }
+  .modal-sub { margin: 0; color: var(--muted); font-size: 15px; max-width: 34ch; }
+  .modal-label { font-family: var(--display); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 4px 0 8px; }
+  .ready-list { width: 100%; display: grid; gap: 6px; }
+  .ready-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 3px; background: #110c09; text-align: left; animation: rise .4s var(--ease) both; }
+  .ready-row:nth-child(2) { animation-delay: .05s; } .ready-row:nth-child(3) { animation-delay: .1s; } .ready-row:nth-child(4) { animation-delay: .15s; }
+  .ready-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed rgba(207, 167, 90, .5); transition: background .3s; }
+  .ready-row.ok .ready-dot { border-style: solid; border-color: var(--gold-hi); }
+  .ready-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ready-state { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .ready-row.ok .ready-state { color: var(--gold-hi); animation: pop .5s var(--ease); }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .swatch { position: relative; width: 62px; height: 62px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid transparent; background: radial-gradient(circle, #1d1611, #110c09);
+    transition: transform .25s var(--ease), border-color .2s, box-shadow .25s, opacity .2s; }
+  .swatch:hover:not(:disabled) { transform: translateY(-2px); }
+  .swatch[aria-pressed=true] { border-color: var(--gold-hi); box-shadow: 0 0 0 2px rgba(236, 208, 143, .35), 0 0 18px rgba(236, 208, 143, .35); }
+  .swatch.picked { animation: pop .45s var(--ease); }
+  .swatch:disabled { opacity: .32; cursor: not-allowed; }
+  .swatch-owner { position: absolute; right: -2px; bottom: -2px; min-width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; display: grid; place-items: center; background: #0b0807; border: 1px solid var(--line); color: var(--ivory); }
+  .swatch-owner:empty { display: none; }
+  .big-btn { width: 100%; padding: 15px; font-family: var(--display); font-size: 20px; letter-spacing: .1em; text-transform: uppercase; font-weight: 400; margin-top: 4px; }
+  .link-btn { border: 0; background: transparent; color: var(--muted); font-size: 15px; padding: 6px 10px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(169, 155, 129, .4); }
+  .link-btn:hover { color: var(--ivory); }
+  .die-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(236, 208, 143, .5); }
+  .fighter.ready-ok { border-color: rgba(143, 207, 159, .6); }
+  .fighter.ready-ok .tag { color: var(--ok); }
+
+  .orb { position: fixed; z-index: 45; width: 18px; height: 18px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, #fff7dc 0%, #ecd08f 42%, #b08442 72%); box-shadow: 0 0 14px rgba(236, 208, 143, .95), 0 0 34px rgba(236, 208, 143, .55); }
+  .fighter.flash { animation: cardflash .7s var(--ease); }
+  @keyframes cardflash { 30% { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 26px rgba(236, 208, 143, .6); transform: scale(1.04); } }
+  .next-pill { position: absolute; z-index: 5; left: 50%; top: 4px; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; max-width: calc(100% - 16px);
+    padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(207, 167, 90, .45); background: rgba(17, 12, 9, .92); font-size: 14px; white-space: nowrap; pointer-events: none;
+    animation: pillin .5s var(--ease) both; }
+  .next-pill .np-stage { font-family: var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--gold-hi); }
+  .next-pill .np-who { color: var(--ivory); overflow: hidden; text-overflow: ellipsis; }
+  .next-pill.mine { border-color: var(--gold-hi); box-shadow: 0 0 16px rgba(236, 208, 143, .3); }
+  .next-pill.mine .np-who { color: var(--gold-hi); font-weight: 700; }
+  @keyframes pillin { from { opacity: 0; transform: translateY(-10px) scale(.92); } }
+
+  /* заставка начала раунда */
+  .intro { position: fixed; inset: 0; z-index: 33; display: grid; place-items: center; padding: 16px; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, rgba(11, 8, 7, .9), rgba(11, 8, 7, .97)); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: fadein .35s ease-out both; }
+  .intro.out { animation: fadeout .38s ease-in forwards; }
+  .intro-card { display: grid; justify-items: center; gap: 14px; text-align: center; }
+  .intro-kicker { font-family: var(--display); font-size: 14px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); animation: rise .5s var(--ease) .1s both; }
+  .intro-title { font-family: var(--display); font-size: clamp(44px, 13vw, 72px); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-hi);
+    text-shadow: 0 0 30px rgba(236, 208, 143, .45); animation: titlein .9s cubic-bezier(.2,.9,.25,1) .15s both; }
+  @keyframes titlein { from { opacity: 0; letter-spacing: .6em; transform: scale(1.25); filter: blur(8px); } }
+  .intro-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px 18px; max-width: 420px; }
+  .intro-row.many { gap: 10px 12px; }
+  .intro-p { display: grid; justify-items: center; gap: 4px; font-weight: 700; animation: dropin .7s cubic-bezier(.3,1.4,.5,1) both; animation-delay: calc(.45s + var(--i) * .12s); }
+  @keyframes dropin { from { opacity: 0; transform: translateY(-40px) rotate(-120deg) scale(.5); } }
+  .intro-vs { font-family: var(--display); font-size: 22px; color: var(--muted); letter-spacing: .1em; animation: fadein .4s ease-out .7s both; }
+  .intro-first { font-size: 16px; color: var(--ivory); animation: rise .5s var(--ease) 1s both; }
   ::view-transition-old(root) { animation: vt-out .26s ease-in both; }
   ::view-transition-new(root) { animation: vt-in .4s var(--ease) both; }
   @keyframes vt-out { to { opacity: 0; transform: scale(.985); } }
@@ -600,6 +691,20 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </div>
   </div>
 </div>
+<div id="readyScrim" class="scrim" style="z-index:34" hidden></div>
+<div id="readyModal" class="modal gilded" role="dialog" aria-modal="true" aria-labelledby="readyTitle" hidden>
+  <svg class="modal-crest" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 10l20 20M10 10h6M10 10v6M38 10L18 30M38 10h-6M38 10v6"/><path d="M15 33l-5 5M33 33l5 5M13 27l8 8M35 27l-8 8"/></svg>
+  <h3 id="readyTitle" class="modal-title">Раунд</h3>
+  <p id="readySub" class="modal-sub"></p>
+  <div id="readyList" class="ready-list"></div>
+  <div id="readyPick">
+    <div class="modal-label">Цвет вашего кубика</div>
+    <div id="swatches" class="swatches"></div>
+  </div>
+  <button id="readyYes" class="btn primary big-btn" type="button">Подтвердить</button>
+  <button id="readyNo" class="link-btn" type="button">Отклонить</button>
+  <button id="readyHide" class="link-btn" type="button" hidden>Скрыть окно</button>
+</div>
 <div id="banner" class="banner" role="status" hidden></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
@@ -627,7 +732,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const ROOM_RE = /^[a-z0-9-]{3,24}$/;
 const PALETTE = ["#8c3b2f", "#2f6b5a", "#3e528c", "#6b4a9c", "#8a6a2c", "#7a4a2e", "#4f6b2a", "#8c3f62"];
-const TUMBLE_MS = 1500;
+const TUMBLE_MS = 2500;
 const WIN_POINTS = 3;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -642,7 +747,7 @@ function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0;
 function newRoomCode() { const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; for (let i = 0; i < 4; i++) s += a[randInt(a.length) - 1]; return "stol-" + s; }
 function colorFor(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }
 function initials(name) { return (name || "?").trim().slice(0, 1).toUpperCase(); }
-function ava(id, name) { const a = el("span", "ava", initials(name)); a.style.background = colorFor(id); return a; }
+function ava(id, name) { const a = el("span", "ava", initials(name)); a.style.background = typeof colorOfPid === "function" ? colorOfPid(id) : colorFor(id); return a; }
 function fmtTime(ts) { return typeof ts === "number" ? new Date(ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : ""; }
 function toast(msg, ms = 2200) { const t = $("toast"); t.textContent = msg; t.hidden = false; t.style.animation = "none"; void t.offsetWidth; t.style.animation = ""; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), ms); }
 function banner(title, text, ms = 3600) {
@@ -669,7 +774,8 @@ let players = {}, freeRolls = [], round = null, results = [], meta = null, closi
 let knownFree = new Set(), knownDuel = new Set(), firstFree = true, firstRound = true;
 const hiddenKeys = new Set();          // броски, которые ещё катятся: их результат пока скрыт
 const animQueue = []; let animating = false, cooldown = false;
-let dismissedRound = null, picked = [], arenaStale = false;
+let dismissedRound = null, picked = [], arenaStale = false, declineShown = null, readyHidden = null, readyPick = null, startedSeen = null, readyWatched = null;
+const pipHold = new Map(); let flashSeat = null;
 const params = new URLSearchParams(location.search);
 let invitedRoom = (params.get("room") || "").toLowerCase();
 
@@ -692,6 +798,20 @@ if (tg) {
   if (tgName) { myName = tgName; store.set("dndroll.name", myName); }
 }
 const tgLocked = !!(tg && myName);
+
+// ---------- цвета кубиков ----------
+const DIE_COLORS = [
+  { hex: "#8c2f2a", name: "Гранат" }, { hex: "#1f6f52", name: "Изумруд" }, { hex: "#2f4f9c", name: "Сапфир" }, { hex: "#6b3fa0", name: "Аметист" },
+  { hex: "#8f5f14", name: "Янтарь" }, { hex: "#1d6e7a", name: "Бирюза" }, { hex: "#9a4a26", name: "Медь" }, { hex: "#9c3566", name: "Роза" }
+];
+const DIE_HEX = DIE_COLORS.map((c) => c.hex);
+function defaultColor(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return DIE_HEX[h % DIE_HEX.length]; }
+let myColor = DIE_HEX.includes(store.get("dndroll.color")) ? store.get("dndroll.color") : defaultColor(pid);
+function colorOfPid(id) { if (id === pid) return myColor; const p = players[id]; return p && DIE_HEX.includes(p.color) ? p.color : defaultColor(id); }
+function rollColor(r) {
+  if (r.seat != null) { const info = readyInfo(round); if (info && info.colors[r.seat]) return info.colors[r.seat]; }
+  return DIE_HEX.includes(r.color) ? r.color : colorOfPid(r.pid);
+}
 function haptic(kind) {
   try { if (tg && tg.HapticFeedback) { if (kind === "win") tg.HapticFeedback.notificationOccurred("success"); else if (kind === "fail") tg.HapticFeedback.notificationOccurred("error"); else tg.HapticFeedback.impactOccurred(kind === "light" ? "light" : "medium"); } } catch {}
 }
@@ -730,6 +850,24 @@ function deriveRound(rd, onlyVisible) {
   }
   return { n, seats, score, exchanges, current: cur, winner, last, nextSeat: winner !== null ? null : count % n };
 }
+// Подготовка: каждый участник выбирает цвет кубика и подтверждает готовность. Пока не готовы все — бросать нельзя.
+function readyInfo(rd) {
+  const seats = seatsOf(rd); if (!seats) return null;
+  const R = rd.ready || {};
+  const ok = seats.map((p) => !!(R[p.pid] && R[p.pid].ok === true));
+  const declined = seats.filter((p) => R[p.pid] && R[p.pid].ok === false);
+  const used = new Set(), colors = [];
+  seats.map((p, i) => ({ i, r: R[p.pid] })).filter((x) => x.r && x.r.ok === true)
+    .sort((x, y) => ((x.r.ts || 0) - (y.r.ts || 0)) || x.i - y.i)
+    .forEach(({ i, r }) => { if (DIE_HEX.includes(r.color) && !used.has(r.color)) { colors[i] = r.color; used.add(r.color); } });
+  seats.forEach((p, i) => {
+    if (colors[i]) return;
+    const pref = colorOfPid(p.pid), c = !used.has(pref) ? pref : DIE_HEX.find((x) => !used.has(x)) || pref;
+    colors[i] = c; used.add(c);
+  });
+  return { seats, ok, all: ok.every(Boolean), declined, colors, taken: (exceptPid) => new Map(seats.filter((p) => p.pid !== exceptPid && R[p.pid] && R[p.pid].ok === true).map((p) => [colors[seats.indexOf(p)], p])) };
+}
+function roundStarted() { const i = readyInfo(round); return !!(i && i.all); }
 const roundState = () => deriveRound(round, false);
 const visibleState = () => deriveRound(round, true);
 function roundShown() { return !!(round && seatsOf(round) && round.id !== dismissedRound); }
@@ -738,12 +876,13 @@ function uiLive() { if (!roundShown()) return false; const s = visibleState(); r
 function uiFinished() { if (!roundShown()) return false; const s = visibleState(); return !!(s && s.winner !== null); }
 function mySeat() { const s = seatsOf(round); return s ? s.findIndex((p) => p.pid === pid) : -1; }
 function myTurn() {
-  if (!roundLive() || animating || cooldown) return false;
+  if (!roundLive() || !roundStarted() || animating || cooldown) return false;
   const full = roundState(), vis = visibleState();
   return full.seats[full.nextSeat].pid === pid && vis.nextSeat === full.nextSeat;
 }
 function rollerName(r) { const s = seatsOf(round); return r.name || (s && s[r.seat] && s[r.seat].name) || "Игрок"; }
 function sideOf(seat, n) { return n === 2 ? (seat === 0 ? "a" : "b") : null; }
+function players_(n) { const m = n % 10, h = n % 100; return n + " " + (m === 1 && h !== 11 ? "игрок" : m >= 2 && m <= 4 && (h < 12 || h > 14) ? "игрока" : "игроков"); }
 function tieText(st) { return st.n === 2 ? "Ничья — очко никому" : "Ничья наверху — очко никому"; }
 function scoreLine(st) { return st.score.slice().sort((x, y) => y - x).join(":"); }
 function exchangeLine(st, ex) {
@@ -917,7 +1056,7 @@ function enterRoom(r) {
     if (!on || room !== r) return;
     // при обрыве связи сервер сам уберёт игрока со стола и из списка столов
     onDisconnect(meRef).remove().then(() => onDisconnect(lobbyRef).remove())
-      .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp() }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
+      .then(() => Promise.all([set(meRef, { name: myName, seen: serverTimestamp(), color: myColor }), set(lobbyRef, { name: myName, seen: serverTimestamp() })]))
       .catch(() => {});
   }));
   let firstPlayers = true;
@@ -966,10 +1105,22 @@ function enterRoom(r) {
       const isNew = !firstRound && round.id !== prevId;
       if (firstRound) rolls.forEach((x) => knownDuel.add(x.key));
       if (isNew) announceRound(round);
+      const info = readyInfo(round);
+      if (info && info.declined.length && declineShown !== round.id) {
+        declineShown = round.id;
+        toast("Отказ от раунда: " + info.declined.map((p) => p.name).join(", ") + ". Раунд отменён.", 3200);
+        if (info.declined.some((p) => p.pid === pid)) setTimeout(() => { if (round && round.id === v.id) remove(R("round")).catch(() => {}); }, 1400);
+      }
+      if (info && info.all && startedSeen !== round.id) {
+        if (!firstRound && readyWatched === round.id) enqueue({ kind: "intro", roundId: round.id });
+        startedSeen = round.id;
+      }
+      if (info && !info.all) readyWatched = round.id;
       rolls.filter((x) => !knownDuel.has(x.key)).forEach((x) => { knownDuel.add(x.key); enqueue({ kind: "duel", roll: x, roundId: round.id }); });
       if (firstRound && !animating) syncArena(true);
     } else if (prevId && !firstRound) {
-      toast("Раунд отменён");
+      if (declineShown !== prevId) toast("Раунд отменён");
+      pipHold.clear();
       if (!animating) syncArena(false); else arenaStale = true;
     }
     firstRound = false;
@@ -993,7 +1144,7 @@ function leaveRoom() {
   }
 }
 function goLobby() {
-  ["picker", "history", "closeSheet"].forEach(closeSheet);
+  ["picker", "history", "closeSheet"].forEach(closeSheet); closeReady();
   transition(() => {
     leaveRoom(); room = null; invitedRoom = "";
     const url = new URL(location.href); url.searchParams.delete("room"); history.replaceState(null, "", url);
@@ -1128,11 +1279,11 @@ const D20 = (() => {
     const sx = dir * (.42 + .2 * rnd()) * Math.max(arenaW, dieW * 1.6);
     const sy = (.42 + .25 * rnd()) * Math.max(arenaH, dieW * 1.4);
     const curve = (rnd() - .5) * .35 * dieW;
-    const US = .8, N = 140;
-    const ease = (u) => { const t = Math.min(1, u / .93); return 1 - Math.pow(1 - t, 3.2); };
+    const US = .86, N = 220;
+    const ease = (u) => { const t = Math.min(1, u / .96); return 1 - Math.pow(1 - t, 2.6); };
     const pos = (u) => { const e = ease(u); return [sx * (1 - e) + curve * Math.sin(Math.PI * e), sy * (1 - e)]; };
-    const B = [0, .27, .48, .63, .74];
-    const PEAK = [1.25, .42, .17, .06];
+    const B = [0, .15, .28, .38, .46, .52];
+    const PEAK = [1.3, .55, .26, .11, .04];
     const height = (u) => {
       if (u < B[1]) { const t = u / B[1]; return PEAK[0] * (1 - t * t); }
       for (let i = 1; i < B.length - 1; i++) if (u < B[i + 1]) { const t = (u - B[i]) / (B[i + 1] - B[i]); return PEAK[i] * 4 * t * (1 - t); }
@@ -1140,7 +1291,7 @@ const D20 = (() => {
     };
     // вращение: в полёте — свободное, при касании стола — перекат в сторону движения
     let q = qnorm([rnd() - .5, rnd() - .5, rnd() - .5, rnd() - .5]);
-    let w = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * (14 + 8 * rnd()));
+    let w = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * (8 + 5 * rnd()));
     const rpx = dieW * .36, T = TUMBLE_MS / 1000;
     const Q = [q]; let lastGround = false;
     for (let i = 1; i <= N; i++) {
@@ -1149,7 +1300,7 @@ const D20 = (() => {
       const ground = height(u1) < .03;
       const roll = mul(cross([0, 0, 1], v), 1 / rpx);
       if (ground && !lastGround) { // удар о стол: часть вращения гасится, добавляется случайный толчок
-        const kick = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * 6 * (1 - u1));
+        const kick = nrm([rnd() - .5, rnd() - .5, rnd() - .5]).map((x) => x * 5 * (1 - u1));
         w = add(add(mul(w, .35), mul(roll, .65)), kick);
       } else if (ground) w = add(mul(w, .8), mul(roll, .2));
       lastGround = ground;
@@ -1232,14 +1383,14 @@ class Die3D {
         if (u >= 1) finish(); else requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
-      setTimeout(finish, T + 600); // если кадры не рисуются (свёрнутое окно), всё равно заканчиваем вовремя
+      setTimeout(finish, T + 900); // если кадры не рисуются (свёрнутое окно), всё равно заканчиваем вовремя
     });
   }
 }
 
 function makeDie(caption, side, pos, color) {
   const d = el("div", "dz");
-  d.innerHTML = '<div class="die-stage"><div class="die-shadow"></div><div class="die-body"><canvas aria-hidden="true"></canvas></div></div><div class="dz-cap"></div><span class="plus" aria-hidden="true">+1</span><span class="die-num sr-only"></span>';
+  d.innerHTML = '<div class="die-stage"><div class="die-shadow"></div><div class="die-body"><canvas aria-hidden="true"></canvas></div></div><div class="dz-cap"></div><span class="dz-val"></span><span class="plus" aria-hidden="true">+1</span><span class="die-num sr-only"></span>';
   d.querySelector(".dz-cap").textContent = caption || "";
   if (side) d.dataset.side = side;
   d.dataset.pos = pos || "enter";
@@ -1250,7 +1401,50 @@ function makeDie(caption, side, pos, color) {
   return d;
 }
 function critClasses(d, v) { d.classList.toggle("crit-win", v === 20); d.classList.toggle("crit-fail", v === 1); d.classList.toggle("idle", v === "?"); }
-function setNum(d, v) { d.querySelector(".die-num").textContent = v; critClasses(d, v); d.die.rest(v); }
+function setNum(d, v) {
+  d.querySelector(".die-num").textContent = v; d.querySelector(".dz-val").textContent = v === "?" ? "" : v;
+  critClasses(d, v); repairDie(d); d.die.rest(v);
+  if (v === 1) breakDie(d, false);
+}
+// Критический провал: кость трескается и разваливается на две половины.
+const CRACK_L = "polygon(0 0, 53% 0, 46% 21%, 56% 39%, 45% 58%, 55% 77%, 48% 100%, 0 100%)";
+const CRACK_R = "polygon(53% 0, 100% 0, 100% 100%, 48% 100%, 55% 77%, 45% 58%, 56% 39%, 46% 21%)";
+function repairDie(d) { const w = d.querySelector(".shard-wrap"); if (w) w.remove(); d.querySelector(".die-body canvas").style.visibility = ""; d.classList.remove("broken"); }
+function breakDie(d, animate) {
+  const body = d.querySelector(".die-body"), cv = body.querySelector("canvas");
+  if (body.querySelector(".shard-wrap") || !cv.width) return Promise.resolve();
+  const wrap = el("div", "shard-wrap");
+  const halves = [CRACK_L, CRACK_R].map((clip, i) => {
+    const c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; c.getContext("2d").drawImage(cv, 0, 0);
+    c.className = "half " + (i ? "half-r" : "half-l"); c.style.clipPath = clip; return c;
+  });
+  wrap.append(...halves);
+  body.append(wrap); cv.style.visibility = "hidden"; d.classList.add("broken");
+  const endL = "translate(-15%, 7%) rotate(-17deg)", endR = "translate(14%, 11%) rotate(14deg)";
+  if (!animate || reduceMotion()) { halves[0].style.transform = endL; halves[1].style.transform = endR; return Promise.resolve(); }
+  const crack = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  crack.setAttribute("viewBox", "0 0 100 100"); crack.setAttribute("preserveAspectRatio", "none"); crack.classList.add("crack");
+  crack.innerHTML = '<polyline points="53,0 46,21 56,39 45,58 55,77 48,100"/>';
+  wrap.append(crack);
+  for (let i = 0; i < 7; i++) {
+    const sh = el("span", "shard"); const ang = (i / 7) * Math.PI * 2 + .4, dist = 40 + (i % 3) * 18;
+    sh.style.setProperty("--tx", (Math.cos(ang) * dist).toFixed(0) + "px"); sh.style.setProperty("--ty", (Math.sin(ang) * dist + 30).toFixed(0) + "px");
+    sh.style.setProperty("--r", (i * 67 % 360) + "deg"); sh.style.animationDelay = "320ms"; wrap.append(sh);
+  }
+  const opt = { duration: 680, delay: 330, easing: "cubic-bezier(.3,1.35,.5,1)", fill: "forwards" };
+  const shake = [{ transform: "translate(0,0)" }, { transform: "translate(-2%,1%)" }, { transform: "translate(2%,-1%)" }, { transform: "translate(0,0)" }];
+  halves[0].animate(shake, { duration: 300 }); halves[1].animate(shake, { duration: 300 });
+  halves[0].animate([{ transform: "none" }, { transform: endL }], opt);
+  const a = halves[1].animate([{ transform: "none" }, { transform: endR }], opt);
+  setTimeout(() => crack.remove(), 900);
+  return a.finished.catch(() => {}).then(() => { halves[0].style.transform = endL; halves[1].style.transform = endR; });
+}
+function critBanner(kind) {
+  arena.querySelectorAll(".crit-banner").forEach((x) => x.remove());
+  const b = el("div", "crit-banner " + kind);
+  b.append(el("span", "", kind === "fail" ? "Критический провал" : "Критический успех"));
+  arena.append(b); setTimeout(() => b.remove(), 2600);
+}
 function place(d, pos) {
   if (!d) return;
   void d.offsetWidth; d.dataset.pos = pos;
@@ -1259,15 +1453,16 @@ function place(d, pos) {
 }
 function dropDie(d, instant) { if (!d) return; if (instant) { d.remove(); return; } d.classList.remove("won", "lost", "tie"); d.dataset.pos = "out"; setTimeout(() => d.remove(), 520); }
 function clearArena(instant) {
+  clearNextPill();
   dropDie(front, instant); dropDie(back, instant); front = back = null;
   for (const d of slotDice.values()) dropDie(d, instant);
   slotDice.clear(); multiN = 0;
   arena.querySelectorAll(".seat-ghost").forEach((g) => g.remove());
 }
-function placeholder(caption, instant) { clearArena(instant); front = makeDie(caption, null, instant ? "front" : "enter"); setNum(front, "?"); place(front, "front"); }
+function placeholder(caption, instant, color) { clearArena(instant); front = makeDie(caption, null, instant ? "front" : "enter", color); setNum(front, "?"); place(front, "front"); }
 function dieOf(r, pos) {
   const n = (seatsOf(round) || []).length, side = r.seat != null ? sideOf(r.seat, n) : null;
-  const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), side, pos, colorFor(r.pid)); setNum(d, r.value); return d;
+  const d = makeDie(r.pid === pid ? "Вы" : rollerName(r), side, pos, rollColor(r)); setNum(d, r.value); return d;
 }
 // Раунд на 3–8 игроков: у каждого своё место на столе, пустые места подписаны, чьё место сейчас — мерцает.
 const slotDice = new Map(); let multiN = 0;
@@ -1319,14 +1514,18 @@ async function throwDie(d, final, r, caption, side, scale) {
   const cap = d.querySelector(".dz-cap");
   if (caption != null) setTimeout(() => { cap.textContent = caption; }, 360);
   d.classList.remove("crit-win", "crit-fail", "idle", "won", "lost", "tie");
-  d.die.color = colorFor(r.pid);
+  repairDie(d);
+  d.die.color = rollColor(r);
   if (reduceMotion() || document.hidden) { setNum(d, final); return; }
   d.classList.add("rolling");
   await d.die.roll(final, r.key, side, scale || 1);
   d.classList.remove("rolling");
   d.querySelector(".die-num").textContent = final;
+  d.querySelector(".dz-val").textContent = final;
   critClasses(d, final);
   d.querySelector(".die-body").animate([{ transform: "scale(1.06)" }, { transform: "scale(1)" }], { duration: 260, easing: "cubic-bezier(.2,.9,.25,1)" });
+  if (final === 1) { critBanner("fail"); await breakDie(d, true); }
+  else if (final === 20) { critBanner("win"); await wait(500); }
 }
 
 // Статическая картина без анимации: последний бросок свободный или текущее положение раунда.
@@ -1345,7 +1544,7 @@ function syncArena(instant) {
         back = dieOf(rb, instant ? "back-" + sideOf(bs, 2) : "enter"); front = dieOf(rf, instant ? "front" : "enter");
         place(back, "back-" + sideOf(bs, 2)); place(front, "front");
         if (lastEx.point !== null) { front.classList.add("won"); back.classList.add("lost"); } else { front.classList.add("tie"); back.classList.add("tie"); }
-      } else placeholder(st.seats[st.nextSeat !== null ? st.nextSeat : 0].name, instant);
+      } else { const ns = st.nextSeat !== null ? st.nextSeat : 0, info = readyInfo(round); placeholder(st.seats[ns].name, instant, info && info.all ? info.colors[ns] : null); }
     } else {
       multiN = st.n;
       const shown = st.current.length ? st.current : (lastEx ? lastEx.rolls : []);
@@ -1356,8 +1555,9 @@ function syncArena(instant) {
       renderGhosts(st);
     }
     describeRoundState(st);
+    showNextPill(st);
   } else if (lastFree) {
-    clearArena(instant); front = makeDie(lastFree.pid === pid ? "Вы" : lastFree.name, null, instant ? "front" : "enter", colorFor(lastFree.pid)); setNum(front, lastFree.value); place(front, "front");
+    clearArena(instant); front = makeDie(lastFree.pid === pid ? "Вы" : lastFree.name, null, instant ? "front" : "enter", rollColor(lastFree)); setNum(front, lastFree.value); place(front, "front");
     describeFree(lastFree);
   } else { placeholder("", instant); setLines("", "", ""); }
 }
@@ -1383,17 +1583,18 @@ function describeRoundState(st) {
 }
 
 // Очередь анимаций: броски проигрываются по одному, у всех игроков одинаково.
-function enqueue(evt) { hiddenKeys.add(evt.roll.key); animQueue.push(evt); if (!animating) runNext(); }
+function enqueue(evt) { if (evt.roll) hiddenKeys.add(evt.roll.key); animQueue.push(evt); if (!animating) runNext(); }
 async function runNext() {
   const evt = animQueue.shift();
   if (!evt) { animating = false; if (arenaStale) { arenaStale = false; syncArena(false); } renderAll(); return; }
   animating = true; renderControls();
   try {
     if (evt.kind === "free") await playFree(evt.roll);
+    else if (evt.kind === "intro") { if (round && evt.roundId === round.id) await playIntro(); }
     else if (round && evt.roundId === round.id) await playRound(evt.roll);
     else hiddenKeys.delete(evt.roll.key);
   }
-  catch (e) { console.error(e); hiddenKeys.delete(evt.roll.key); }
+  catch (e) { console.error(e); if (evt.roll) hiddenKeys.delete(evt.roll.key); pipHold.clear(); }
   renderAll();
   await wait(animQueue.length ? 350 : 0);
   runNext();
@@ -1404,7 +1605,7 @@ function rollingLine(r, extra) {
   setLines("", [nameNode(r), document.createTextNode(t + (extra || "") + "…" + (r.note ? " " + r.note : ""))]);
 }
 async function playFree(r) {
-  rollingLine(r);
+  rollingLine(r); clearNextPill();
   if (back) { dropDie(back); back = null; }
   if (front && front.dataset.side) { dropDie(front); front = null; }
   if (!front) front = makeDie("", null, "front");
@@ -1419,6 +1620,8 @@ async function playRound(r) {
   const before = visibleState();
   if (!before) { hiddenKeys.delete(r.key); return; }
   const n = before.n;
+  clearNextPill();
+  before.score.forEach((v, i) => pipHold.set(i, v));
   rollingLine(r, " в раунде " + round.num);
   const caption = r.pid === pid ? "Вы" : rollerName(r);
   let thrown;
@@ -1437,7 +1640,7 @@ async function playRound(r) {
     await throwDie(front, r.value, r, caption, side, 1);
   } else {
     if (!before.current.length || multiN !== n) { clearArena(); multiN = n; }   // новый круг: прошлые кости уходят со стола
-    const d = makeDie(caption, null, "slot", colorFor(r.pid)); d.classList.add("rolling");
+    const d = makeDie(caption, null, "slot", rollColor(r)); d.classList.add("rolling");
     const L = setSlot(d, r.seat, n); slotDice.set(r.seat, d);
     renderGhosts(before);
     thrown = d;
@@ -1449,10 +1652,14 @@ async function playRound(r) {
   const ex = st.exchanges[st.exchanges.length - 1];
   const closed = ex && ex.rolls.some((x) => x.key === r.key);
   if (!closed) {
+    pipHold.clear(); renderDuel();
     setLines(critText(r.value), [nameNode(r), document.createTextNode(": выпало " + r.value)], cls(r.value));
     if (n > 2) renderGhosts(st);
+    showNextPill(st);
     return;
   }
+  for (const k of [...pipHold.keys()]) if (k !== ex.point) pipHold.delete(k);
+  renderDuel();
   await wait(250);
   if (n === 2) {
     if (ex.point !== null) {
@@ -1470,30 +1677,93 @@ async function playRound(r) {
   } else {
     for (const [seat, d] of slotDice) markExchange(d, seat, ex);
   }
-  if (ex.point !== null) haptic(st.seats[ex.point].pid === pid ? "win" : "tap");
   setLines(ex.point !== null ? "Очко получает " + st.seats[ex.point].name : tieText(st), exchangeLine(st, ex), ex.point !== null ? "win" : "");
+  if (ex.point !== null) {
+    const winEl = n === 2 ? front : slotDice.get(ex.point);
+    await wait(350);
+    await flyPoint(winEl, ex.point);
+    pipHold.delete(ex.point); flashSeat = ex.point; renderDuel();
+    haptic(st.seats[ex.point].pid === pid ? "win" : "light");
+  }
+  pipHold.clear(); renderDuel();
   if (st.winner !== null) {
     await wait(500);
     const w = st.seats[st.winner];
     setLines(w.name + " выигрывает раунд!", "Счёт " + scoreLine(st), "win");
     banner(w.name + " побеждает", "Раунд " + round.num + " — " + scoreLine(st));
     if (w.pid === pid) { buzz([60, 40, 60, 40, 160]); haptic("win"); }
-  }
-  await wait(600);
+  } else { await wait(700); showNextPill(st); }
+  await wait(400);
+}
+// Очко золотым шаром летит от кости победителя к его табло, там загорается кружок.
+async function flyPoint(fromEl, seat) {
+  const card = $("fighters").querySelectorAll(".fighter")[seat];
+  if (!card || !fromEl || reduceMotion() || document.hidden) return;
+  const pip = card.querySelectorAll(".pip")[pipHold.get(seat) || 0] || card;
+  const a = (fromEl.querySelector(".die-stage") || fromEl).getBoundingClientRect(), b = pip.getBoundingClientRect();
+  const x0 = a.left + a.width / 2, y0 = a.top + a.height / 2, dx = b.left + b.width / 2 - x0, dy = b.top + b.height / 2 - y0;
+  const orb = el("div", "orb"); orb.style.left = x0 + "px"; orb.style.top = y0 + "px"; document.body.append(orb);
+  const lift = Math.min(90, Math.abs(dx) * .35 + 40);
+  const anim = orb.animate([
+    { transform: "translate(-50%, -50%) scale(.3)", opacity: 0 },
+    { transform: "translate(-50%, -50%) scale(1.35)", opacity: 1, offset: .18 },
+    { transform: `translate(calc(-50% + ${(dx * .5).toFixed(1)}px), calc(-50% + ${(dy * .5 - lift).toFixed(1)}px)) scale(1.1)`, opacity: 1, offset: .58 },
+    { transform: `translate(calc(-50% + ${dx.toFixed(1)}px), calc(-50% + ${dy.toFixed(1)}px)) scale(.75)`, opacity: 1 }
+  ], { duration: 860, easing: "cubic-bezier(.45,.05,.35,1)", fill: "forwards" });
+  await Promise.race([anim.finished.catch(() => {}), wait(1300)]);
+  orb.remove();
+}
+function clearNextPill() { arena.querySelectorAll(".next-pill").forEach((x) => x.remove()); }
+function showNextPill(st) {
+  clearNextPill();
+  if (!st || st.winner !== null || !roundStarted() || st.nextSeat === null) return;
+  const p = st.seats[st.nextSeat];
+  const pill = el("div", "next-pill");
+  pill.append(el("span", "np-stage", (st.n > 2 ? "Круг " : "Обмен ") + (st.exchanges.length + 1)),
+    el("span", "np-who", p.pid === pid ? "ваш ход" : "бросает " + p.name));
+  if (p.pid === pid) pill.classList.add("mine");
+  arena.append(pill);
+}
+function miniDie(color, px, value) {
+  const c = document.createElement("canvas"), dpr = Math.min(3, window.devicePixelRatio || 1);
+  c.width = c.height = Math.round(px * dpr); c.style.width = c.style.height = px + "px"; c.className = "mini-die";
+  D20.draw(c.getContext("2d"), c.width, D20.restQ(value || 20), { color, labelScale: 1.1 });
+  return c;
+}
+// Заставка начала раунда: название, участники со своими кубиками, кто бросает первым.
+async function playIntro() {
+  const st = visibleState(), info = readyInfo(round); if (!st || !info) return;
+  const ov = el("div", "intro"); ov.setAttribute("role", "status");
+  const card = el("div", "intro-card");
+  card.append(el("div", "intro-kicker", st.n === 2 ? "Дуэль" : players_(st.n)), el("div", "intro-title", "Раунд " + round.num));
+  const row = el("div", "intro-row" + (st.n > 4 ? " many" : ""));
+  st.seats.forEach((p, i) => {
+    if (i && st.n === 2) row.append(el("span", "intro-vs", "VS"));
+    const f = el("div", "intro-p"); f.style.setProperty("--i", i);
+    f.append(miniDie(info.colors[i], st.n > 4 ? 40 : 56), el("span", "", p.pid === pid ? "Вы" : p.name));
+    row.append(f);
+  });
+  card.append(row, el("div", "intro-first", "Первым бросает " + (st.seats[0].pid === pid ? "вы" : st.seats[0].name)));
+  ov.append(card);
+  $("table").append(ov);
+  haptic("medium");
+  await wait(reduceMotion() ? 900 : 2300);
+  ov.classList.add("out"); await wait(380); ov.remove();
+  syncArena(false); renderAll();
 }
 function announceRound(rd) {
+  pipHold.clear(); readyHidden = null; readyPick = null;
   dismissedRound = null;
   const s = seatsOf(rd); if (!s) return;
   const names = s.map((p) => p.name);
-  banner("Раунд " + rd.num, s.length === 2
-    ? "Сражаются " + names[0] + " и " + names[1] + ". Первым бросает " + names[0] + "."
-    : "Играют " + s.length + ": " + names.join(", ") + ". Первым бросает " + names[0] + ".");
+  // участникам вместо баннера открывается окно готовности
   if (s.some((p) => p.pid === pid)) { buzz([80, 60, 80]); haptic("win"); }
+  else banner("Раунд " + rd.num, (s.length === 2 ? names[0] + " и " + names[1] : "Играют " + s.length + ": " + names.join(", ")) + ". Ждём готовности.");
   if (!animating) syncArena(false); else arenaStale = true;
 }
 
 // ---------- отрисовка стола ----------
-function renderAll() { if (!room) return; $("closeTableBtn").hidden = !isOwner(); renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); }
+function renderAll() { if (!room) return; $("closeTableBtn").hidden = !isOwner(); renderPlayers(); renderDuel(); renderControls(); renderHistory(); renderPicker(); renderReady(); }
 function onlinePlayers() {
   const list = Object.entries(players).map(([id, p]) => ({ pid: id, name: (p && p.name) || "Игрок" }));
   if (!list.some((p) => p.pid === pid) && myName) list.push({ pid, name: myName });
@@ -1558,25 +1828,33 @@ function renderDuel() {
   if (!roundShown()) { box.hidden = true; return; }
   const st = visibleState(); if (!st) { box.hidden = true; return; }
   const wasHidden = box.hidden; box.hidden = false; if (wasHidden) animateIn(box, "duel");
-  box.classList.toggle("done", st.winner !== null);
+  // пока очко летит к табло, счёт и победитель показываются «до» обмена
+  const score = st.score.map((v, i) => (pipHold.has(i) ? pipHold.get(i) : v));
+  const winner = pipHold.size ? null : st.winner;
+  box.classList.toggle("done", winner !== null);
   $("duelTitle").textContent = "Раунд " + round.num;
-  $("duelSub").textContent = st.winner !== null ? "завершён" : (st.n > 2 ? st.n + " игроков · круг " : "обмен ") + (st.exchanges.length + 1);
+  const info = readyInfo(round), started = info.all;
+  const exNo = st.exchanges.length + (pipHold.size && st.current.length === 0 && st.exchanges.length ? 0 : 1);
+  $("duelSub").textContent = winner !== null ? "завершён" : !started ? "подготовка" : (st.n > 2 ? players_(st.n) + " · круг " : "обмен ") + exNo;
   $("duelSub").title = "До " + WIN_POINTS + " очков";
   const fbox = $("fighters");
-  const prev = fbox.dataset.round === round.id ? (fbox.dataset.scores || "").split(",").map(Number) : st.score;
+  const prev = fbox.dataset.round === round.id ? (fbox.dataset.scores || "").split(",").map(Number) : score;
   fbox.className = "fighters" + (st.n > 2 ? " multi" : "");
   fbox.style.setProperty("--cols", String(st.n <= 4 ? st.n : Math.ceil(st.n / 2)));
   fbox.replaceChildren();
   st.seats.forEach((p, i) => {
     if (st.n === 2 && i === 1) fbox.append(el("div", "vs", "VS"));
-    const f = el("div", "fighter" + (st.winner === i ? " won" : "") + (st.winner === null && st.nextSeat === i ? " turn" : ""));
+    const f = el("div", "fighter" + (winner === i ? " won" : "") + (started && winner === null && !pipHold.size && st.nextSeat === i ? " turn" : "") + (flashSeat === i ? " flash" : ""));
     f.append(el("span", "fname", p.name + (p.pid === pid ? (st.n > 2 ? " · вы" : " (вы)") : "")));
     const pips = el("span", "pips");
-    for (let k = 0; k < WIN_POINTS; k++) { const d = el("span", "pip" + (k < st.score[i] ? " on" : "")); if (k < st.score[i] && k >= (prev[i] || 0)) d.classList.add("pop"); pips.append(d); }
-    f.append(pips, el("span", "tag", st.winner === i ? "победитель" : (st.winner === null && st.nextSeat === i ? (p.pid === pid ? "ваш ход" : "бросает") : "")));
+    for (let k = 0; k < WIN_POINTS; k++) { const d = el("span", "pip" + (k < score[i] ? " on" : "")); if (k < score[i] && k >= (prev[i] || 0)) d.classList.add("pop"); pips.append(d); }
+    const tag = !started ? (info.ok[i] ? "готов" : "ждём") : winner === i ? "победитель" : (winner === null && !pipHold.size && st.nextSeat === i ? (p.pid === pid ? "ваш ход" : "бросает") : "");
+    f.append(pips, el("span", "tag", tag));
+    const dot = el("span", "die-dot"); dot.style.background = info.colors[i]; f.prepend(dot);
+    if (!started) f.classList.toggle("ready-ok", info.ok[i]);
     fbox.append(f);
   });
-  fbox.dataset.round = round.id; fbox.dataset.scores = st.score.join(",");
+  fbox.dataset.round = round.id; fbox.dataset.scores = score.join(","); flashSeat = null;
   const log = $("exlog"); const prevN = log.dataset.round === round.id ? Number(log.dataset.n || 0) : st.exchanges.length;
   log.replaceChildren();
   const shown = st.exchanges.slice(st.n > 2 ? -4 : -6), offset = st.exchanges.length - shown.length;
@@ -1628,10 +1906,16 @@ function renderControls() {
   let canRoll = false;
   if (live) {
     const full = animating ? visibleState() : roundState(); const next = full.seats[full.nextSeat];
-    const participant = mySeat() >= 0;
-    if (animating) { btn.textContent = "Кость катится…"; btn.disabled = true; hint.textContent = participant ? "" : "Вы зритель в этом раунде"; }
+    const participant = mySeat() >= 0, info = readyInfo(round);
+    if (!info.all) {
+      const mineOk = participant && info.ok[mySeat()];
+      btn.textContent = "Ждём готовности игроков"; btn.disabled = !participant || mineOk;
+      if (participant && !mineOk) { btn.textContent = "Подтвердить готовность"; btn.disabled = false; btn.classList.add("your-turn"); }
+      const waiting = info.seats.filter((p, i) => !info.ok[i]).map((p) => p.pid === pid ? "вас" : p.name);
+      hint.textContent = "Ждём: " + waiting.join(", ");
+    } else if (animating) { btn.textContent = "Кость катится…"; btn.disabled = true; hint.textContent = participant ? "" : "Вы зритель в этом раунде"; }
     else if (myTurn()) { btn.textContent = "Ваш ход — бросить d20"; btn.disabled = false; btn.classList.add("your-turn"); hint.textContent = "Ваш ход: нажмите на кость или на кнопку"; canRoll = true; }
-    else { btn.textContent = "Сейчас бросает " + next.name; btn.disabled = true; hint.textContent = participant ? "Ждите своей очереди" : "Вы зритель: смотрите раунд, бросают участники"; }
+    else { btn.textContent = "Сейчас бросает " + next.name; btn.disabled = true; hint.textContent = participant ? "Ждите своей очереди" : "Вы зритель в этом раунде"; }
   } else if (finished) {
     btn.textContent = "Новый раунд"; btn.disabled = animating; hint.textContent = animating ? "" : "× закрывает итог раунда";
   } else {
@@ -1764,6 +2048,72 @@ $("pickStart").addEventListener("click", async () => {
   try { await set(R("round"), data); closeSheet("picker"); }
   catch { toast("Не получилось начать раунд. Проверьте интернет."); $("pickStart").disabled = false; }
 });
+// --- окно готовности: цвет кубика и «Подтвердить» / «Отклонить» ---
+function renderReady() {
+  const modal = $("readyModal");
+  const info = round && roundShown() ? readyInfo(round) : null, st = info ? roundState() : null;
+  const show = !!(info && st && st.winner === null && !info.all && !info.declined.length && mySeat() >= 0 && readyHidden !== round.id);
+  if (!show) { closeReady(); return; }
+  if (modal.hidden) {
+    modal.classList.remove("closing"); modal.hidden = false; $("readyScrim").classList.remove("closing"); $("readyScrim").hidden = false;
+    animateIn(modal, "opening");
+  }
+  const mine = (round.ready || {})[pid], confirmed = !!(mine && mine.ok === true);
+  const taken = info.taken(pid);
+  if (!readyPick || taken.has(readyPick)) readyPick = !taken.has(myColor) ? myColor : DIE_HEX.find((c) => !taken.has(c));
+  $("readyTitle").textContent = "Раунд " + round.num;
+  $("readySub").textContent = confirmed ? "Вы готовы. Ждём остальных…" : (st.n === 2 ? "Вас вызвали на дуэль." : "Вас позвали в раунд: " + players_(st.n) + ".") + " Выберите цвет кубика и подтвердите готовность.";
+  const list = $("readyList"); list.replaceChildren();
+  info.seats.forEach((p, i) => {
+    const row = el("div", "ready-row" + (info.ok[i] ? " ok" : ""));
+    const dot = el("span", "ready-dot"); dot.style.background = info.ok[i] ? info.colors[i] : "transparent";
+    row.append(dot, el("span", "ready-name", p.pid === pid ? p.name + " (вы)" : p.name), el("span", "ready-state", info.ok[i] ? "готов" : "думает…"));
+    list.append(row);
+  });
+  $("readyPick").hidden = confirmed; $("readyYes").hidden = confirmed; $("readyNo").hidden = confirmed; $("readyHide").hidden = !confirmed;
+  if (!confirmed) {
+    const sw = $("swatches");
+    if (sw.dataset.built !== "1") {
+      sw.replaceChildren();
+      DIE_COLORS.forEach((c) => {
+        const b = el("button", "swatch"); b.type = "button"; b.dataset.hex = c.hex; b.title = c.name; b.setAttribute("aria-label", "Цвет кубика: " + c.name);
+        b.append(miniDie(c.hex, 46), el("span", "swatch-owner"));
+        b.addEventListener("click", () => { if (b.disabled) return; readyPick = c.hex; animateIn(b, "picked"); renderReady(); });
+        sw.append(b);
+      });
+      sw.dataset.built = "1";
+    }
+    sw.querySelectorAll(".swatch").forEach((b) => {
+      const owner = taken.get(b.dataset.hex);
+      b.disabled = !!owner; b.setAttribute("aria-pressed", String(b.dataset.hex === readyPick));
+      b.querySelector(".swatch-owner").textContent = owner ? initials(owner.name) : "";
+      b.title = owner ? "Занят: " + owner.name : DIE_COLORS.find((c) => c.hex === b.dataset.hex).name;
+    });
+  }
+}
+function closeReady() {
+  const modal = $("readyModal"); if (modal.hidden || modal.classList.contains("closing")) return;
+  modal.classList.add("closing"); $("readyScrim").classList.add("closing");
+  setTimeout(() => { modal.hidden = true; modal.classList.remove("closing"); $("readyScrim").hidden = true; $("readyScrim").classList.remove("closing"); }, reduceMotion() ? 0 : 300);
+}
+$("readyYes").addEventListener("click", async () => {
+  if (!round) return;
+  const color = readyPick || myColor;
+  myColor = color; store.set("dndroll.color", color);
+  $("readyYes").disabled = true;
+  try {
+    await set(R("round/ready/" + pid), { ok: true, color, ts: serverTimestamp() });
+    set(R("players/" + pid), { name: myName, seen: serverTimestamp(), color }).catch(() => {});
+    haptic("light");
+  } catch { toast("Не получилось подтвердить. Проверьте интернет."); }
+  $("readyYes").disabled = false;
+});
+$("readyNo").addEventListener("click", async () => {
+  if (!round) return;
+  try { await set(R("round/ready/" + pid), { ok: false, ts: serverTimestamp() }); } catch { toast("Не получилось отклонить. Проверьте интернет."); }
+});
+$("readyHide").addEventListener("click", () => { readyHidden = round && round.id; closeReady(); });
+
 function saveResultIfFinished() {
   const st = roundState();
   if (!st || st.winner === null || results.some((x) => x.key === round.id)) return;
@@ -1780,6 +2130,7 @@ document.querySelectorAll("#modeSeg button").forEach((b) => b.addEventListener("
 async function doRoll() {
   if (!room || animating || cooldown) return;
   if (roundShown() && !roundLive()) { openPicker(); return; }
+  if (roundShown() && roundLive() && !roundStarted()) { if (mySeat() >= 0) { readyHidden = null; renderReady(); } else toast("Игроки готовятся к раунду"); return; }
   if (roundLive() && roundShown()) {
     if (!myTurn()) { const st = roundState(); toast(mySeat() >= 0 ? "Сейчас ход: " + st.seats[st.nextSeat].name : "Вы зритель в этом раунде"); return; }
     const st = roundState();
@@ -1794,7 +2145,7 @@ async function doRoll() {
   if (mode === "adv") { value = Math.max(a, b); alt = Math.min(a, b); }
   if (mode === "dis") { value = Math.min(a, b); alt = Math.max(a, b); }
   const note = $("noteInput").value.trim().slice(0, 80);
-  const data = { pid, name: myName, value, ts: serverTimestamp() };
+  const data = { pid, name: myName, value, ts: serverTimestamp(), color: myColor };
   if (mode) { data.mode = mode; data.alt = alt; }
   if (note) data.note = note;
   try { await set(push(R("rolls")), data); $("noteInput").value = ""; }
